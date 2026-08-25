@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>LADDER</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{--black:#080808;--white:#f4f0e8;--lime:#d4f000;--red:#ff2d2d;--dim:rgba(244,240,232,0.1);--dim2:rgba(244,240,232,0.05);--muted:rgba(244,240,232,0.3);--vmuted:rgba(244,240,232,0.15);}
+html,body{width:100%;height:100%;background:var(--black);color:var(--white);font-family:'IBM Plex Sans',system-ui,sans-serif;overflow:hidden;}
+#noise{position:fixed;inset:0;pointer-events:none;z-index:900;opacity:0.03;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");}
+#pFlash{position:fixed;inset:0;background:rgba(255,45,45,0.1);pointer-events:none;z-index:800;opacity:0;transition:opacity 0.5s;}
+.screen{position:fixed;inset:0;bottom:56px;display:flex;flex-direction:column;align-items:center;opacity:0;pointer-events:none;transition:opacity 0.4s ease;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+.screen.active{opacity:1;pointer-events:all;}
+#s-boot{bottom:0;justify-content:center;align-items:center;padding:40px 32px;}
+.inner{width:100%;max-width:680px;padding:44px 28px 40px;display:flex;flex-direction:column;}
+.boot-word{font-family:'Bebas Neue',sans-serif;font-size:clamp(72px,20vw,160px);line-height:0.85;letter-spacing:0.04em;overflow:hidden;}
+.boot-word span{display:inline-block;transform:translateY(110%);animation:slideUp 0.7s cubic-bezier(0.16,1,0.3,1) both;}
+.boot-word:nth-child(1) span{animation-delay:0.1s;}
+.boot-word:nth-child(2) span{animation-delay:0.25s;}
+.boot-word:nth-child(1) span{animation-delay:0.1s;color:var(--lime);}
+.boot-word:nth-child(3) span{animation-delay:0.4s;color:var(--lime);}
+.boot-sub{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-top:24px;animation:fadeIn 1s 1s both;}
+.boot-enter{margin-top:48px;font-family:'IBM Plex Mono',monospace,system-ui;font-size:0.65rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--lime);animation:blinkAnim 1.4s 1.5s infinite both;cursor:pointer;border:1px solid var(--lime);padding:14px 32px;display:inline-block;transition:background 0.2s,color 0.2s;background:none;}
+.boot-enter:hover{background:var(--lime);color:var(--black);}
+.lbl{font-family:'IBM Plex Mono',monospace;font-size:0.6rem;font-weight:500;letter-spacing:0.26em;text-transform:uppercase;color:rgba(244,240,232,0.38);}
+.big-q{font-family:'Bebas Neue',sans-serif;font-size:clamp(2rem,7vw,4.2rem);line-height:0.9;letter-spacing:0.02em;}
+.big-q em{color:var(--lime);font-style:normal;}
+.tbar{font-family:'IBM Plex Mono',monospace;font-size:0.6rem;font-weight:500;letter-spacing:0.24em;color:rgba(244,240,232,0.32);text-transform:uppercase;margin-bottom:24px;}
+.ybar{font-family:'IBM Plex Mono',monospace;font-size:0.74rem;color:rgba(244,240,232,0.45);padding:14px 0 14px 18px;border-left:2px solid var(--dim);line-height:2;margin:20px 0 32px;letter-spacing:0.02em;}
+.ybar .g{color:var(--lime);}
+.ybar .r{color:rgba(255,45,45,0.72);}
+.plbl{font-family:'IBM Plex Mono',monospace;font-size:0.58rem;font-weight:500;letter-spacing:0.24em;text-transform:uppercase;color:rgba(244,240,232,0.22);margin-bottom:10px;}
+.ptrack{width:100%;height:1px;background:var(--dim);position:relative;overflow:hidden;margin-bottom:16px;}
+.pfill{position:absolute;left:0;top:0;height:100%;background:var(--lime);transition:width 0.5s cubic-bezier(0.16,1,0.3,1);}
+.rsteps{width:100%;display:flex;flex-direction:column;}
+.rs{display:flex;align-items:center;gap:16px;padding:17px 16px 17px 14px;border-bottom:1px solid var(--dim2);cursor:pointer;position:relative;overflow:hidden;user-select:none;min-height:54px;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.rs::before{content:'';position:absolute;left:0;top:0;bottom:0;width:0;background:var(--lime);transition:width 0.35s cubic-bezier(0.16,1,0.3,1);z-index:0;}
+.rs.done::before{width:100%;}
+.rs .sn{font-family:'IBM Plex Mono',monospace;font-size:0.58rem;font-weight:500;letter-spacing:0.08em;color:rgba(244,240,232,0.25);width:26px;flex-shrink:0;position:relative;z-index:1;transition:color 0.35s;}
+.rs .st{font-family:'IBM Plex Sans',sans-serif;font-size:0.92rem;font-weight:300;position:relative;z-index:1;transition:color 0.35s;flex:1;}
+.rs .smeta{font-family:'IBM Plex Mono',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.14em;color:rgba(244,240,232,0.22);position:relative;z-index:1;margin-left:auto;padding-right:14px;transition:color 0.35s;flex-shrink:0;}
+.rs.done .smeta{color:rgba(8,8,8,0.45);}
+.rs .sc{font-size:0.68rem;opacity:0;position:relative;z-index:1;transition:opacity 0.3s,color 0.35s;}
+.rs.done .st,.rs.done .sc{color:var(--black);}
+.rs.done .sn{color:rgba(8,8,8,0.42);}
+.rs.done .sc{opacity:1;}
+.idstmt{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.8rem,5.5vw,3.4rem);line-height:0.92;letter-spacing:0.02em;margin:12px 0 32px;}
+.idstmt .acc{color:var(--lime);}
+.li{width:100%;background:none;border:none;border-bottom:1px solid var(--dim);color:var(--white);font-family:'IBM Plex Mono',monospace;font-size:0.9rem;font-weight:300;padding:10px 0;outline:none;transition:border-color 0.25s;caret-color:var(--lime);}
+.li::placeholder{color:var(--vmuted);}
+.li:focus{border-bottom-color:var(--lime);}
+.mta{width:100%;background:rgba(244,240,232,0.02);border:none;border-bottom:1px solid var(--dim);color:var(--white);font-family:'IBM Plex Mono',monospace;font-size:0.82rem;font-weight:300;line-height:1.85;resize:none;height:160px;outline:none;padding:10px 0;transition:border-color 0.25s;caret-color:var(--lime);position:relative;z-index:10;pointer-events:all;display:block;}
+.li{width:100%;background:none;border:none;border-bottom:1px solid var(--dim);color:var(--white);font-family:'IBM Plex Mono',monospace;font-size:0.82rem;font-weight:300;padding:10px 0;outline:none;transition:border-color 0.25s;caret-color:var(--lime);}
+.li::placeholder{color:var(--vmuted);}
+.li:focus{border-bottom-color:var(--lime);}
+.tip-wrap{position:relative;display:inline-block;}
+.tip-icon{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;border:1px solid rgba(212,240,0,0.3);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:rgba(212,240,0,0.4);cursor:pointer;margin-left:8px;vertical-align:middle;transition:all 0.2s;user-select:none;font-style:italic;font-weight:500;flex-shrink:0;}
+.tip-icon:hover{border-color:var(--lime);color:var(--lime);background:rgba(212,240,0,0.06);}
+.tip-box{display:none;position:absolute;left:0;top:28px;background:#111;border:1px solid rgba(212,240,0,0.15);border-left:2px solid var(--lime);padding:12px 16px;font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:rgba(244,240,232,0.5);line-height:1.8;z-index:9999;min-width:280px;max-width:340px;}
+.tip-box.open{display:block;}
+.li{width:100%;background:none;border:none;border-bottom:1px solid var(--dim);color:var(--white);font-family:'IBM Plex Mono',monospace;font-size:0.82rem;font-weight:300;padding:10px 0;outline:none;transition:border-color 0.25s;caret-color:var(--lime);}
+.li::placeholder{color:var(--vmuted);}
+.li:focus{border-bottom-color:var(--lime);}
+.trow{display:flex;align-items:center;gap:12px;padding:15px 0;border-bottom:1px solid var(--dim2);cursor:pointer;user-select:none;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;font-weight:300;color:rgba(244,240,232,0.6);transition:color 0.2s;min-height:52px;-webkit-tap-highlight-color:transparent;}
+.trow:hover{color:var(--white);}
+.tdot{width:8px;height:8px;border:1px solid rgba(244,240,232,0.25);border-radius:50%;flex-shrink:0;transition:all 0.2s;}
+.trow.dn{color:rgba(244,240,232,0.18);text-decoration:line-through;text-decoration-color:rgba(244,240,232,0.1);}
+.trow.dn .tdot{background:var(--lime);border-color:var(--lime);}
+.tdel{margin-left:auto;font-size:0.85rem;color:rgba(244,240,232,0.18);transition:color 0.2s;padding:10px 4px 10px 20px;flex-shrink:0;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.tdel:hover{color:var(--red);}
+.tadd{display:flex;gap:8px;margin-top:12px;align-items:center;}
+.bp{background:var(--lime);color:var(--black);border:none;font-family:'IBM Plex Mono',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:16px 26px;cursor:pointer;transition:background 0.2s,color 0.2s;white-space:nowrap;min-height:50px;-webkit-tap-highlight-color:transparent;}
+.bp:hover{background:var(--white);}
+.bg{background:none;color:var(--muted);border:1px solid var(--dim);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;padding:14px 22px;cursor:pointer;transition:all 0.2s;white-space:nowrap;min-height:50px;-webkit-tap-highlight-color:transparent;}
+.bg:hover{color:var(--white);border-color:rgba(244,240,232,0.35);}
+.brow{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap;}
+.bdng{background:none;color:var(--red);border:1px solid rgba(255,45,45,0.3);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;padding:14px 22px;cursor:pointer;transition:all 0.2s;min-height:50px;-webkit-tap-highlight-color:transparent;}
+.bdng:hover{background:rgba(255,45,45,0.1);}
+.lbig{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,14vw,8rem);line-height:0.82;letter-spacing:0.04em;margin-bottom:24px;}
+.lbig span{color:var(--lime);}
+.srow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px;}
+.sb{border:1px solid var(--dim);padding:16px 12px;}
+.sn{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;line-height:1;color:var(--lime);margin-bottom:3px;}
+.sn.bad{color:var(--red);}
+.sl{font-family:'IBM Plex Mono',monospace;font-size:0.54rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);line-height:1.5;}
+.lgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:24px;}
+.redlbl{font-family:'IBM Plex Mono',monospace;font-size:0.58rem;font-weight:500;letter-spacing:0.24em;text-transform:uppercase;color:rgba(255,45,45,0.6);}
+.rednote{font-family:'IBM Plex Mono',monospace;font-size:0.66rem;font-weight:500;letter-spacing:0.1em;color:rgba(255,45,45,0.78);line-height:1.8;}
+.timeblock{margin:-8px 0 30px;padding-left:18px;border-left:2px solid var(--dim);}
+.timeblock .tnum{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;line-height:0.9;color:var(--lime);letter-spacing:0.01em;}
+.timeblock .tgoal{font-family:'IBM Plex Mono',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:rgba(244,240,232,0.42);margin-top:8px;}
+.timeblock .tsub{font-family:'IBM Plex Mono',monospace;font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;color:rgba(244,240,232,0.2);margin-top:6px;}
+.monthnav{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--dim);}
+.mnav{background:none;border:none;color:rgba(244,240,232,0.3);font-family:'IBM Plex Mono',monospace;font-size:0.85rem;cursor:pointer;padding:14px 18px;transition:color 0.2s;min-width:44px;min-height:44px;}
+.mnav:hover{color:var(--lime);}
+.ldayhead{font-family:'IBM Plex Mono',monospace;font-size:0.58rem;text-align:center;color:rgba(244,240,232,0.25);letter-spacing:0.15em;}
+.ld{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;cursor:pointer;border:1px solid var(--dim);color:rgba(244,240,232,0.3);transition:all 0.15s;position:relative;min-width:0;touch-action:manipulation;}
+.ld:hover{border-color:rgba(244,240,232,0.35);color:rgba(244,240,232,0.55);}
+.ld.lw{background:var(--lime);border-color:var(--lime);color:var(--black);font-weight:500;}
+.ld.lm{background:rgba(255,45,45,0.12);border-color:var(--red);color:var(--red);}
+.ld.lt{border-color:var(--lime);color:var(--white);font-weight:600;box-shadow:0 0 0 1px rgba(212,240,0,0.25);}
+.ld.lt::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:3px;height:3px;border-radius:50%;background:var(--lime);}
+.ld.lt.lw{border-color:var(--lime);}
+.ld.lt.lm{border-color:var(--red);}
+/* DAY DETAIL PANEL */
+#dayDetail{background:rgba(244,240,232,0.015);border:1px solid var(--dim);border-left:2px solid var(--lime);padding:20px 22px;margin-bottom:20px;display:none;}
+#dayDetail.open{display:block;}
+.dd-date{font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--lime);margin-bottom:14px;}
+.dd-focus{font-family:'IBM Plex Mono',monospace;font-size:0.82rem;color:var(--white);margin-bottom:12px;line-height:1.6;font-weight:300;}
+.dd-tasks{font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:rgba(244,240,232,0.5);line-height:1.9;}
+.dd-tasks .dk{color:rgba(244,240,232,0.18);text-decoration:line-through;}
+.dd-mirror{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:rgba(244,240,232,0.35);line-height:1.7;margin-top:8px;border-top:1px solid var(--dim2);padding-top:8px;white-space:pre-wrap;}
+.csec{width:100%;border:1px solid var(--dim);border-top:2px solid var(--lime);padding:24px 20px;margin-bottom:20px;}
+.cq{font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:18px;line-height:2;}
+.crow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.cwin,.cmiss{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:22px 10px;cursor:pointer;transition:all 0.2s;font-family:'IBM Plex Mono',monospace;-webkit-tap-highlight-color:transparent;min-height:88px;}
+.cwin{background:var(--lime);border:1px solid var(--lime);color:var(--black);}
+.cwin:hover{background:#e2ff1a;}
+.cmiss{background:none;border:1px solid rgba(255,45,45,0.35);color:var(--red);}
+.cmiss:hover{background:rgba(255,45,45,0.08);}
+.cbig{font-size:1.6rem;font-weight:700;line-height:1;}
+.csub{font-size:0.55rem;letter-spacing:0.18em;text-transform:uppercase;opacity:0.75;}
+.cfoot{display:flex;justify-content:space-between;align-items:center;margin-top:16px;}
+#todaySt{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--muted);min-height:18px;}
+.cundo{background:none;border:none;color:rgba(244,240,232,0.25);font-family:'IBM Plex Mono',monospace;font-size:0.55rem;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;padding:14px 4px;text-decoration:underline;text-decoration-color:rgba(244,240,232,0.15);text-underline-offset:4px;transition:all 0.2s;}
+.cundo:hover{color:var(--white);text-decoration-color:var(--white);}
+
+.atype-btn{flex:1;background:none;border:1px solid var(--dim);color:rgba(244,240,232,0.35);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;padding:11px;cursor:pointer;transition:all 0.2s;}
+.action-row-edit{border:1px solid var(--dim);padding:14px;margin-bottom:10px;}
+.action-row-del{color:rgba(244,240,232,0.25);cursor:pointer;font-size:0.7rem;padding:8px 4px;flex-shrink:0;transition:color 0.2s;}
+.action-row-del:hover{color:rgba(255,45,45,0.7);}
+.atype-btn.small{padding:9px 14px;font-size:0.56rem;}
+.atype-btn.active{border-color:var(--lime);color:var(--lime);background:rgba(212,240,0,0.06);}
+.gtimer{margin-top:14px;padding:18px;border:1px solid var(--dim);position:relative;transition:border-color 0.3s;}
+.gtimer.running{border-color:rgba(212,240,0,0.4);}
+.gtimer.gt-done{border-color:rgba(212,240,0,0.55);}
+.gtimer-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;gap:10px;}
+.gtimer-label{font-family:'IBM Plex Sans',sans-serif;font-size:0.82rem;color:var(--white);font-weight:300;line-height:1.4;}
+.gtimer-target{font-family:'IBM Plex Mono',monospace;font-size:0.56rem;letter-spacing:0.1em;color:rgba(244,240,232,0.22);text-transform:uppercase;white-space:nowrap;flex-shrink:0;}
+.gtimer-display{font-family:'Bebas Neue',sans-serif;font-size:2.4rem;line-height:1;color:var(--white);letter-spacing:0.01em;margin-bottom:12px;transition:color 0.3s;}
+.gtimer-bar{height:2px;background:var(--dim);position:relative;margin-bottom:16px;}
+.gtimer-fill{position:absolute;left:0;top:0;height:100%;background:var(--lime);transition:width 0.3s linear;}
+.gtimer-controls{display:flex;gap:8px;align-items:center;}
+.gt-play{flex:1;font-family:'IBM Plex Mono',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;padding:12px;cursor:pointer;background:var(--lime);border:1px solid var(--lime);color:var(--black);transition:all 0.2s;}
+.gt-play.on{background:none;color:var(--lime);}
+.gt-reset{font-family:'IBM Plex Mono',monospace;font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;padding:12px 16px;cursor:pointer;background:none;border:1px solid var(--dim);color:rgba(244,240,232,0.3);transition:all 0.2s;}
+.gt-reset:hover{border-color:rgba(255,45,45,0.4);color:rgba(255,45,45,0.7);}
+.gt-donebadge{font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--lime);margin-top:10px;}
+
+.ftimer-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--dim2);}
+.ftimer-btn{width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(244,240,232,0.22);background:none;color:rgba(244,240,232,0.55);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:0.62rem;transition:all 0.2s;}
+.ftimer-row.f-running .ftimer-btn{border-color:var(--lime);color:var(--lime);}
+.ftimer-row.f-done .ftimer-btn{border-color:var(--lime);color:var(--lime);background:rgba(212,240,0,0.08);}
+.ftimer-body{flex:1;min-width:0;}
+.ftimer-name{font-family:'IBM Plex Sans',sans-serif;font-size:0.82rem;color:var(--white);font-weight:300;margin-bottom:5px;}
+.ftimer-bar{height:1px;background:var(--dim);position:relative;}
+.ftimer-fill{position:absolute;left:0;top:0;height:100%;background:rgba(212,240,0,0.5);transition:width 0.3s linear;}
+.ftimer-row.f-running .ftimer-fill{background:var(--lime);}
+.ftimer-time{font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:rgba(244,240,232,0.5);min-width:64px;text-align:right;flex-shrink:0;}
+.ftimer-row.f-running .ftimer-time{color:var(--lime);}
+.ftimer-del{color:rgba(244,240,232,0.15);font-size:0.6rem;cursor:pointer;padding:4px 2px;flex-shrink:0;transition:color 0.2s;}
+.ftimer-del:hover{color:rgba(255,45,45,0.6);}
+
+.sdiv{width:100%;height:1px;background:var(--dim);margin:28px 0;}
+/* RULES */
+.rule-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--dim2);cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;min-height:52px;position:relative;z-index:1;touch-action:manipulation;}
+.rule-edit:hover{color:rgba(244,240,232,0.5)!important;}
+.rule-indicator{width:10px;height:10px;border-radius:50%;flex-shrink:0;border:1.5px solid rgba(244,240,232,0.2);transition:all 0.25s;}
+.rule-row.held .rule-indicator{background:var(--lime);border-color:var(--lime);box-shadow:0 0 8px rgba(212,240,0,0.4);}
+.rule-row.broke .rule-indicator{background:var(--red);border-color:var(--red);}
+.rule-name{font-family:'IBM Plex Mono',monospace;font-size:0.82rem;font-weight:300;flex:1;transition:color 0.25s;}
+.rule-row.held .rule-name{color:rgba(244,240,232,0.4);}
+.rule-row.broke .rule-name{color:var(--red);}
+.rule-status{font-family:'IBM Plex Mono',monospace;font-size:0.58rem;font-weight:500;letter-spacing:0.2em;text-transform:uppercase;color:rgba(244,240,232,0.18);transition:color 0.25s;margin-left:auto;}
+.rule-row.held .rule-status{color:var(--lime);}
+.rule-row.broke .rule-status{color:rgba(255,45,45,0.85);}
+/* REWARDS */
+.reward-block{background:rgba(212,240,0,0.05);border:1px solid rgba(212,240,0,0.15);padding:18px;margin-bottom:10px;}
+.tapzone{touch-action:manipulation;}
+.reward-block.locked{background:rgba(244,240,232,0.02);border-color:var(--dim);}
+.reward-streak{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--lime);line-height:1;}
+.reward-block.locked .reward-streak{color:rgba(244,240,232,0.2);}
+.reward-title{font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:rgba(244,240,232,0.7);margin:4px 0 2px;}
+.reward-block.locked .reward-title{color:rgba(244,240,232,0.25);}
+.reward-desc{font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:rgba(244,240,232,0.35);line-height:1.6;}
+.reward-block.locked .reward-desc{color:rgba(244,240,232,0.15);}
+.reward-lock{font-size:0.6rem;color:rgba(244,240,232,0.15);float:right;}
+.mq-block{margin-bottom:28px;}
+.mq-label{font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--lime);margin-bottom:6px;}
+.mq-question{font-family:'IBM Plex Sans',sans-serif;font-size:0.95rem;font-weight:300;color:rgba(244,240,232,0.85);margin-bottom:10px;line-height:1.5;}
+.mq-ta{width:100%;background:rgba(244,240,232,0.03);border:none;border-bottom:1px solid var(--dim);color:var(--white);font-family:'IBM Plex Mono',monospace;font-size:0.8rem;font-weight:300;line-height:1.8;resize:none;height:72px;outline:none;padding:8px 0;transition:border-color 0.25s;caret-color:var(--lime);display:block;position:relative;z-index:10;pointer-events:all;-webkit-appearance:none;}
+.mq-ta::placeholder{color:rgba(244,240,232,0.12);}
+.mq-ta:focus{border-bottom-color:var(--lime);}
+.sunbox{background:rgba(212,240,0,0.06);border:1px solid rgba(212,240,0,0.2);padding:14px 16px;margin-bottom:24px;}
+.suntxt{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:rgba(212,240,0,0.7);line-height:1.7;}
+#nav{position:fixed;bottom:0;left:0;right:0;height:56px;display:flex;border-top:1px solid var(--dim);background:rgba(8,8,8,0.97);backdrop-filter:blur(12px);z-index:600;}
+.nb{flex:1;background:none;border:none;color:rgba(244,240,232,0.3);font-family:'IBM Plex Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;cursor:pointer;transition:color 0.2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;}
+.nb .ni{font-size:0.95rem;line-height:1;font-family:'IBM Plex Mono',monospace;-webkit-font-feature-settings:'liga' 0;filter:grayscale(1);opacity:0.75;transition:all 0.2s;}
+.nb.on .ni{filter:none;opacity:1;}
+.nb:hover{color:rgba(244,240,232,0.5);}
+.nb.on{color:var(--lime);border-top:2px solid var(--lime);margin-top:-2px;}
+#nav.hidden{display:none;}
+@keyframes slideUp{from{transform:translateY(110%);}to{transform:translateY(0);}}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes blinkAnim{0%,100%{opacity:1;}50%{opacity:0.2;}}
+::-webkit-scrollbar{width:2px;}
+::-webkit-scrollbar-thumb{background:var(--dim);}
+@media(max-width:480px){.inner{padding:36px 20px 32px;}}
+</style>
+</head>
+<body>
+<div id="noise"></div>
+<div id="pFlash"></div>
+
+<div class="screen active" id="s-boot">
+  <div class="boot-word"><span>DO IT</span></div>
+  <div class="boot-word"><span>OR</span></div>
+  <div class="boot-word"><span>DON'T.</span></div>
+  <div class="boot-sub">Nobody is gonna keep you accountable but you.</div>
+  <button class="boot-enter" onclick="enterApp()" type="button">Start Today &rarr;</button>
+</div>
+
+<div class="screen" id="s-morning">
+  <div class="inner">
+    <div class="tbar" id="tM"></div>
+    <div class="lbl" style="margin-bottom:12px">Morning ritual</div>
+    <div class="big-q" id="mGreet">Good morning.<br>Are you <em>ready?</em></div>
+    <div class="ybar" id="yBar">Loading...</div>
+
+    <div class="lbl" style="margin-bottom:10px">Today I am</div>
+    <div class="idstmt" id="idStmt">Someone who does<br>what he <span class="acc">says.</span></div>
+
+    <div class="lbl" style="margin-bottom:8px">Today's word
+      <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tw1')">i</span><div class="tip-box" id="tw1">One word or short sentence that sets the tone for today. Not a task — a way of being.<br><br>Examples:<br>— discipline<br>— forgiveness<br>— overcome fear<br>— keep every promise<br>— hard work</div></span>
+    </div>
+    <input class="li" id="todayWord" type="text" placeholder="One word. How you show up today." style="margin-bottom:32px">
+
+    <div class="plbl" id="mPlbl">0 / 5 complete</div>
+    <div class="ptrack"><div class="pfill" id="mPfill" style="width:0%"></div></div>
+    <div class="rsteps" id="mSteps"></div>
+    <div class="brow">
+      <button class="bp" onclick="goTo('s-goals')">Go to your goals &rarr;</button>
+      <button class="bg" onclick="goTo('s-ladder')">Ladder</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="s-ladder">
+  <div class="inner">
+    <div class="lbig">LAD<span>DER</span></div>
+    <div class="srow">
+      <div class="sb"><div class="sn" id="stStreak">0</div><div class="sl">Day<br>streak</div></div>
+      <div class="sb"><div class="sn" id="stWins">0</div><div class="sl">Total<br>wins</div></div>
+      <div class="sb" id="kmBlock"><div class="sn bad" id="stKm">0km</div><div class="sl">KM<br>debt</div></div>
+    </div>
+    <div id="timeLine" class="timeblock"></div>
+
+    <div id="debtPanel" style="display:none;border-left:2px solid rgba(255,45,45,0.4);padding:2px 0 2px 18px;margin-bottom:28px;">
+      <div class="redlbl" style="margin-bottom:6px;">Run it off &mdash; no music</div>
+      <div id="debtDeadline" style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.08em;color:rgba(244,240,232,0.3);margin-bottom:16px;"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="bg" onclick="payKm(1)">&#10003; 1km</button>
+        <button class="bg" onclick="payKm(5)">&#10003; 5km</button>
+        <button class="bg" onclick="payKm(10)">&#10003; 10km</button>
+        <span style="color:rgba(244,240,232,0.12);padding:0 4px;">|</span>
+        <button class="bdng" onclick="addKm(5)">+ 5km</button>
+        <button class="bdng" onclick="addKm(10)">+ 10km</button>
+      </div>
+    </div>
+
+    <div class="monthnav">
+      <button class="mnav" onclick="shiftWeeks(-1)">&#8592;</button>
+      <span id="gridRangeLabel" style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--white);"></span>
+      <button class="mnav" onclick="shiftWeeks(1)">&#8594;</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:8px;">
+      <div class="ldayhead">M</div><div class="ldayhead">T</div><div class="ldayhead">W</div>
+      <div class="ldayhead">T</div><div class="ldayhead">F</div><div class="ldayhead">S</div><div class="ldayhead">S</div>
+    </div>
+    <div class="lgrid" id="lGrid"></div>
+    <div id="dayDetail">
+      <div class="dd-date" id="ddDate"></div>
+      <div class="dd-focus" id="ddFocus"></div>
+      <div class="dd-tasks" id="ddTasks"></div>
+      <div class="dd-mirror" id="ddMirror"></div>
+    </div>
+    <div class="csec">
+      <div class="cq">Close today &mdash; be honest.<br><span style="color:var(--white);font-size:0.85rem;">Did you show up?</span></div>
+      <div class="crow">
+        <button class="cwin" onclick="markToday(true)"><span class="cbig">W</span><span class="csub">that was a win</span></button>
+        <button class="cmiss" onclick="markToday(false)"><span class="cbig">&#10007;</span><span class="csub">I missed</span></button>
+      </div>
+      <div class="cfoot">
+        <div id="todaySt"></div>
+        <button class="cundo" onclick="clearTodayMark()">undo</button>
+      </div>
+    </div>
+    <div class="sdiv"></div>
+    <div class="lbl" style="margin-bottom:8px">Unbreakable rules
+      <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tr1')">i</span><div class="tip-box" id="tr1">Your own rules. You set them, you hold them. Tap a rule to cycle: neutral → held → broke. Breaking a rule adds its consequence in km to your debt.<br><br>Examples:<br>— No porn. No masturbation. (10km)<br>— No social media until goal actions done (10km)<br>— No bed until the day is closed (5km)</div></span>
+    </div>
+    <div id="rulesList"></div>
+    <button onclick="openAddRule()" style="background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;padding:12px 20px;cursor:pointer;margin-top:10px;width:100%;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--lime)';this.style.color='var(--lime)'" onmouseout="this.style.borderColor='var(--dim)';this.style.color='var(--muted)'">+ Add rule</button>
+
+    <!-- RULE MODAL -->
+    <div id="ruleModal" style="display:none;position:fixed;inset:0;background:rgba(8,8,8,0.97);z-index:999;overflow-y:auto;padding:40px 28px;">
+      <div style="max-width:560px;margin:0 auto;">
+        <div class="lbl" style="margin-bottom:20px" id="ruleModalTitle">New rule</div>
+        <div style="display:flex;flex-direction:column;gap:20px;">
+          <div>
+            <div class="lbl" style="margin-bottom:8px">The rule</div>
+            <input id="rText" class="li" placeholder="e.g. No social media until goal actions are done">
+          </div>
+          <div>
+            <div class="lbl" style="margin-bottom:8px">Consequence when broken (km)</div>
+            <input id="rKm" class="li" type="number" placeholder="10">
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:28px;">
+          <button onclick="saveRule()" style="background:var(--lime);border:none;color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:16px 28px;cursor:pointer;flex:1;">Save rule</button>
+          <button onclick="closeRuleModal()" style="background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;padding:16px 20px;cursor:pointer;">Cancel</button>
+        </div>
+        <button id="deleteRuleBtn" onclick="deleteRule()" style="display:none;background:none;border:1px solid rgba(255,45,45,0.3);color:var(--red);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;padding:14px;cursor:pointer;width:100%;margin-top:10px;">Delete this rule</button>
+      </div>
+    </div>
+
+    <div class="sdiv"></div>
+    <div class="lbl" style="margin-bottom:12px">Penalties &mdash; no music zone</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:rgba(244,240,232,0.35);line-height:2.2;margin-bottom:16px">
+      Skip morning routine &rarr; <span style="color:var(--red)">+5km</span><br>
+      Broken rule &rarr; <span style="color:var(--red)">its own consequence</span><br>
+      All debt must be run before <span style="color:var(--white)">Sunday ends</span><br>
+      No music. That's the point.
+    </div>
+    <div class="sdiv"></div>
+    <div class="lbl" style="margin-bottom:16px">Rewards &mdash; earned not given</div>
+    <div id="rewardsList"></div>
+
+    <div style="margin-top:40px;padding-top:20px;border-top:1px solid var(--dim2);">
+      <button onclick="goToBoot()" style="background:none;border:none;font-family:'IBM Plex Mono',monospace,system-ui;font-size:0.55rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(244,240,232,0.15);cursor:pointer;padding:14px 4px;transition:color 0.2s;" onmouseover="this.style.color='rgba(244,240,232,0.4)'" onmouseout="this.style.color='rgba(244,240,232,0.15)'">&#8592; back to start</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="s-mirror">
+  <div class="inner">
+    <div class="tbar" id="tMir"></div>
+    <div class="lbl" style="margin-bottom:12px">Evening mirror</div>
+    <div class="big-q" style="margin-bottom:28px">Answer these.<br><em>Honestly.</em></div>
+
+    <div id="mirrorQuestions"></div>
+
+    <div class="sdiv"></div>
+    <div class="lbl" style="margin-bottom:12px">Night ritual &mdash; no phone after this</div>
+    <div class="rsteps" id="nSteps"></div>
+    <div class="brow">
+      <button class="bp" onclick="closeDay()">Close the day &rarr;</button>
+      <button class="bg" onclick="goTo('s-goals')">&larr; Back</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="s-goals">
+  <div class="inner">
+    <div class="tbar" id="tGoals"></div>
+    <div class="lbl" style="margin-bottom:12px">Goals</div>
+    <div class="big-q" style="margin-bottom:28px">Where you're <em>going.</em></div>
+
+    <div id="sunBox" class="sunbox" style="display:none;margin-bottom:24px">
+      <div class="suntxt">It's Sunday &mdash; do your check-ins and set up the week.</div>
+    </div>
+
+    <div id="goalsList"></div>
+
+    <button onclick="openAddGoal()" style="background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;padding:14px 24px;cursor:pointer;margin-top:8px;width:100%;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--lime)';this.style.color='var(--lime)'" onmouseout="this.style.borderColor='var(--dim)';this.style.color='var(--muted)'">+ Add goal</button>
+    <button onclick="openAiGoal()" style="background:rgba(212,240,0,0.06);border:1px solid rgba(212,240,0,0.25);color:var(--lime);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;padding:14px 24px;cursor:pointer;margin-top:10px;width:100%;transition:all 0.2s;" onmouseover="this.style.background='rgba(212,240,0,0.12)'" onmouseout="this.style.background='rgba(212,240,0,0.06)'">◈ Build my goal with AI</button>
+
+    <div class="sdiv"></div>
+
+    <div class="lbl" style="margin-bottom:8px">Timers
+      <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tfree')">i</span><div class="tip-box" id="tfree">These are separate from goals &mdash; not tied to an outcome, just for anything you want to time and stay honest about, like rest or a break. Goal timers live inside each goal above; these are freestanding. They keep running while you move between tabs.</div></span>
+    </div>
+    <div id="freeTimersList"></div>
+    <button onclick="openAddFreeTimer()" style="background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;padding:12px 18px;cursor:pointer;margin-top:4px;width:100%;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--lime)';this.style.color='var(--lime)'" onmouseout="this.style.borderColor='var(--dim)';this.style.color='var(--muted)'">+ Add timer</button>
+
+    <!-- ADD FREE TIMER MODAL -->
+    <div id="freeTimerModal" style="display:none;position:fixed;inset:0;background:rgba(8,8,8,0.97);z-index:999;overflow-y:auto;padding:40px 28px;">
+      <div style="max-width:480px;margin:0 auto;">
+        <div class="lbl" style="margin-bottom:20px">New timer</div>
+        <div style="display:flex;flex-direction:column;gap:20px;">
+          <div>
+            <div class="lbl" style="margin-bottom:8px">Name</div>
+            <input id="ftName" class="li" placeholder="e.g. Rest">
+          </div>
+          <div>
+            <div class="lbl" style="margin-bottom:8px">Duration (minutes)</div>
+            <input id="ftMinutes" class="li" type="number" placeholder="e.g. 60">
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:28px;">
+          <button onclick="saveFreeTimer()" style="background:var(--lime);border:none;color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:16px 28px;cursor:pointer;flex:1;">Add timer</button>
+          <button onclick="closeFreeTimerModal()" style="background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;padding:16px 20px;cursor:pointer;">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="brow">
+      <button class="bp" onclick="goTo('s-mirror')">Evening reflection &rarr;</button>
+      <button class="bg" onclick="goTo('s-morning')">&larr; Morning</button>
+    </div>
+
+    <!-- AI GOAL MODAL -->
+    <div id="aiGoalModal" style="display:none;position:fixed;inset:0;background:rgba(8,8,8,0.97);z-index:999;overflow-y:auto;padding:40px 28px;">
+      <div style="max-width:680px;margin:0 auto;">
+        <div class="lbl" style="margin-bottom:8px">AI goal builder</div>
+        <div class="big-q" style="margin-bottom:20px;font-size:1.6rem;">Just <em>talk.</em></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:rgba(244,240,232,0.4);line-height:1.9;margin-bottom:20px;">
+          Write freely about what you want. What it is, why you want it, when you want it, what you're willing to do. Don't structure it — that's the AI's job. It will turn your words into a complete goal: outcome, daily action, milestones, check-in fields, adjustment rule. You review it before saving.
+        </div>
+
+        <textarea id="aiInput" style="width:100%;background:none;border:1px solid var(--dim);color:var(--white);font-family:'IBM Plex Mono',monospace;font-size:0.82rem;resize:vertical;min-height:180px;outline:none;padding:16px;caret-color:var(--lime);line-height:1.8;" placeholder="e.g. I want to have 10k saved by february 2027 because it gives me freedom to be myself without depending on anyone. I'm thinking remote work for like 200 a week plus I'm writing a book and building a website I want to sell subscriptions for. I can put in about 4 hours a day..."></textarea>
+        <div id="aiQuestions" style="display:none;"></div>
+        <div id="aiStatus" style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--lime);margin-top:12px;min-height:20px;"></div>
+        <div id="aiActionRow" style="display:flex;gap:10px;margin-top:16px;">
+          <button id="aiGenBtn" onclick="generateGoal()" style="background:var(--lime);border:none;color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:16px 28px;cursor:pointer;flex:1;">Generate goal →</button>
+          <button onclick="closeAiModal()" style="background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;padding:16px 20px;cursor:pointer;">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADD GOAL MODAL -->
+    <div id="goalModal" style="display:none;position:fixed;inset:0;background:rgba(8,8,8,0.97);z-index:999;overflow-y:auto;padding:40px 28px;">
+      <div style="max-width:680px;margin:0 auto;">
+        <div class="lbl" style="margin-bottom:20px" id="modalTitle">New goal</div>
+        <div style="display:flex;flex-direction:column;gap:20px;">
+          <div>
+            <div class="lbl" style="margin-bottom:8px">Goal name
+              <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t1')">i</span><div class="tip-box" id="t1">Give your goal a short name. This is just for you to recognize it. Keep it simple — one to four words.<br><br>Examples:<br>— Freedom of action<br>— Graduation internship<br>— Build the body</div></span>
+            </div>
+            <input id="gName" class="li" placeholder="e.g. Freedom of action" style="font-size:0.9rem;">
+          </div>
+          <div>
+            <div class="lbl" style="margin-bottom:8px">Outcome goal
+              <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t2')">i</span><div class="tip-box" id="t2">What exactly do you want to achieve, and by when? Be as specific as possible. A good outcome goal has a number and a date in it.<br><br>Examples:<br>— €10.000 balance by 16 feb 2027<br>— 3 interviews planned by 1 sept 2026<br>— Run a 10K in under 50 min by 1 jan 2027</div></span>
+            </div>
+            <input id="gOutcome" class="li" placeholder="e.g. €10.000 balance by 16 feb 2027">
+          </div>
+          <div>
+            <div class="lbl" style="margin-bottom:8px">Deadline
+              <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t3')">i</span><div class="tip-box" id="t3">The date by which you want to have achieved your outcome goal. This is shown in the overview so you can always see how much time you have left.<br><br>Example: 16 feb 2027</div></span>
+            </div>
+            <input id="gDeadline" class="li" placeholder="e.g. 16 feb 2027">
+          </div>
+          <div>
+            <div class="lbl" style="margin-bottom:8px">Daily actions
+              <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t4')">i</span><div class="tip-box" id="t4">The things you do every day that move you toward this goal. Add as many as you need &mdash; most goals need just one, some need two or three separate blocks of work.<br><br>If an action has a time attached &mdash; "1 hour of calling", "3 hours on the book" &mdash; choose <strong style="color:var(--lime)">Timer</strong> and actually time it. A checkbox can't tell you if you did 10 minutes or the full hour. If it's a count or task with no fixed length &mdash; "call 5 organisations", "make the bed" &mdash; use <strong style="color:var(--lime)">Check off</strong>.<br><br>Example: a money goal might have two actions &mdash; "1 hour calling, emailing, LinkedIn" (Timer, 60 min) and "3 hours on the book and site" (Timer, 180 min).</div></span>
+            </div>
+            <div id="actionRows"></div>
+            <button type="button" onclick="addActionRow()" style="background:none;border:1px dashed var(--dim);color:rgba(244,240,232,0.35);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;padding:12px;cursor:pointer;width:100%;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--lime)';this.style.color='var(--lime)'" onmouseout="this.style.borderColor='var(--dim)';this.style.color='rgba(244,240,232,0.35)'">+ Add action</button>
+          </div>
+          <div>
+            <div class="lbl" style="margin-bottom:8px">Adjustment rule
+              <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t6')">i</span><div class="tip-box" id="t6">What do you do if your daily actions are consistently done (green) but the outcome still isn't moving? This rule forces you to change your approach instead of repeating what doesn't work.<br><br>Examples:<br>— 2 weeks green but no movement → switch from email to calling, or try a different sector<br>— 2 weeks green but no sales → change price or target audience</div></span>
+            </div>
+            <input id="gAdjust" class="li" placeholder="e.g. 2 weeks green but no movement → change price, channel or audience">
+          </div>
+          <div>
+            <div class="lbl" style="margin-bottom:8px">Milestones
+              <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t7')">i</span><div class="tip-box" id="t7">Smaller checkpoints on the way to your big goal. One per line. You can tick them off when you hit them.<br><br>Format: what you want to achieve | by when<br><br>Examples:<br>— First paying client | 1 okt 2026<br>— First monthly user | 1 nov 2026<br>— €1.000 in the bank | 1 dec 2026</div></span>
+            </div>
+            <textarea id="gMilestones" style="width:100%;background:none;border:none;border-bottom:1px solid var(--dim);color:var(--white);font-family:'IBM Plex Mono',monospace;font-size:0.82rem;resize:none;height:90px;outline:none;padding:8px 0;caret-color:var(--lime);" placeholder="First paying client | 1 okt 2026&#10;First monthly user | 1 nov 2026"></textarea>
+          </div>
+          <div>
+            <div class="lbl" style="margin-bottom:8px">Sunday check-in fields
+              <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t8')">i</span><div class="tip-box" id="t8">This is how you measure progress. Every Sunday you fill these in, and the app keeps the history so you can see if the outcome is actually moving.<br><br>Write the things you want to track, separated by commas. Each becomes its own input box.<br><br>Examples:<br>— Balance, Sales this week, Active users<br>— Reactions received, Interviews planned<br>— Weight (kg), Workouts this week</div></span>
+            </div>
+            <input id="gCheckinFields" class="li" placeholder="e.g. Balance, Sales this week, Active users">
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:28px;">
+          <button onclick="saveGoal()" style="background:var(--lime);border:none;color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:16px 28px;cursor:pointer;flex:1;">Save goal</button>
+          <button onclick="closeGoalModal()" style="background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;padding:16px 20px;cursor:pointer;">Cancel</button>
+        </div>
+        <button id="deleteGoalBtn" onclick="deleteGoal()" style="display:none;background:none;border:1px solid rgba(255,45,45,0.3);color:var(--red);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;padding:14px;cursor:pointer;width:100%;margin-top:10px;">Delete this goal</button>
+      </div>
+    </div>
+
+    <!-- CHECKIN MODAL -->
+    <div id="checkinModal" style="display:none;position:fixed;inset:0;background:rgba(8,8,8,0.97);z-index:999;overflow-y:auto;padding:40px 28px;">
+      <div style="max-width:680px;margin:0 auto;">
+        <div class="lbl" style="margin-bottom:6px" id="checkinGoalName"></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--muted);margin-bottom:24px;">Sunday check-in — <span id="checkinDate"></span></div>
+        <div id="checkinFields" style="display:flex;flex-direction:column;gap:16px;"></div>
+        <div style="display:flex;gap:10px;margin-top:28px;">
+          <button onclick="saveCheckinModal()" style="background:var(--lime);border:none;color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:16px 28px;cursor:pointer;flex:1;">Save</button>
+          <button onclick="closeCheckinModal()" style="background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;padding:16px 20px;cursor:pointer;">Cancel</button>
+        </div>
+        <div id="checkinHistory" style="margin-top:28px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<nav id="nav" class="hidden">
+  <button class="nb on" data-s="s-morning" onclick="goTo('s-morning')"><span class="ni">&#9728;&#65038;</span>morning</button>
+  <button class="nb" data-s="s-goals" onclick="goTo('s-goals')"><span class="ni">&#9678;</span>goals</button>
+  <button class="nb" data-s="s-mirror" onclick="goTo('s-mirror')"><span class="ni">&#9790;&#65038;</span>mirror</button>
+  <button class="nb" data-s="s-ladder" onclick="goTo('s-ladder')"><span class="ni">&#9650;</span>ladder</button>
+</nav>
+
+<script>
+var KEY='ladder_v5', TODAY=new Date().toDateString();
+var DAYS=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+var MONTHS=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+var MS=[
+  {id:'m0',text:'Make the bed'},
+  {id:'m1',text:'1L water, brush teeth'},
+  {id:'m2',text:'Affirmations, visualize',meta:'5 min'},
+  {id:'m3',text:'Read',meta:'10 min'},
+  {id:'m4',text:'Write 1 gratitude'}
+];
+var NS=[{id:'n0',text:'Brush teeth'},{id:'n1',text:'Affirmations, visualize'}];
+var IDS=[
+  ['Someone who does','what he <span class="acc">says.</span>'],
+  ['Someone who grows','in <span class="acc">silence.</span>'],
+  ["Someone who doesn't stop",'when it gets <span class="acc">hard.</span>'],
+  ['Someone who chooses','the <span class="acc">stairs.</span>'],
+  ['Someone who is building','his own <span class="acc">future.</span>'],
+  ['Someone who keeps','his <span class="acc">promises.</span>'],
+  ['Someone who wins','in the <span class="acc">small.</span>']
+];
+
+function load(){
+  try{
+    var r=localStorage.getItem(KEY);
+    if(!r) return fresh();
+    var s=JSON.parse(r);
+    if(s.date!==TODAY) return Object.assign(fresh(),{history:s.history||[],kmDebt:s.kmDebt||0,snapshots:s.snapshots||{},mirrorAnswers:{}});
+    // merge stored data onto today's defaults so any field missing from an
+    // older/earlier version of the app (before this field existed) safely
+    // gets a valid default instead of staying undefined.
+    return Object.assign(fresh(), s);
+  }catch(e){return fresh();}
+}
+function fresh(){return {date:TODAY,morning:{},night:{},todayWord:'',mirrorNote:'',mirrorAnswers:{},rules:{},goalActions:{},history:[],kmDebt:0,todayClosed:false};}
+var S=load();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+function tick(){
+  var n=new Date();
+  var str=DAYS[n.getDay()]+' '+n.getDate()+' '+MONTHS[n.getMonth()]+' — '+n.toTimeString().slice(0,5);
+  ['tM','tMir','tGoals'].forEach(function(id){var e=document.getElementById(id);if(e)e.textContent=str;});
+}
+
+function buildSteps(cid,steps,key){
+  var c=document.getElementById(cid); c.innerHTML='';
+  steps.forEach(function(step,i){
+    var d=document.createElement('div');
+    d.className='rs'+(S[key][step.id]?' done':'');
+    d.setAttribute('data-step-key',key);
+    d.setAttribute('data-step-id',step.id);
+    d.innerHTML='<span class="sn">'+String(i+1).padStart(2,'0')+'</span><span class="st">'+step.text+'</span>'+(step.meta?'<span class="smeta">'+step.meta+'</span>':'')+'<span class="sc">✓</span>';
+    c.appendChild(d);
+  });
+}
+
+function toggleStep(key,stepId){
+  if(!S[key]) S[key]={};
+  S[key][stepId]=!S[key][stepId];
+  save();
+  var el=document.querySelector('.rs[data-step-key="'+key+'"][data-step-id="'+stepId+'"]');
+  if(el) el.classList.toggle('done',!!S[key][stepId]);
+  if(key==='morning') updateMP();
+}
+
+function updateMP(){
+  var done=Object.values(S.morning).filter(Boolean).length, total=MS.length;
+  var fill=document.getElementById('mPfill'), lbl=document.getElementById('mPlbl');
+  if(fill) fill.style.width=(done/total*100)+'%';
+  if(lbl) lbl.textContent=done+' / '+total+' complete';
+}
+
+function buildYBar(){
+  var hist=S.history||[], el=document.getElementById('yBar');
+  var yd=new Date(); yd.setDate(yd.getDate()-1);
+  var yest=hist.find(function(h){return h.date===yd.toDateString();});
+  var streak=calcStreak();
+  if(!hist.length){el.innerHTML='This is your first day.<br><span class="g">Start here. Start now.</span>';return;}
+  if(!yest){el.innerHTML='No entry for yesterday.<br><span style="color:rgba(244,240,232,0.28)">Close each day on the Ladder screen.</span>';return;}
+  var dn=DAYS[yd.getDay()];
+  if(yest.win) el.innerHTML=dn+' was a <span class="g">W</span> — '+streak+' day'+(streak!==1?'s':'')+' in a row.<br>Finish it. Today counts.';
+  else el.innerHTML=dn+' was a miss. <span class="r">KM debt added.</span><br>Today you repair it. No drama. Just go.';
+}
+
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ── FLEXIBLE DATE PARSING (for milestone dates like "16 feb 2027", "1 okt 2026") ──
+var MONTH_MAP={jan:0,feb:1,mrt:2,mar:2,apr:3,mei:4,may:4,jun:5,jul:6,aug:7,sep:8,sept:8,okt:9,oct:9,nov:10,dec:11};
+function parseFlexDate(str){
+  if(!str) return null;
+  var s=str.trim().toLowerCase();
+  var m=s.match(/(\d{1,2})?\D*?([a-z]{3,})\D*?(\d{4})/);
+  if(!m) return null;
+  var day=m[1]?parseInt(m[1],10):1;
+  var monIdx=MONTH_MAP[m[2].slice(0,4)];
+  if(monIdx===undefined) monIdx=MONTH_MAP[m[2].slice(0,3)];
+  var year=parseInt(m[3],10);
+  if(monIdx===undefined||isNaN(year)||isNaN(day)) return null;
+  var d=new Date(year,monIdx,day);
+  return isNaN(d.getTime())?null:d;
+}
+function isMilestoneOverdue(dateStr){
+  var d=parseFlexDate(dateStr);
+  if(!d) return false;
+  var today=new Date(); today.setHours(0,0,0,0);
+  return d<today;
+}
+
+// ── UNBREAKABLE RULES (user-owned) ──────────────────────
+function loadRules(){
+  var r=JSON.parse(localStorage.getItem('ladder_rules')||'null');
+  if(!r){
+    r=[
+      {id:'r0', text:'No porn. No masturbation.', km:10},
+      {id:'r1', text:'No social media — until goal actions are done', km:10},
+      {id:'r2', text:'No bed — until the day is closed', km:10},
+    ];
+    localStorage.setItem('ladder_rules',JSON.stringify(r));
+  }
+  return r;
+}
+function saveRulesList(r){localStorage.setItem('ladder_rules',JSON.stringify(r));}
+
+var editingRuleId=null;
+function openAddRule(){
+  editingRuleId=null;
+  document.getElementById('ruleModalTitle').textContent='New rule';
+  document.getElementById('deleteRuleBtn').style.display='none';
+  document.getElementById('rText').value='';
+  document.getElementById('rKm').value='10';
+  document.getElementById('ruleModal').style.display='block';
+}
+function openEditRule(ruleId){
+  var rules=loadRules();
+  var r=rules.find(function(x){return x.id===ruleId;});
+  if(!r) return;
+  editingRuleId=ruleId;
+  document.getElementById('ruleModalTitle').textContent='Edit rule';
+  document.getElementById('deleteRuleBtn').style.display='block';
+  document.getElementById('rText').value=r.text;
+  document.getElementById('rKm').value=r.km;
+  document.getElementById('ruleModal').style.display='block';
+}
+function saveRule(){
+  var text=document.getElementById('rText').value.trim();
+  var km=parseInt(document.getElementById('rKm').value)||10;
+  if(!text) return;
+  var rules=loadRules();
+  if(editingRuleId){
+    var idx=rules.findIndex(function(x){return x.id===editingRuleId;});
+    if(idx>-1){rules[idx].text=text;rules[idx].km=km;}
+  } else {
+    rules.push({id:'r_'+Date.now(),text:text,km:km});
+  }
+  saveRulesList(rules);
+  closeRuleModal();
+  buildRules();
+}
+function deleteRule(){
+  if(!editingRuleId) return;
+  if(!confirm('Delete this rule?')) return;
+  var rules=loadRules().filter(function(x){return x.id!==editingRuleId;});
+  saveRulesList(rules);
+  if(S.rules) delete S.rules[editingRuleId];
+  save();
+  closeRuleModal();
+  buildRules();
+}
+function closeRuleModal(){document.getElementById('ruleModal').style.display='none';}
+
+var REWARDS=[
+  {days:3,  title:'3 days',   desc:'1 hour of social media. Guilt-free. Then close it.'},
+  {days:7,  title:'7 days',   desc:'Full evening off. Movie, food, whatever you want. No obligations.'},
+  {days:14, title:'2 weeks',  desc:'Buy something you\'ve been wanting. Up to €50. No guilt.'},
+  {days:21, title:'21 days',  desc:'A full day completely off. Sleep in. Do nothing. You built the right to rest.'},
+  {days:30, title:'30 days',  desc:'Plan and book a weekend trip somewhere. You\'re going.'},
+  {days:45, title:'45 days',  desc:'Upgrade something real — gear, course, clothing. Invest in the new version of you.'},
+  {days:60, title:'60 days',  desc:'Two full days off. Go somewhere, do something memorable. Take someone with you.'},
+  {days:90, title:'90 days',  desc:'Big reward — your choice. A trip, a purchase, an experience. Something you\'ll remember. You\'ve become a different person.'},
+];
+
+function buildRules(){
+  var c=document.getElementById('rulesList'); if(!c) return;
+  c.innerHTML='';
+  if(!S.rules) S.rules={};
+  var RULES=loadRules();
+  RULES.forEach(function(rule){
+    var state=S.rules[rule.id];
+    var div=document.createElement('div');
+    div.className='rule-row'+(state===true?' held':state===false?' broke':'');
+    div.setAttribute('data-rid',rule.id);
+    var statusTxt=state===true?'held ✓':state===false?'broke +'+rule.km+'km':'—';
+    div.innerHTML='<div class="rule-indicator"></div><span class="rule-name">'+esc(rule.text)+'</span><span class="rule-status">'+statusTxt+'</span><span class="rule-edit" data-edit="'+rule.id+'" style="color:rgba(244,240,232,0.15);font-size:0.6rem;padding:16px 6px 16px 18px;cursor:pointer;">edit</span>';
+    c.appendChild(div);
+  });
+  var brokeRules=RULES.filter(function(r){return S.rules[r.id]===false;});
+  if(brokeRules.length>0){
+    var totalKm=brokeRules.reduce(function(sum,r){return sum+r.km;},0);
+    var info=document.createElement('div');
+    info.className='rednote';info.style.cssText='margin-top:14px;padding:12px 0 0;border-top:1px solid rgba(255,45,45,0.15);';
+    info.textContent=brokeRules.length+' rule'+(brokeRules.length>1?'s':'')+' broke today — '+totalKm+'km added to debt';
+    c.appendChild(info);
+  }
+}
+
+function cycleRule(ruleId){
+  var RULES=loadRules();
+  var rule=RULES.find(function(r){return r.id===ruleId;});
+  if(!rule) return;
+  if(!S.rules) S.rules={};
+  var old=S.rules[ruleId];
+  var next;
+  if(old===undefined) next=true;
+  else if(old===true) next=false;
+  else next=undefined;
+  if(next===false && old!==false){
+    S.kmDebt=(S.kmDebt||0)+rule.km;
+    var pf=document.getElementById('pFlash');
+    if(pf){pf.style.opacity='1';setTimeout(function(){pf.style.opacity='0';},600);}
+  }
+  if(next!==false && old===false){
+    S.kmDebt=Math.max(0,(S.kmDebt||0)-rule.km);
+  }
+  if(next===undefined) delete S.rules[ruleId];
+  else S.rules[ruleId]=next;
+  save();
+  buildRules();
+  updateStats();
+}
+
+document.addEventListener('click',function(e){
+  var editBtn=e.target.closest('.rule-edit');
+  if(editBtn){e.stopPropagation();openEditRule(editBtn.getAttribute('data-edit'));return;}
+  var row=e.target.closest('.rule-row');
+  if(row&&row.getAttribute('data-rid')){cycleRule(row.getAttribute('data-rid'));return;}
+  var step=e.target.closest('.rs[data-step-id]');
+  if(step){toggleStep(step.getAttribute('data-step-key'),step.getAttribute('data-step-id'));return;}
+  var dayCell=e.target.closest('.ld[data-day-key]');
+  if(dayCell){showDayDetail(dayCell.getAttribute('data-day-key'));return;}
+  // backdrop-click-to-close: tapping outside the card dismisses the modal
+  var modalCloseFns={ruleModal:closeRuleModal,freeTimerModal:closeFreeTimerModal,aiGoalModal:closeAiModal,goalModal:closeGoalModal,checkinModal:closeCheckinModal};
+  if(e.target.id && modalCloseFns[e.target.id]){ modalCloseFns[e.target.id](); return; }
+});
+
+function calcCleanStreak(){
+  var hist=(S.history||[]).slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  var streak=0;
+  var today=new Date();
+  for(var i=0;i<hist.length;i++){
+    if(!hist[i].win) break;
+    var d=new Date(hist[i].date), exp=new Date(today);
+    exp.setDate(today.getDate()-i);
+    if(d.toDateString()!==exp.toDateString()) break;
+    streak++;
+  }
+  return streak;
+}
+
+var REWARDS_DAILY=[
+  {id:'d0', title:'Social media', desc:'2 hours. Guilt-free. The work is done — scroll without the voice in your head.'},
+  {id:'d1', title:'The evening is yours', desc:'Series, gaming, chilling — free after the night ritual. You closed the day, you own the night.'},
+];
+var REWARDS_RECURRING=[
+  {every:3,  title:'Every 3 days',  pool:[
+    'Long walk or run with no purpose. Phone off.',
+    'Cook something proper. Take your time with it.',
+    'One hour on something you love that isn\'t productive.',
+    'Sleep in one hour tomorrow. Earned, not stolen.',
+  ]},
+  {every:7,  title:'Every 7 days',  pool:[
+    'One night out. See people. No agenda.',
+    'Full evening off. No laptop, no guilt.',
+    'Something physical you enjoy — sauna, swim, football.',
+    'A whole afternoon on a personal project. Nothing to do with the goal.',
+  ]},
+  {every:14, title:'Every 2 weeks', pool:[
+    'Take one thing off your wishlist. No price debate.',
+    'Day trip somewhere you haven\'t been.',
+    'Proper dinner out. Sit down, no takeaway.',
+    'Invest in the work — a book, a course, gear.',
+  ]},
+];
+
+function togglePool(every){
+  var key='pool_open_'+every;
+  window[key]=!(window[key]===true);
+  buildRewards();
+}
+
+function claimedKey(every){return 'ladder_claimed_'+every;}
+function getClaimed(every){return JSON.parse(localStorage.getItem(claimedKey(every))||'[]');}
+function claimReward(every,idx){
+  var claimed=getClaimed(every);
+  var tier=REWARDS_RECURRING.find(function(t){return t.every===every;});
+  claimed.push(idx);
+  if(claimed.length>=tier.pool.length) claimed=[]; // pool exhausted → reshuffle
+  localStorage.setItem(claimedKey(every),JSON.stringify(claimed));
+  buildRewards();
+}
+var REWARDS_MILESTONE=[
+  {days:21, title:'21 days',  desc:'Full day off. Sleep in. Do nothing. You built the right to rest.'},
+  {days:30, title:'30 days',  desc:'Plan and book a weekend trip. You\'re going.'},
+  {days:45, title:'45 days',  desc:'Upgrade something real — gear, course, clothing.'},
+  {days:60, title:'60 days',  desc:'Two full days off. Go somewhere. Take someone with you.'},
+  {days:90, title:'90 days',  desc:'Big reward — your choice. A trip, an experience. You\'re a different person.'},
+];
+
+function dailyRewardEarned(){
+  var entry=(S.history||[]).find(function(h){return h.date===TODAY;});
+  if(entry&&entry.win) return true; // marked as a W → earned
+  var list=allDailyActions();
+  if(list.length){
+    return list.every(function(x){return isActionDone(x.action);});
+  }
+  return MS.every(function(st){return !!S.morning[st.id];});
+}
+function dailyRewardProgress(){
+  var list=allDailyActions();
+  if(list.length){
+    var done=list.filter(function(x){return isActionDone(x.action);}).length;
+    return {done:done,total:list.length,label:'action'+(list.length!==1?'s':'')};
+  }
+  var d=MS.filter(function(st){return !!S.morning[st.id];}).length;
+  return {done:d,total:MS.length,label:'morning steps'};
+}
+
+function buildRewards(){
+  var c=document.getElementById('rewardsList'); c.innerHTML='';
+  var streak=calcCleanStreak();
+
+  // DAILY — earned today, reset tomorrow
+  var dayLabel=document.createElement('div');
+  dayLabel.style.cssText='font-family:"IBM Plex Mono",monospace;font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(244,240,232,0.3);margin-bottom:12px;';
+  dayLabel.textContent='Daily — earned, not given';
+  c.appendChild(dayLabel);
+
+  var earned=dailyRewardEarned();
+  var prog=dailyRewardProgress();
+  REWARDS_DAILY.forEach(function(r){
+    var div=document.createElement('div');
+    div.className='reward-block'+(earned?'':' locked');
+    if(earned) div.style.borderColor='var(--lime)';
+    var pct=prog.total?Math.round(prog.done/prog.total*100):0;
+    div.innerHTML=
+      '<span class="reward-lock" style="'+(earned?'color:var(--lime)':'')+'">'+
+        (earned?'✓ unlocked — now':prog.done+'/'+prog.total+' '+prog.label)+
+      '</span>'+
+      '<div class="reward-streak">1</div>'+
+      '<div class="reward-title">'+r.title+'</div>'+
+      '<div class="reward-desc">'+r.desc+'</div>'+
+      '<div style="margin-top:10px;height:1px;background:var(--dim);position:relative;">'+
+        '<div style="position:absolute;left:0;top:0;height:100%;width:'+(earned?100:pct)+'%;background:'+(earned?'var(--lime)':'rgba(212,240,0,0.3)')+';transition:width 0.4s;"></div>'+
+      '</div>'+
+      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;color:rgba(244,240,232,0.25);margin-top:6px;">'+
+        (earned?'earned by doing the work — tomorrow you earn it fresh':'unlocks the moment your '+prog.label+' are done')+
+      '</div>';
+    c.appendChild(div);
+  });
+
+  // RECURRING
+  var recLabel=document.createElement('div');
+  recLabel.style.cssText='font-family:"IBM Plex Mono",monospace;font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(244,240,232,0.3);margin-bottom:12px;';
+  recLabel.textContent='Recurring';
+  c.appendChild(recLabel);
+
+  REWARDS_RECURRING.forEach(function(r){
+    var timesEarned=Math.floor(streak/r.every);
+    var nextIn=r.every-(streak%r.every);
+    var justEarned=(streak%r.every===0 && streak>0);
+    var claimed=getClaimed(r.every);
+    var div=document.createElement('div');
+    div.className='reward-block'+(timesEarned===0?' locked':'');
+    if(justEarned) div.style.borderColor='var(--lime)';
+    var pct=Math.min(100,Math.round((streak%r.every)/r.every*100));
+    if(justEarned) pct=100;
+
+    var openKey='pool_open_'+r.every;
+    var isOpen=justEarned||window[openKey]===true;
+    var left=r.pool.length-claimed.length;
+
+    var poolLines=r.pool.map(function(p,i){
+      var isClaimed=claimed.indexOf(i)>-1;
+      if(isClaimed){
+        return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(244,240,232,0.03);"><span style="width:6px;height:6px;border-radius:50%;background:rgba(244,240,232,0.15);flex-shrink:0;"></span><span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.7rem;color:rgba(244,240,232,0.18);text-decoration:line-through;">'+p+'</span></div>';
+      }
+      if(justEarned){
+        return '<div onclick="claimReward('+r.every+','+i+')" class="tapzone" style="display:flex;align-items:center;gap:10px;padding:13px 0;min-height:44px;border-bottom:1px solid rgba(244,240,232,0.03);cursor:pointer;transition:all 0.2s;" onmouseover="this.style.paddingLeft=\'6px\'" onmouseout="this.style.paddingLeft=\'0\'"><span style="width:6px;height:6px;border-radius:50%;border:1px solid rgba(212,240,0,0.5);flex-shrink:0;"></span><span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.7rem;color:rgba(244,240,232,0.75);">'+p+'</span></div>';
+      }
+      return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(244,240,232,0.03);"><span style="width:6px;height:6px;border-radius:50%;border:1px solid rgba(244,240,232,0.15);flex-shrink:0;"></span><span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.7rem;color:rgba(244,240,232,0.32);">'+p+'</span></div>';
+    }).join('');
+
+    var poolHtml='<div class="reward-desc">Pick 1 of '+r.pool.length+' rewards. Each one can only be taken once — when the pool is empty it refills.</div>'
+      +(justEarned?'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.55rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--lime);margin-top:12px;margin-bottom:4px;">Choose your reward — '+left+' left</div>':'')
+      +'<div id="pool-'+r.every+'" style="display:'+(isOpen?'block':'none')+';margin-top:'+(justEarned?'0':'10px')+';">'+poolLines+'</div>'
+      +(justEarned?'':'<div onclick="togglePool('+r.every+')" class="tapzone" style="font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;color:rgba(244,240,232,0.25);margin-top:6px;padding:12px 0;cursor:pointer;text-align:right;transition:color 0.2s;" onmouseover="this.style.color=\'var(--lime)\'" onmouseout="this.style.color=\'rgba(244,240,232,0.25)\'">'+(isOpen?'hide pool ↑':'see pool ('+left+' left) ↓')+'</div>');
+
+    div.innerHTML=
+      '<span class="reward-lock" style="'+(justEarned?'color:var(--lime)':'')+'">'+
+        (justEarned ? '🎉 pick one now' : timesEarned>0 ? '×'+timesEarned+' earned' : 'not yet')+
+      '</span>'+
+      '<div class="reward-streak">'+r.every+'</div>'+
+      '<div class="reward-title">'+r.title+'</div>'+
+      poolHtml+
+      '<div style="margin-top:10px;height:1px;background:var(--dim);position:relative;">'+
+        '<div style="position:absolute;left:0;top:0;height:100%;width:'+pct+'%;background:'+(justEarned?'var(--lime)':'rgba(212,240,0,0.3)')+';transition:width 0.4s;"></div>'+
+      '</div>'+
+      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;color:rgba(244,240,232,0.25);margin-top:6px;">'+
+        (justEarned ? 'next in '+r.every+' days' : nextIn+' day'+(nextIn!==1?'s':'')+' until next')+
+      '</div>';
+    c.appendChild(div);
+  });
+
+  // MILESTONES
+  var milLabel=document.createElement('div');
+  milLabel.style.cssText='font-family:"IBM Plex Mono",monospace;font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(244,240,232,0.3);margin:20px 0 12px;';
+  milLabel.textContent='Milestones';
+  c.appendChild(milLabel);
+
+  REWARDS_MILESTONE.forEach(function(r){
+    var unlocked=streak>=r.days;
+    var pct=Math.min(100,Math.round(streak/r.days*100));
+    var div=document.createElement('div');
+    div.className='reward-block'+(unlocked?'':' locked');
+    div.innerHTML=
+      '<span class="reward-lock">'+(unlocked?'✓ unlocked':streak+'/'+r.days+' days')+'</span>'+
+      '<div class="reward-streak">'+r.days+'</div>'+
+      '<div class="reward-title">'+r.title+'</div>'+
+      '<div class="reward-desc">'+r.desc+'</div>'+
+      (!unlocked?'<div style="margin-top:10px;height:1px;background:var(--dim);position:relative;"><div style="position:absolute;left:0;top:0;height:100%;width:'+pct+'%;background:rgba(212,240,0,0.3);transition:width 0.4s;"></div></div>':'');
+    c.appendChild(div);
+  });
+}
+
+var MIRROR_QS=[
+  {id:'q1', label:'01 — the promise', q:'Did you keep your promise to yourself today?', ph:'Not "kind of". Not "mostly". Yes or no — then explain.'},
+  {id:'q2', label:'02 — the move', q:'What did you actually do today that moves you forward?', ph:'Name it. One real thing. Not what you planned — what you did.'},
+  {id:'q3', label:'03 — the pattern', q:'What did you do today that the old you would do?', ph:'Be honest. What habit showed up that you said you were done with?'},
+  {id:'q4', label:'04 — the moment', q:'Was there a moment today where you chose comfort over growth?', ph:'When was it. What did you choose instead of the hard thing.'},
+  {id:'q5', label:'05 — tomorrow', q:'What is the one thing you will do tomorrow. No matter what.', ph:'Write it like a contract with yourself. Specific. No escape.'},
+];
+
+function buildMirrorQuestions(){
+  var c=document.getElementById('mirrorQuestions'); c.innerHTML='';
+  if(!S.mirrorAnswers) S.mirrorAnswers={};
+  MIRROR_QS.forEach(function(q){
+    var block=document.createElement('div');
+    block.className='mq-block';
+    block.innerHTML='<div class="mq-label">'+q.label+'</div><div class="mq-question">'+q.q+'</div><textarea class="mq-ta" data-qid="'+q.id+'" placeholder="'+q.ph+'"></textarea>';
+    var ta=block.querySelector('textarea');
+    ta.value=S.mirrorAnswers[q.id]||'';
+    ta.addEventListener('input',function(){
+      if(!S.mirrorAnswers) S.mirrorAnswers={};
+      S.mirrorAnswers[q.id]=ta.value;
+      // also build combined mirrorNote for snapshot
+      S.mirrorNote=MIRROR_QS.map(function(qq){
+        return qq.q+'\n'+(S.mirrorAnswers[qq.id]||'—');
+      }).join('\n\n');
+      save();
+    });
+    c.appendChild(block);
+  });
+}
+
+function setIdentity(){
+  var doy=Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/86400000);
+  var id=IDS[doy%IDS.length];
+  document.getElementById('idStmt').innerHTML=id[0]+'<br>'+id[1];
+}
+function checkSunday(){document.getElementById('sunBox').style.display=new Date().getDay()===0?'block':'none';}
+
+var weekOffset=0; // now used as month offset
+function shiftWeeks(n){
+  weekOffset+=n;
+  if(weekOffset>0) weekOffset=0;
+  buildLadder();
+}
+
+function buildLadder(){
+  var grid=document.getElementById('lGrid'); grid.innerHTML='';
+  selectedDay=null;
+  var ddp=document.getElementById('dayDetail'); if(ddp) ddp.classList.remove('open');
+  var now=new Date();
+  now.setHours(0,0,0,0);
+
+  // current month + offset
+  var viewDate=new Date(now.getFullYear(), now.getMonth()+weekOffset, 1);
+  var year=viewDate.getFullYear();
+  var month=viewDate.getMonth();
+
+  // days in this month
+  var daysInMonth=new Date(year, month+1, 0).getDate();
+
+  // what day of week is the 1st? (Mon=0 ... Sun=6)
+  var firstDow=new Date(year, month, 1).getDay();
+  var firstColMon=firstDow===0 ? 6 : firstDow-1;
+
+  // total cells needed
+  var totalCells=firstColMon+daysInMonth;
+  var rows=Math.ceil(totalCells/7);
+
+  for(var i=0; i<rows*7; i++){
+    var dayNum=i-firstColMon+1;
+    var div=document.createElement('div');
+    div.className='ld';
+
+    if(dayNum<1 || dayNum>daysInMonth){
+      div.style.opacity='0';
+      div.style.pointerEvents='none';
+    } else {
+      var d=new Date(year, month, dayNum);
+      d.setHours(0,0,0,0);
+      var key=d.toDateString();
+      var isToday=d.toDateString()===now.toDateString();
+      var isFuture=d>now;
+      var entry=(S.history||[]).find(function(h){return h.date===key;});
+
+      if(isToday) div.className+=' lt';
+      if(!isFuture&&entry&&entry.win) div.className+=' lw';
+      else if(!isFuture&&entry&&!entry.win) div.className+=' lm';
+      if(isFuture) div.style.opacity='0.2';
+
+      div.textContent=dayNum;
+      div.title=DAYS[d.getDay()]+' '+dayNum+' '+MONTHS[month];
+      if(!isFuture) div.setAttribute('data-day-key',key);
+    }
+    grid.appendChild(div);
+  }
+
+  // update label to month name
+  var monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var lbl=document.getElementById('gridRangeLabel');
+  if(lbl) lbl.textContent=monthNames[month]+' '+year;
+
+  updateStats(); updateTodaySt();
+}
+
+var selectedDay=null;
+function showDayDetail(key){
+  // toggle if same day clicked twice
+  if(selectedDay===key){
+    selectedDay=null;
+    document.getElementById('dayDetail').classList.remove('open');
+    return;
+  }
+  selectedDay=key;
+  var d=new Date(key);
+  var entry=(S.history||[]).find(function(h){return h.date===key;});
+  var snap=(S.snapshots||{})[key];
+  var isToday=key===TODAY;
+  var panel=document.getElementById('dayDetail');
+  var dateLabel=DAYS[d.getDay()]+' '+d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear();
+  if(isToday) dateLabel+=' — today';
+  else if(entry) dateLabel+=(entry.win?' — W':' — miss');
+  document.getElementById('ddDate').textContent=dateLabel;
+  // word + morning ritual count
+  var focus=isToday?(S.todayWord||''):(snap&&snap.focus?snap.focus:'');
+  var mDone=isToday?MS.filter(function(st){return !!S.morning[st.id];}).length:(snap&&snap.morningDone!==undefined?snap.morningDone:null);
+  var mTotal=isToday?MS.length:(snap&&snap.morningTotal?snap.morningTotal:MS.length);
+  var focusEl=document.getElementById('ddFocus');
+  var focusHtml=focus?'<span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase">word — </span>'+esc(focus):'<span style="color:rgba(244,240,232,0.2);font-size:0.7rem">no word recorded</span>';
+  if(mDone!==null){
+    focusHtml+='<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.62rem;color:'+(mDone===mTotal?'var(--lime)':'rgba(244,240,232,0.35)')+';margin-top:6px;">morning ritual — '+mDone+'/'+mTotal+(mDone===mTotal?' ✓':'')+'</div>';
+  }
+  focusEl.innerHTML=focusHtml;
+  // goal actions
+  var tasks;
+  if(isToday){
+    tasks=loadGoals().reduce(function(acc,g){
+      (g.actions||[]).forEach(function(a){ acc.push({text:g.name+' — '+a.text, done:isActionDone(a)}); });
+      return acc;
+    },[]);
+  } else {
+    tasks=(snap&&snap.tasks)?snap.tasks:[];
+  }
+  var tasksEl=document.getElementById('ddTasks');
+  if(!tasks.length){tasksEl.innerHTML='<span style="color:rgba(244,240,232,0.18);font-size:0.68rem;">no goal actions</span>';}
+  else{tasksEl.innerHTML='<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.55rem;letter-spacing:0.14em;text-transform:uppercase;color:rgba(244,240,232,0.25);margin-bottom:8px;">goal actions</div>'+tasks.map(function(t){return '<div class="'+(t.done?'dk':'')+'" style="display:flex;align-items:center;gap:10px;padding:4px 0;"><span style="width:6px;height:6px;border-radius:50%;flex-shrink:0;'+(t.done?'background:var(--lime);':'border:1px solid rgba(244,240,232,0.25);')+'"></span><span>'+esc(t.text)+'</span></div>';}).join('');}
+  // mirror answers — per question
+  var answers=isToday?(S.mirrorAnswers||{}):((snap&&snap.answers)?snap.answers:{});
+  var answered=MIRROR_QS.filter(function(q){return answers[q.id]&&answers[q.id].trim();});
+  var mirrorEl2=document.getElementById('ddMirror');
+  if(answered.length){
+    mirrorEl2.style.display='block';
+    mirrorEl2.innerHTML='<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.55rem;letter-spacing:0.14em;text-transform:uppercase;color:rgba(244,240,232,0.25);margin-bottom:10px;">mirror</div>'
+      +answered.map(function(q){
+        return '<div style="margin-bottom:12px;">'
+          +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.55rem;letter-spacing:0.12em;text-transform:uppercase;color:rgba(212,240,0,0.55);margin-bottom:3px;">'+q.label+'</div>'
+          +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.72rem;color:rgba(244,240,232,0.65);line-height:1.7;white-space:pre-wrap;">'+esc(answers[q.id])+'</div>'
+        +'</div>';
+      }).join('');
+  } else {
+    var oldMirror=isToday?(S.mirrorNote||''):((snap&&snap.mirror)?snap.mirror:'');
+    if(oldMirror){mirrorEl2.style.display='block';mirrorEl2.textContent=oldMirror;}
+    else{mirrorEl2.style.display='block';mirrorEl2.innerHTML='<span style="color:rgba(244,240,232,0.18);font-size:0.68rem;">no reflection recorded</span>';}
+  }
+  panel.classList.add('open');
+  // also toggle win/miss on click
+  panel.querySelector && null;
+}
+function toggleDay(key){
+  if(!S.history) S.history=[];
+  var idx=S.history.findIndex(function(h){return h.date===key;});
+  if(idx===-1) S.history.push({date:key,win:true});
+  else if(S.history[idx].win) S.history[idx].win=false;
+  else S.history.splice(idx,1);
+  save(); buildLadder();
+}
+function calcStreak(){
+  var hist=(S.history||[]).slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  var streak=0, today=new Date();
+  for(var i=0;i<hist.length;i++){
+    if(!hist[i].win) break;
+    var d=new Date(hist[i].date), exp=new Date(today);
+    exp.setDate(today.getDate()-i);
+    if(d.toDateString()!==exp.toDateString()) break;
+    streak++;
+  }
+  return streak;
+}
+function updateStats(){
+  var hist=S.history||[];
+  document.getElementById('stStreak').textContent=calcStreak();
+  document.getElementById('stWins').textContent=hist.filter(function(h){return h.win;}).length;
+  document.getElementById('stKm').textContent=(S.kmDebt||0)+'km';
+
+  // debt panel: only show when there's debt
+  var dp=document.getElementById('debtPanel');
+  if(dp) dp.style.display=(S.kmDebt||0)>0?'block':'none';
+  var kb=document.getElementById('kmBlock');
+  if(kb) kb.style.borderColor=(S.kmDebt||0)>0?'rgba(255,45,45,0.35)':'var(--dim)';
+
+  // debt deadline — everything must be run off before Sunday ends
+  var dd=document.getElementById('debtDeadline');
+  if(dd && (S.kmDebt||0)>0){
+    var nw=new Date();
+    var dow=nw.getDay(); // 0=Sun
+    var daysLeft=dow===0?0:7-dow;
+    var txt;
+    if(daysLeft===0) txt='Deadline today — Sunday. Run it or it doubles.';
+    else if(daysLeft===1) txt='Due by Sunday — 1 day left.';
+    else txt='Due by Sunday — '+daysLeft+' days left.';
+    dd.innerHTML=txt+' <span style="color:rgba(244,240,232,0.18)">'+(S.kmDebt||0)+'km outstanding</span>';
+  }
+
+  // time pressure line
+  var tl=document.getElementById('timeLine');
+  if(tl){
+    var now=new Date();
+    var start=new Date(now.getFullYear(),0,0);
+    var dayOfYear=Math.floor((now-start)/86400000);
+    var yearDays=((now.getFullYear()%4===0&&now.getFullYear()%100!==0)||now.getFullYear()%400===0)?366:365;
+    var deadlines=loadGoals().map(function(g){
+      if(!g.deadline) return null;
+      var d=parseFlexDate(g.deadline);
+      if(!d) return null;
+      var days=Math.ceil((d-now)/86400000);
+      return days>0?{name:g.name,days:days,featured:!!g.featured}:null;
+    }).filter(Boolean).sort(function(a,b){return a.days-b.days;});
+
+    if(deadlines.length){
+      var heroIdx=deadlines.findIndex(function(x){return x.featured;});
+      if(heroIdx===-1) heroIdx=0;
+      var hero=deadlines[heroIdx];
+      var rest=deadlines.filter(function(x,i){return i!==heroIdx;});
+      tl.innerHTML='<div class="tnum">'+hero.days+'</div>'
+        +'<div class="tgoal">days to &ldquo;'+esc(hero.name)+'&rdquo;</div>'
+        +'<div class="tsub">day '+dayOfYear+' of '+now.getFullYear()+' &middot; '+(yearDays-dayOfYear)+' left in the year</div>'
+        +(rest.length?'<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--dim2);">'
+          +rest.map(function(r){
+            return '<div style="display:flex;justify-content:space-between;font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;letter-spacing:0.05em;color:rgba(244,240,232,0.22);padding:3px 0;"><span>'+esc(r.name)+'</span><span>'+r.days+'d</span></div>';
+          }).join('')
+        +'</div>':'');
+    } else {
+      tl.innerHTML='<div class="tnum">'+(yearDays-dayOfYear)+'</div>'
+        +'<div class="tgoal">days left in '+now.getFullYear()+'</div>'
+        +'<div class="tsub">set a deadline in goals to track it here</div>';
+    }
+  }
+}
+function updateTodaySt(){
+  var el=document.getElementById('todaySt');
+  var entry=(S.history||[]).find(function(h){return h.date===TODAY;});
+  if(!entry){el.textContent='Open. The day is still yours.';return;}
+  el.innerHTML=entry.win?'<span style="font-weight:500;letter-spacing:0.12em;color:var(--lime)">Today marked as a W &#10003;</span>':'<span style="font-weight:500;letter-spacing:0.12em;color:rgba(255,45,45,0.85)">Today marked as a miss &#10007;</span>';
+}
+function markToday(win){
+  if(!S.history) S.history=[];
+  var idx=S.history.findIndex(function(h){return h.date===TODAY;});
+  if(idx===-1) S.history.push({date:TODAY,win:win});
+  else S.history[idx].win=win;
+  // save snapshot for history view
+  if(!S.snapshots) S.snapshots={};
+  var goalTasks=loadGoals().reduce(function(acc,g){
+    (g.actions||[]).forEach(function(a){ acc.push({text:g.name+': '+a.text, done:isActionDone(a)}); });
+    return acc;
+  },[]);
+  S.snapshots[TODAY]={focus:S.todayWord||'',tasks:goalTasks,mirror:S.mirrorNote||'',answers:S.mirrorAnswers||{},morningDone:MS.filter(function(st){return !!S.morning[st.id];}).length,morningTotal:MS.length};
+  if(!win){
+    var debt=0;
+    var mDone=Object.values(S.morning).filter(Boolean).length;
+    var tDone=(S.tasks||[]).filter(function(t){return t.done;}).length;
+    var tTotal=(S.tasks||[]).length;
+    if(mDone<MS.length) debt+=5;
+    if(tTotal>0&&tDone===0) debt+=10;
+    S.kmDebt=(S.kmDebt||0)+debt;
+    var f=document.getElementById('pFlash');
+    f.style.opacity='1'; setTimeout(function(){f.style.opacity='0';},700);
+  }
+  S.todayClosed=true; save(); buildLadder(); buildRewards();
+}
+function clearTodayMark(){
+  if(!S.history) return;
+  S.history=S.history.filter(function(h){return h.date!==TODAY;});
+  S.todayClosed=false; save(); buildLadder(); buildRewards();
+}
+function payKm(km){
+  if((S.kmDebt||0)===0) return;
+  S.kmDebt=Math.max(0,(S.kmDebt||0)-km);
+  save();
+  updateStats();
+  document.getElementById('stKm').textContent=(S.kmDebt||0)+'km';
+}
+function addKm(km){
+  S.kmDebt=(S.kmDebt||0)+km;
+  save();
+  updateStats();
+  document.getElementById('stKm').textContent=(S.kmDebt||0)+'km';
+}
+function closeDay(){markToday(true);goTo('s-ladder');}
+
+var curScreen='s-boot';
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nb').forEach(function(b){b.classList.toggle('on',b.dataset.s===id);});
+  curScreen=id;
+  if(id==='s-morning'){
+    var h=new Date().getHours();
+    var g=h<12?'Good morning.':h<17?'Good afternoon.':'Good evening.';
+    document.getElementById('mGreet').innerHTML=g+'<br>Are you <em>ready?</em>';
+    setIdentity();
+    document.getElementById('todayWord').value=S.todayWord||'';
+    buildSteps('mSteps',MS,'morning'); updateMP(); buildYBar();
+  }
+  if(id==='s-ladder'){buildLadder();buildRewards();buildRules();}
+  if(id==='s-mirror'){buildSteps('nSteps',NS,'night');buildMirrorQuestions();}
+  if(id==='s-goals'){buildGoalsList();checkSunday();buildFreeTimers();}
+  document.getElementById(id).scrollTop=0;
+}
+
+function goToBoot(){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById('s-boot').classList.add('active');
+  document.getElementById('nav').classList.add('hidden');
+  curScreen='s-boot';
+}
+
+function enterApp(){
+  document.getElementById('nav').classList.remove('hidden');
+  document.getElementById('todayWord').addEventListener('input',function(){S.todayWord=this.value;save();});
+  setIdentity();
+  goTo('s-morning');
+}
+
+function toggleTip(id){
+  var box=document.getElementById(id);
+  if(!box) return;
+  var isOpen=box.classList.contains('open');
+  document.querySelectorAll('.tip-box').forEach(function(b){b.classList.remove('open');});
+  if(!isOpen) box.classList.add('open');
+}
+document.addEventListener('click',function(e){
+  if(!e.target.classList.contains('tip-icon')) document.querySelectorAll('.tip-box').forEach(function(b){b.classList.remove('open');});
+});
+
+// ── TIMER ENGINE (shared by goal timers + free timers) ──
+function fmtHMS(totalSec){
+  totalSec=Math.max(0,Math.round(totalSec));
+  var h=Math.floor(totalSec/3600);
+  var m=Math.floor((totalSec%3600)/60);
+  var s=totalSec%60;
+  return (h>0?String(h).padStart(2,'0')+':':'')+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function timerElapsedSec(t){
+  return (t.accumulated||0) + ((t.running && t.startedAt) ? (Date.now()-t.startedAt)/1000 : 0);
+}
+
+// GOAL-LINKED TIMERS (reset daily, tied to a goal id)
+function loadGoalTimer(goalId){
+  var t=JSON.parse(localStorage.getItem('ladder_gtimer_'+goalId+'_'+TODAY)||'null');
+  return t||{accumulated:0,running:false,startedAt:null};
+}
+function saveGoalTimerState(goalId,t){
+  localStorage.setItem('ladder_gtimer_'+goalId+'_'+TODAY,JSON.stringify(t));
+}
+function toggleGoalTimer(actionId){
+  var t=loadGoalTimer(actionId);
+  if(t.running){ t.accumulated=timerElapsedSec(t); t.running=false; t.startedAt=null; }
+  else { t.running=true; t.startedAt=Date.now(); }
+  saveGoalTimerState(actionId,t);
+  renderGoalTimer(actionId);
+}
+function resetGoalTimer(actionId){
+  if(!confirm('Reset this timer to zero?')) return;
+  saveGoalTimerState(actionId,{accumulated:0,running:false,startedAt:null});
+  if(S.goalActions&&S.goalActions[TODAY]) delete S.goalActions[TODAY][actionId];
+  save();
+  renderGoalTimer(actionId);
+}
+function renderGoalTimerHTML(a){
+  var t=loadGoalTimer(a.id);
+  var elapsed=timerElapsedSec(t);
+  var target=a.minutes*60;
+  var overtime=elapsed>=target;
+  var hrs=Math.floor(a.minutes/60), mins=a.minutes%60;
+  var targetLabel=(hrs>0?hrs+'h ':'')+(mins>0?mins+'m':'')+' target';
+  return '<div class="gtimer'+(t.running?' running':'')+(overtime?' gt-done':'')+'" id="gtimer-'+a.id+'">'
+    +'<div class="gtimer-top"><span class="gtimer-label">'+esc(a.text)+'</span><span class="gtimer-target">'+targetLabel+'</span></div>'
+    +'<div class="gtimer-display" id="tdisp-'+a.id+'">'+(overtime?'+':'')+fmtHMS(overtime?elapsed-target:target-elapsed)+'</div>'
+    +'<div class="gtimer-bar"><div class="gtimer-fill" id="tfill-'+a.id+'" style="width:'+Math.min(100,(elapsed/target)*100)+'%"></div></div>'
+    +'<div class="gtimer-controls">'
+      +'<button class="gt-play'+(t.running?' on':'')+'" id="tbtn-'+a.id+'" onclick="toggleGoalTimer(\''+a.id+'\')">'+(t.running?'&#10073;&#10073; pause':'&#9654; start')+'</button>'
+      +'<button class="gt-reset" onclick="resetGoalTimer(\''+a.id+'\')">reset</button>'
+    +'</div>'
+    +(overtime?'<div class="gt-donebadge">&#10003; done &mdash; '+fmtHMS(elapsed)+' logged</div>':'')
+  +'</div>';
+}
+function renderGoalTimer(actionId){
+  var found=findAction(actionId);
+  if(!found) return;
+  var a=found.action;
+  var disp=document.getElementById('tdisp-'+actionId);
+  if(!disp){return;}
+  var t=loadGoalTimer(actionId);
+  var elapsed=timerElapsedSec(t);
+  var target=a.minutes*60;
+  var overtime=elapsed>=target;
+  disp.textContent=(overtime?'+':'')+fmtHMS(overtime?elapsed-target:target-elapsed);
+  var fill=document.getElementById('tfill-'+actionId);
+  if(fill) fill.style.width=Math.min(100,(elapsed/target)*100)+'%';
+  var btn=document.getElementById('tbtn-'+actionId);
+  if(btn){ btn.innerHTML=t.running?'&#10073;&#10073; pause':'&#9654; start'; btn.classList.toggle('on',t.running); }
+  var wrap=document.getElementById('gtimer-'+actionId);
+  if(wrap){ wrap.classList.toggle('running',t.running); wrap.classList.toggle('gt-done',overtime); }
+  if(overtime){
+    if(!S.goalActions) S.goalActions={};
+    if(!S.goalActions[TODAY]) S.goalActions[TODAY]={};
+    if(!S.goalActions[TODAY][actionId]){ S.goalActions[TODAY][actionId]=true; save(); }
+    var badge=wrap?wrap.querySelector('.gt-donebadge'):null;
+    if(wrap&&!badge){
+      var b=document.createElement('div');
+      b.className='gt-donebadge';
+      b.innerHTML='&#10003; done &mdash; '+fmtHMS(elapsed)+' logged';
+      wrap.appendChild(b);
+    } else if(badge){
+      badge.innerHTML='&#10003; done &mdash; '+fmtHMS(elapsed)+' logged';
+    }
+  }
+}
+
+// FREE-STANDING TIMERS (name+duration persist forever, daily progress resets)
+function loadFreeTimerTemplates(){return JSON.parse(localStorage.getItem('ladder_freetimer_templates')||'[]');}
+function saveFreeTimerTemplates(list){localStorage.setItem('ladder_freetimer_templates',JSON.stringify(list));}
+function loadFreeTimerState(id){
+  var t=JSON.parse(localStorage.getItem('ladder_ftimer_'+id+'_'+TODAY)||'null');
+  return t||{accumulated:0,running:false,startedAt:null};
+}
+function saveFreeTimerState(id,t){localStorage.setItem('ladder_ftimer_'+id+'_'+TODAY,JSON.stringify(t));}
+
+function openAddFreeTimer(){
+  document.getElementById('ftName').value='';
+  document.getElementById('ftMinutes').value='';
+  document.getElementById('freeTimerModal').style.display='block';
+}
+function closeFreeTimerModal(){document.getElementById('freeTimerModal').style.display='none';}
+function saveFreeTimer(){
+  var name=document.getElementById('ftName').value.trim();
+  var mins=parseInt(document.getElementById('ftMinutes').value)||0;
+  if(!name||!mins) return;
+  var list=loadFreeTimerTemplates();
+  list.push({id:'ft_'+Date.now(),name:name,minutes:mins});
+  saveFreeTimerTemplates(list);
+  closeFreeTimerModal();
+  buildFreeTimers();
+}
+function deleteFreeTimer(id){
+  if(!confirm('Delete this timer?')) return;
+  saveFreeTimerTemplates(loadFreeTimerTemplates().filter(function(t){return t.id!==id;}));
+  buildFreeTimers();
+}
+function toggleFreeTimer(id){
+  var t=loadFreeTimerState(id);
+  if(t.running){ t.accumulated=timerElapsedSec(t); t.running=false; t.startedAt=null; }
+  else { t.running=true; t.startedAt=Date.now(); }
+  saveFreeTimerState(id,t);
+  renderFreeTimer(id);
+}
+
+function buildFreeTimers(){
+  var c=document.getElementById('freeTimersList'); if(!c) return;
+  c.innerHTML='';
+  var templates=loadFreeTimerTemplates();
+  templates.forEach(function(tpl){
+    var t=loadFreeTimerState(tpl.id);
+    var elapsed=timerElapsedSec(t);
+    var target=tpl.minutes*60;
+    var overtime=elapsed>=target;
+    var row=document.createElement('div');
+    row.className='ftimer-row'+(t.running?' f-running':'')+(overtime?' f-done':'');
+    row.id='ftrow-'+tpl.id;
+    row.innerHTML=
+      '<button class="ftimer-btn" id="ftbtn-'+tpl.id+'" onclick="toggleFreeTimer(\''+tpl.id+'\')">'+(overtime?'&#10003;':t.running?'&#10073;&#10073;':'&#9654;')+'</button>'
+      +'<div class="ftimer-body">'
+        +'<div class="ftimer-name">'+esc(tpl.name)+'</div>'
+        +'<div class="ftimer-bar"><div class="ftimer-fill" id="ftfill-'+tpl.id+'" style="width:'+Math.min(100,(elapsed/target)*100)+'%"></div></div>'
+      +'</div>'
+      +'<div class="ftimer-time" id="fttime-'+tpl.id+'">'+(overtime?'+':'')+fmtHMS(overtime?elapsed-target:target-elapsed)+'</div>'
+      +'<span class="ftimer-del" onclick="deleteFreeTimer(\''+tpl.id+'\')" style="padding:14px 10px;display:inline-block;">&#10005;</span>';
+    c.appendChild(row);
+  });
+}
+function renderFreeTimer(id){
+  var templates=loadFreeTimerTemplates();
+  var tpl=templates.find(function(x){return x.id===id;});
+  if(!tpl) return;
+  var timeEl=document.getElementById('fttime-'+id);
+  if(!timeEl) return;
+  var t=loadFreeTimerState(id);
+  var elapsed=timerElapsedSec(t);
+  var target=tpl.minutes*60;
+  var overtime=elapsed>=target;
+  timeEl.textContent=(overtime?'+':'')+fmtHMS(overtime?elapsed-target:target-elapsed);
+  var fill=document.getElementById('ftfill-'+id);
+  if(fill) fill.style.width=Math.min(100,(elapsed/target)*100)+'%';
+  var btn=document.getElementById('ftbtn-'+id);
+  if(btn) btn.innerHTML=overtime?'&#10003;':(t.running?'&#10073;&#10073;':'&#9654;');
+  var row=document.getElementById('ftrow-'+id);
+  if(row){ row.classList.toggle('f-running',t.running); row.classList.toggle('f-done',overtime); }
+}
+
+// GLOBAL TICK — updates every visible running timer once per second
+setInterval(function(){
+  if(typeof curScreen!=='undefined' && curScreen!=='s-goals') return;
+  allDailyActions().forEach(function(x){
+    if(x.action.type==='timer'&&x.action.minutes>0){
+      var t=loadGoalTimer(x.action.id);
+      if(t.running) renderGoalTimer(x.action.id);
+    }
+  });
+  loadFreeTimerTemplates().forEach(function(tpl){
+    var t=loadFreeTimerState(tpl.id);
+    if(t.running) renderFreeTimer(tpl.id);
+  });
+},1000);
+
+// ── AI GOAL BUILDER ──────────────────────────────────────
+var aiOriginalInput='';
+
+function openAiGoal(){
+  document.getElementById('aiInput').value='';
+  document.getElementById('aiInput').style.display='block';
+  document.getElementById('aiActionRow').style.display='flex';
+  document.getElementById('aiQuestions').style.display='none';
+  document.getElementById('aiQuestions').innerHTML='';
+  document.getElementById('aiStatus').textContent='';
+  var genBtn=document.getElementById('aiGenBtn');
+  genBtn.disabled=false; genBtn.style.opacity='1';
+  aiOriginalInput='';
+  document.getElementById('aiGoalModal').style.display='block';
+}
+function closeAiModal(){document.getElementById('aiGoalModal').style.display='none';}
+
+function renderAiQuestions(questions){
+  document.getElementById('aiInput').style.display='none';
+  document.getElementById('aiActionRow').style.display='none';
+  var wrap=document.getElementById('aiQuestions');
+  wrap.innerHTML=questions.map(function(q){
+    return '<div style="margin-bottom:16px;">'
+      +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.78rem;color:var(--white);line-height:1.6;margin-bottom:8px;">'+esc(q)+'</div>'
+      +'<input class="li aiqa" data-q="'+escAttr(q)+'" placeholder="Your answer">'
+    +'</div>';
+  }).join('')
+  +'<div style="display:flex;gap:10px;margin-top:8px;">'
+    +'<button onclick="generateGoal(true)" style="background:var(--lime);border:none;color:var(--black);font-family:\'IBM Plex Mono\',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:16px 28px;cursor:pointer;flex:1;">Continue →</button>'
+    +'<button onclick="closeAiModal()" style="background:none;border:1px solid var(--dim);color:var(--muted);font-family:\'IBM Plex Mono\',monospace;font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;padding:16px 20px;cursor:pointer;">Cancel</button>'
+  +'</div>';
+  wrap.style.display='block';
+}
+
+function collectAiAnswers(){
+  var out=[];
+  document.querySelectorAll('#aiQuestions .aiqa').forEach(function(inp){
+    out.push({question:inp.getAttribute('data-q'), answer:inp.value.trim()});
+  });
+  return out;
+}
+
+async function generateGoal(fromQuestions){
+  var status=document.getElementById('aiStatus');
+  var input, qa=null;
+
+  if(fromQuestions){
+    input=aiOriginalInput;
+    qa=collectAiAnswers();
+  } else {
+    input=document.getElementById('aiInput').value.trim();
+    if(!input){status.textContent='Write something first.';return;}
+    aiOriginalInput=input;
+  }
+
+  var btn=document.getElementById('aiGenBtn');
+  status.textContent=fromQuestions?'Finishing your goal...':'Thinking...';
+  document.querySelectorAll('#aiQuestions button, #aiGenBtn').forEach(function(b){b.disabled=true;b.style.opacity='0.4';});
+
+  try{
+    var response=await fetch("/api/generate-goal",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({input:input, qa:qa})
+    });
+    if(!response.ok){
+      var errBody=await response.text();
+      console.error('API error', response.status, errBody);
+      status.textContent='Request failed. Try again.';
+      document.querySelectorAll('#aiQuestions button, #aiGenBtn').forEach(function(b){b.disabled=false;b.style.opacity='1';});
+      return;
+    }
+    var data=await response.json();
+    var text=data.content.map(function(i){return i.type==='text'?i.text:'';}).join('');
+    var clean=text.replace(/```json|```/g,'').trim();
+    var parsed=JSON.parse(clean);
+
+    if(parsed.type==='questions' && parsed.questions && parsed.questions.length){
+      renderAiQuestions(parsed.questions);
+      status.textContent='';
+      btn.disabled=false; btn.style.opacity='1';
+      return;
+    }
+
+    var g=parsed;
+    // Pre-fill the normal goal form for review
+    closeAiModal();
+    openAddGoal();
+    document.getElementById('gName').value=g.name||'';
+    document.getElementById('gOutcome').value=g.outcome||'';
+    document.getElementById('gDeadline').value=g.deadline||'';
+    currentActions=(g.actions||[]).map(function(a,i){
+      return {id:'a_'+Date.now()+'_'+i,text:a.text||'',type:a.type==='timer'?'timer':'check',minutes:parseInt(a.minutes)||0};
+    });
+    if(!currentActions.length && g.action){ // fallback for older single-action shape
+      currentActions=[{id:'a_'+Date.now(),text:g.action,type:'check',minutes:0}];
+    }
+    renderActionRows();
+    document.getElementById('gAdjust').value=g.adjust||'';
+    document.getElementById('gMilestones').value=(g.milestones||[]).map(function(m){return m.text+' | '+m.date;}).join('\n');
+    document.getElementById('gCheckinFields').value=(g.checkinFields||[]).join(', ');
+    document.getElementById('modalTitle').textContent='Review your goal — then save';
+  }catch(err){
+    console.error(err);
+    status.textContent='Something went wrong. Try again.';
+    document.querySelectorAll('#aiQuestions button, #aiGenBtn').forEach(function(b){b.disabled=false;b.style.opacity='1';});
+  }
+}
+
+
+var editingGoalId=null;
+
+function loadGoals(){
+  var goals=JSON.parse(localStorage.getItem('ladder_goals')||'[]');
+  var migrated=false;
+  goals=goals.map(function(g){
+    if(!g.actions){
+      migrated=true;
+      g.actions=g.action?[{id:'a_'+g.id,text:g.action,type:g.actionType==='timer'?'timer':'check',minutes:g.actionMinutes||0}]:[];
+    }
+    return g;
+  });
+  if(migrated) saveGoals(goals);
+  return goals;
+}
+function saveGoals(goals){localStorage.setItem('ladder_goals',JSON.stringify(goals));}
+
+function escAttr(s){return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+var currentActions=[];
+function addActionRow(){
+  currentActions.push({id:'a_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),text:'',type:'check',minutes:0});
+  renderActionRows();
+}
+function removeActionRow(idx){
+  currentActions.splice(idx,1);
+  renderActionRows();
+}
+function updateActionText(idx,val){ if(currentActions[idx]) currentActions[idx].text=val; }
+function updateActionMinutes(idx,val){ if(currentActions[idx]) currentActions[idx].minutes=parseInt(val)||0; }
+function setActionRowType(idx,type){ if(currentActions[idx]){ currentActions[idx].type=type; renderActionRows(); } }
+
+function renderActionRows(){
+  var c=document.getElementById('actionRows'); if(!c) return;
+  c.innerHTML='';
+  if(!currentActions.length){
+    var empty=document.createElement('div');
+    empty.style.cssText='font-family:"IBM Plex Mono",monospace;font-size:0.68rem;color:rgba(244,240,232,0.2);padding:6px 0 14px;';
+    empty.textContent='No actions yet — add at least one.';
+    c.appendChild(empty);
+  }
+  currentActions.forEach(function(a,idx){
+    var row=document.createElement('div');
+    row.className='action-row-edit';
+    row.innerHTML=
+      '<div style="display:flex;gap:10px;align-items:flex-start;">'
+        +'<input class="li" style="flex:1" value="'+escAttr(a.text)+'" placeholder="e.g. 1 hour calling, emailing, LinkedIn" oninput="updateActionText('+idx+',this.value)">'
+        +'<span class="action-row-del" onclick="removeActionRow('+idx+')" style="padding:10px;display:inline-block;">&#10005;</span>'
+      +'</div>'
+      +'<div style="display:flex;gap:8px;margin-top:10px;">'
+        +'<button type="button" class="atype-btn small'+(a.type==='check'?' active':'')+'" onclick="setActionRowType('+idx+',\'check\')">Check off</button>'
+        +'<button type="button" class="atype-btn small'+(a.type==='timer'?' active':'')+'" onclick="setActionRowType('+idx+',\'timer\')">Timer</button>'
+      +'</div>'
+      +(a.type==='timer'?'<input class="li" type="number" style="margin-top:10px" placeholder="Duration in minutes, e.g. 60" value="'+(a.minutes||'')+'" oninput="updateActionMinutes('+idx+',this.value)">':'');
+    c.appendChild(row);
+  });
+}
+
+function findAction(actionId){
+  var goals=loadGoals();
+  for(var i=0;i<goals.length;i++){
+    var a=(goals[i].actions||[]).find(function(x){return x.id===actionId;});
+    if(a) return {goal:goals[i],action:a};
+  }
+  return null;
+}
+function allDailyActions(){
+  var out=[];
+  loadGoals().forEach(function(g){
+    (g.actions||[]).forEach(function(a){ out.push({goal:g,action:a}); });
+  });
+  return out;
+}
+function isActionDone(a){
+  if(a.type==='timer'&&a.minutes>0){
+    var t=loadGoalTimer(a.id);
+    return timerElapsedSec(t)>=a.minutes*60;
+  }
+  return !!(S.goalActions&&S.goalActions[TODAY]&&S.goalActions[TODAY][a.id]);
+}
+
+function buildGoalsList(){
+  var c=document.getElementById('goalsList'); if(!c) return;
+  var goals=loadGoals();
+  c.innerHTML='';
+  if(!goals.length){
+    c.innerHTML=
+      '<div style="border:1px solid var(--dim);padding:22px;margin-bottom:12px;">'
+        +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--lime);margin-bottom:14px;">No goals yet</div>'
+        +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.78rem;color:rgba(244,240,232,0.55);line-height:1.9;margin-bottom:16px;">'
+          +'A goal here has three parts: what you want <span style="color:rgba(244,240,232,0.8)">(outcome)</span>, what you do for it every day <span style="color:rgba(244,240,232,0.8)">(actions)</span>, and how you\'ll know it\'s working <span style="color:rgba(244,240,232,0.8)">(check-ins)</span>.'
+        +'</div>'
+        +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.78rem;color:rgba(244,240,232,0.4);line-height:1.9;">'
+          +'Not sure how to structure yours? Describe it in your own words with <span style="color:var(--lime)">Build my goal with AI</span> below and it fills in the rest &mdash; you review before saving.'
+        +'</div>'
+      +'</div>';
+    return;
+  }
+  goals.forEach(function(g){
+    var doneMilestones=(g.milestones||[]).filter(function(m){return m.done;}).length;
+    var totalMilestones=(g.milestones||[]).length;
+
+    var div=document.createElement('div');
+    div.style.cssText='border:1px solid var(--dim);padding:20px;margin-bottom:12px;';
+    div.innerHTML=
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">'
+        +'<div>'
+          +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;color:var(--lime);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px;">'+esc(g.name)+'</div>'
+          +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.82rem;color:var(--white);line-height:1.5;">'+esc(g.outcome)+'</div>'
+          +(g.deadline?'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.65rem;color:var(--muted);margin-top:4px;">deadline: '+esc(g.deadline)+'</div>':'')
+        +'</div>'
+        +'<div style="display:flex;align-items:center;gap:2px;">'
+          +'<button onclick="toggleFeaturedGoal(\''+g.id+'\')" title="Show as primary on Ladder" style="background:none;border:none;color:'+(g.featured?'var(--lime)':'rgba(244,240,232,0.2)')+';font-size:0.95rem;cursor:pointer;padding:14px 8px;line-height:1;" onmouseover="this.style.color=\''+(g.featured?'var(--lime)':'rgba(244,240,232,0.5)')+'\'" onmouseout="this.style.color=\''+(g.featured?'var(--lime)':'rgba(244,240,232,0.2)')+'\'">'+(g.featured?'\u2605':'\u2606')+'</button>'
+          +'<button onclick="openEditGoal(\''+g.id+'\')" style="background:none;border:none;color:rgba(244,240,232,0.2);font-size:0.75rem;cursor:pointer;padding:14px 10px;" onmouseover="this.style.color=\'var(--white)\'" onmouseout="this.style.color=\'rgba(244,240,232,0.2)\'">edit</button>'
+        +'</div>'
+      +'</div>'
+
+      // Daily actions — one or more, each checkbox or timer
+      +((g.actions&&g.actions.length)?g.actions.map(function(a){
+        if(a.type==='timer'&&a.minutes>0) return renderGoalTimerHTML(a);
+        var done=isActionDone(a);
+        return '<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--dim2);border-bottom:1px solid var(--dim2);cursor:pointer;" onclick="toggleGoalAction(\''+a.id+'\')">'
+          +'<div style="width:8px;height:8px;border-radius:50%;border:1.5px solid '+(done?'var(--lime)':'rgba(244,240,232,0.25)')+';background:'+(done?'var(--lime)':'none')+';flex-shrink:0;"></div>'
+          +'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.78rem;color:'+(done?'rgba(244,240,232,0.35)':'var(--white)')+';'+(done?'text-decoration:line-through;':'')+'">'+esc(a.text)+'</span>'
+          +(done?'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;color:var(--lime);margin-left:auto;">done</span>':'')
+        +'</div>';
+      }).join(''):'')
+
+      // Milestones
+      +(totalMilestones?'<div style="margin-top:14px;">'
+        +(g.milestones||[]).map(function(m,mi){
+          var overdue=!m.done&&isMilestoneOverdue(m.date);
+          var dotColor=m.done?'var(--lime)':overdue?'var(--red)':'rgba(244,240,232,0.2)';
+          var textColor=m.done?'rgba(244,240,232,0.25)':overdue?'rgba(255,45,45,0.85)':'rgba(244,240,232,0.6)';
+          return '<div style="display:flex;align-items:center;gap:10px;padding:13px 0;min-height:44px;border-bottom:1px solid rgba(244,240,232,0.03);cursor:pointer;" onclick="toggleMilestone(\''+g.id+'\','+mi+')" class="tapzone">'
+            +'<div style="width:6px;height:6px;border-radius:50%;border:1.5px solid '+dotColor+';background:'+(m.done||overdue?dotColor:'none')+';flex-shrink:0;"></div>'
+            +'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.72rem;color:'+textColor+';flex:1;'+(m.done?'text-decoration:line-through;':'')+'">'+esc(m.text)+'</span>'
+            +(m.date?'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;color:'+(overdue?'rgba(255,45,45,0.6)':'var(--muted)')+';">'+(overdue?'overdue — ':'')+esc(m.date)+'</span>':'')
+          +'</div>';
+        }).join('')
+      +'</div>':'')
+
+      // Adjustment rule
+      +(g.adjust?'<div style="margin-top:14px;padding:12px;background:rgba(212,240,0,0.04);border-left:2px solid rgba(212,240,0,0.2);">'
+        +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;color:rgba(212,240,0,0.5);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px;">Adjustment rule</div>'
+        +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.72rem;color:rgba(244,240,232,0.5);line-height:1.6;">'+esc(g.adjust)+'</div>'
+        +(function(){
+          var missed=(g.milestones||[]).filter(function(m){return !m.done&&isMilestoneOverdue(m.date);}).length;
+          if(!missed) return '';
+          return '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.68rem;color:rgba(255,45,45,0.75);margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,45,45,0.15);">'+missed+' milestone'+(missed>1?'s':'')+' missed — this is your moment to adjust.</div>';
+        })()
+      +'</div>':'')
+
+      // Check-in button
+      +(g.checkinFields&&g.checkinFields.length?'<button onclick="openCheckin(\''+g.id+'\')" style="margin-top:14px;background:none;border:1px solid var(--dim);color:var(--muted);font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;padding:10px 16px;cursor:pointer;width:100%;transition:all 0.2s;" onmouseover="this.style.borderColor=\'var(--lime)\';this.style.color=\'var(--lime)\'" onmouseout="this.style.borderColor=\'var(--dim)\';this.style.color=\'var(--muted)\'">Sunday check-in →</button>':'');
+
+    c.appendChild(div);
+  });
+}
+
+function toggleGoalAction(actionId){
+  if(!S.goalActions) S.goalActions={};
+  if(!S.goalActions[TODAY]) S.goalActions[TODAY]={};
+  S.goalActions[TODAY][actionId]=!S.goalActions[TODAY][actionId];
+  save();
+  buildGoalsList();
+}
+
+function toggleFeaturedGoal(goalId){
+  var goals=loadGoals();
+  var target=goals.find(function(g){return g.id===goalId;});
+  if(!target) return;
+  var turningOn=!target.featured;
+  goals.forEach(function(g){g.featured=false;});
+  if(turningOn) target.featured=true;
+  saveGoals(goals);
+  buildGoalsList();
+}
+
+function toggleMilestone(goalId,mi){
+  var goals=loadGoals();
+  var g=goals.find(function(g){return g.id===goalId;});
+  if(!g) return;
+  g.milestones[mi].done=!g.milestones[mi].done;
+  saveGoals(goals);
+  buildGoalsList();
+}
+
+function openAddGoal(){
+  editingGoalId=null;
+  document.getElementById('modalTitle').textContent='New goal';
+  document.getElementById('deleteGoalBtn').style.display='none';
+  ['gName','gOutcome','gDeadline','gAdjust','gMilestones','gCheckinFields'].forEach(function(id){
+    document.getElementById(id).value='';
+  });
+  currentActions=[];
+  renderActionRows();
+  document.getElementById('goalModal').style.display='block';
+}
+
+function openEditGoal(goalId){
+  var goals=loadGoals();
+  var g=goals.find(function(g){return g.id===goalId;});
+  if(!g) return;
+  editingGoalId=goalId;
+  document.getElementById('modalTitle').textContent='Edit goal';
+  document.getElementById('deleteGoalBtn').style.display='block';
+  document.getElementById('gName').value=g.name||'';
+  document.getElementById('gOutcome').value=g.outcome||'';
+  document.getElementById('gDeadline').value=g.deadline||'';
+  currentActions=(g.actions||[]).map(function(a){return {id:a.id,text:a.text,type:a.type,minutes:a.minutes};});
+  renderActionRows();
+  document.getElementById('gAdjust').value=g.adjust||'';
+  document.getElementById('gMilestones').value=(g.milestones||[]).map(function(m){return m.text+(m.date?' | '+m.date:'');}).join('\n');
+  document.getElementById('gCheckinFields').value=(g.checkinFields||[]).join(', ');
+  document.getElementById('goalModal').style.display='block';
+}
+
+function saveGoal(){
+  var name=document.getElementById('gName').value.trim();
+  if(!name) return;
+  var milestoneRaw=document.getElementById('gMilestones').value.trim();
+  var milestones=milestoneRaw?milestoneRaw.split('\n').filter(Boolean).map(function(line){
+    var parts=line.split('|');
+    return {text:parts[0].trim(), date:(parts[1]||'').trim(), done:false};
+  }):[];
+  var checkinFields=document.getElementById('gCheckinFields').value.split(',').map(function(s){return s.trim();}).filter(Boolean);
+  var actions=currentActions.filter(function(a){return a.text&&a.text.trim();}).map(function(a){
+    return {id:a.id,text:a.text.trim(),type:a.type==='timer'?'timer':'check',minutes:a.type==='timer'?(parseInt(a.minutes)||0):0};
+  });
+  var goals=loadGoals();
+  if(editingGoalId){
+    var idx=goals.findIndex(function(g){return g.id===editingGoalId;});
+    if(idx>-1){
+      var existing=goals[idx];
+      // preserve milestone done states
+      milestones=milestones.map(function(m,i){
+        return {text:m.text,date:m.date,done:(existing.milestones&&existing.milestones[i])?existing.milestones[i].done:false};
+      });
+      goals[idx]={id:editingGoalId,name:name,outcome:document.getElementById('gOutcome').value.trim(),deadline:document.getElementById('gDeadline').value.trim(),actions:actions,adjust:document.getElementById('gAdjust').value.trim(),milestones:milestones,checkinFields:checkinFields};
+    }
+  } else {
+    goals.push({id:'g_'+Date.now(),name:name,outcome:document.getElementById('gOutcome').value.trim(),deadline:document.getElementById('gDeadline').value.trim(),actions:actions,adjust:document.getElementById('gAdjust').value.trim(),milestones:milestones,checkinFields:checkinFields});
+  }
+  saveGoals(goals);
+  closeGoalModal();
+  buildGoalsList();
+}
+
+function deleteGoal(){
+  if(!editingGoalId) return;
+  if(!confirm('Delete this goal?')) return;
+  var goals=loadGoals().filter(function(g){return g.id!==editingGoalId;});
+  saveGoals(goals);
+  closeGoalModal();
+  buildGoalsList();
+}
+
+function closeGoalModal(){document.getElementById('goalModal').style.display='none';}
+
+var checkinGoalId=null;
+function openCheckin(goalId){
+  var goals=loadGoals();
+  var g=goals.find(function(g){return g.id===goalId;});
+  if(!g) return;
+  checkinGoalId=goalId;
+  document.getElementById('checkinGoalName').textContent=g.name;
+  document.getElementById('checkinDate').textContent=new Date().toLocaleDateString('nl-NL');
+  var fc=document.getElementById('checkinFields'); fc.innerHTML='';
+  (g.checkinFields||[]).forEach(function(field){
+    var div=document.createElement('div');
+    div.style.cssText='display:flex;align-items:center;gap:12px;';
+    div.innerHTML='<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.7rem;color:var(--muted);min-width:80px;">'+esc(field)+'</span>'
+      +'<input data-field="'+esc(field)+'" type="text" placeholder="..." style="flex:1;background:none;border:none;border-bottom:1px solid var(--dim);color:var(--white);font-family:\'IBM Plex Mono\',monospace;font-size:0.85rem;padding:8px 0;outline:none;caret-color:var(--lime);">';
+    fc.appendChild(div);
+  });
+  renderCheckinHistory(goalId);
+  document.getElementById('checkinModal').style.display='block';
+}
+
+function saveCheckinModal(){
+  if(!checkinGoalId) return;
+  var inputs=document.getElementById('checkinFields').querySelectorAll('input');
+  var entry={date:new Date().toLocaleDateString('nl-NL'),values:{}};
+  inputs.forEach(function(inp){entry.values[inp.dataset.field]=inp.value;});
+  var key='ladder_checkin_'+checkinGoalId;
+  var history=JSON.parse(localStorage.getItem(key)||'[]');
+  history.unshift(entry);
+  localStorage.setItem(key,JSON.stringify(history));
+  renderCheckinHistory(checkinGoalId);
+  document.getElementById('checkinFields').querySelectorAll('input').forEach(function(i){i.value='';});
+}
+
+function renderCheckinHistory(goalId){
+  var c=document.getElementById('checkinHistory'); if(!c) return;
+  var history=JSON.parse(localStorage.getItem('ladder_checkin_'+goalId)||'[]');
+  if(!history.length){c.innerHTML='';return;}
+  c.innerHTML='<div class="lbl" style="margin-bottom:10px;">History</div>'
+    +history.slice(0,6).map(function(h,i){
+      return '<div style="padding:10px 0;border-bottom:1px solid var(--dim2);display:flex;justify-content:space-between;gap:12px;">'
+        +'<div style="flex:1;min-width:0;">'
+          +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.62rem;color:var(--muted);margin-bottom:6px;">'+h.date+'</div>'
+          +Object.keys(h.values).map(function(k){
+            return '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.72rem;display:flex;gap:12px;"><span style="color:rgba(244,240,232,0.4);min-width:80px;">'+esc(k)+'</span><span style="color:var(--white);">'+esc(h.values[k])+'</span></div>';
+          }).join('')
+        +'</div>'
+        +'<span onclick="deleteCheckinEntry(\''+goalId+'\','+i+')" style="color:rgba(244,240,232,0.15);font-size:0.62rem;cursor:pointer;padding:14px 10px;flex-shrink:0;transition:color 0.2s;" onmouseover="this.style.color=\'rgba(255,45,45,0.7)\'" onmouseout="this.style.color=\'rgba(244,240,232,0.15)\'">&#10005;</span>'
+      +'</div>';
+    }).join('');
+}
+function deleteCheckinEntry(goalId,index){
+  if(!confirm('Delete this check-in entry?')) return;
+  var key='ladder_checkin_'+goalId;
+  var history=JSON.parse(localStorage.getItem(key)||'[]');
+  history.splice(index,1);
+  localStorage.setItem(key,JSON.stringify(history));
+  renderCheckinHistory(goalId);
+}
+
+function closeCheckinModal(){document.getElementById('checkinModal').style.display='none';}
+
+document.addEventListener('keydown',function(e){
+  if(curScreen==='s-boot') return;
+  var tag=document.activeElement.tagName;
+  if(tag==='INPUT'||tag==='TEXTAREA') return;
+  var map={'1':'s-morning','2':'s-goals','3':'s-mirror','4':'s-ladder'};
+  if(map[e.key]) goTo(map[e.key]);
+});
+
+tick();
+setInterval(tick,1000);
+</script>
+</body>
+</html>
