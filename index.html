@@ -617,6 +617,7 @@ function isMilestoneOverdue(dateStr){
   var today=new Date(); today.setHours(0,0,0,0);
   return d<today;
 }
+function fmtThousands(n){return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');}
 
 // ── UNBREAKABLE RULES (user-owned) ──────────────────────
 function loadRules(){
@@ -1166,7 +1167,7 @@ function updateStats(){
       var d=parseFlexDate(g.deadline);
       if(!d) return null;
       var days=Math.ceil((d-now)/86400000);
-      return days>0?{name:g.name,days:days,featured:!!g.featured}:null;
+      return days>0?{name:g.name,days:days,featured:!!g.featured,target:d}:null;
     }).filter(Boolean).sort(function(a,b){return a.days-b.days;});
 
     if(deadlines.length){
@@ -1174,9 +1175,11 @@ function updateStats(){
       if(heroIdx===-1) heroIdx=0;
       var hero=deadlines[heroIdx];
       var rest=deadlines.filter(function(x,i){return i!==heroIdx;});
+      var heroHours=Math.max(0,Math.floor((hero.target-now)/3600000));
       tl.innerHTML='<div class="tnum">'+hero.days+'</div>'
         +'<div class="tgoal">days to &ldquo;'+esc(hero.name)+'&rdquo;</div>'
-        +'<div class="tsub">day '+dayOfYear+' of '+now.getFullYear()+' &middot; '+(yearDays-dayOfYear)+' left in the year</div>'
+        +'<div id="heroHours" style="font-family:\'IBM Plex Mono\',monospace;font-size:0.62rem;letter-spacing:0.04em;color:rgba(212,240,0,0.5);margin-top:5px;">'+fmtThousands(heroHours)+' hours left</div>'
+        +'<div class="tsub" style="margin-top:6px;">day '+dayOfYear+' of '+now.getFullYear()+' &middot; '+(yearDays-dayOfYear)+' left in the year</div>'
         +(rest.length?'<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--dim2);">'
           +rest.map(function(r){
             return '<div style="display:flex;justify-content:space-between;font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;letter-spacing:0.05em;color:rgba(244,240,232,0.22);padding:3px 0;"><span>'+esc(r.name)+'</span><span>'+r.days+'d</span></div>';
@@ -1319,6 +1322,12 @@ function resetGoalTimer(actionId){
   save();
   renderGoalTimer(actionId);
 }
+function loadSessionFocus(actionId){
+  return localStorage.getItem('ladder_focus_'+actionId+'_'+TODAY)||'';
+}
+function saveSessionFocus(actionId,val){
+  localStorage.setItem('ladder_focus_'+actionId+'_'+TODAY,val);
+}
 function renderGoalTimerHTML(a){
   var t=loadGoalTimer(a.id);
   var elapsed=timerElapsedSec(t);
@@ -1328,6 +1337,7 @@ function renderGoalTimerHTML(a){
   var targetLabel=(hrs>0?hrs+'h ':'')+(mins>0?mins+'m':'')+' target';
   return '<div class="gtimer'+(t.running?' running':'')+(overtime?' gt-done':'')+'" id="gtimer-'+a.id+'">'
     +'<div class="gtimer-top"><span class="gtimer-label">'+esc(a.text)+'</span><span class="gtimer-target">'+targetLabel+'</span></div>'
+    +'<input class="li" data-action-id="'+a.id+'" value="'+escAttr(loadSessionFocus(a.id))+'" placeholder="What are you working on right now?" oninput="saveSessionFocus(\''+a.id+'\',this.value)" style="margin:2px 0 14px;font-size:0.75rem;">'
     +'<div class="gtimer-display" id="tdisp-'+a.id+'">'+(overtime?'+':'')+fmtHMS(overtime?elapsed-target:target-elapsed)+'</div>'
     +'<div class="gtimer-bar"><div class="gtimer-fill" id="tfill-'+a.id+'" style="width:'+Math.min(100,(elapsed/target)*100)+'%"></div></div>'
     +'<div class="gtimer-controls">'
@@ -1464,6 +1474,12 @@ setInterval(function(){
     if(t.running) renderFreeTimer(tpl.id);
   });
 },1000);
+
+// LADDER TICK — keeps the hours-left countdown fresh once a minute
+setInterval(function(){
+  if(typeof curScreen==='undefined' || curScreen!=='s-ladder') return;
+  if(document.getElementById('heroHours')) updateStats();
+},60000);
 
 // ── AI GOAL BUILDER ──────────────────────────────────────
 var aiOriginalInput='';
