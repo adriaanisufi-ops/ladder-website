@@ -1337,7 +1337,7 @@ function renderGoalTimerHTML(a){
   var targetLabel=(hrs>0?hrs+'h ':'')+(mins>0?mins+'m':'')+' target';
   return '<div class="gtimer'+(t.running?' running':'')+(overtime?' gt-done':'')+'" id="gtimer-'+a.id+'">'
     +'<div class="gtimer-top"><span class="gtimer-label">'+esc(a.text)+'</span><span class="gtimer-target">'+targetLabel+'</span></div>'
-    +'<input class="li" data-action-id="'+a.id+'" value="'+escAttr(loadSessionFocus(a.id))+'" placeholder="What are you working on right now?" oninput="saveSessionFocus(\''+a.id+'\',this.value)" style="margin:2px 0 14px;font-size:0.75rem;">'
+    +'<textarea class="li gtimer-focus" data-action-id="'+a.id+'" placeholder="What are you working on right now?" oninput="saveSessionFocus(\''+a.id+'\',this.value);this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\'" style="margin:2px 0 14px;font-size:0.75rem;resize:none;overflow:hidden;min-height:20px;line-height:1.5;font-family:inherit;display:block;width:100%;">'+esc(loadSessionFocus(a.id))+'</textarea>'
     +'<div class="gtimer-display" id="tdisp-'+a.id+'">'+(overtime?'+':'')+fmtHMS(overtime?elapsed-target:target-elapsed)+'</div>'
     +'<div class="gtimer-bar"><div class="gtimer-fill" id="tfill-'+a.id+'" style="width:'+Math.min(100,(elapsed/target)*100)+'%"></div></div>'
     +'<div class="gtimer-controls">'
@@ -1748,6 +1748,11 @@ function buildGoalsList(){
       +(g.checkinFields&&g.checkinFields.length?'<button onclick="openCheckin(\''+g.id+'\')" style="margin-top:14px;background:none;border:1px solid var(--dim);color:var(--muted);font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;padding:10px 16px;cursor:pointer;width:100%;transition:all 0.2s;" onmouseover="this.style.borderColor=\'var(--lime)\';this.style.color=\'var(--lime)\'" onmouseout="this.style.borderColor=\'var(--dim)\';this.style.color=\'var(--muted)\'">Sunday check-in →</button>':'');
 
     c.appendChild(div);
+  });
+
+  document.querySelectorAll('.gtimer-focus').forEach(function(ta){
+    ta.style.height='auto';
+    ta.style.height=ta.scrollHeight+'px';
   });
 }
 
