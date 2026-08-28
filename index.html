@@ -232,10 +232,10 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
     <div class="lbl" style="margin-bottom:10px">Today I am</div>
     <div class="idstmt" id="idStmt">Someone who does<br>what he <span class="acc">says.</span></div>
 
-    <div class="lbl" style="margin-bottom:8px">Today's word
+    <div class="lbl" style="margin-bottom:8px">Today's focus
       <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tw1')">i</span><div class="tip-box" id="tw1">One word or short sentence that sets the tone for today. Not a task — a way of being.<br><br>Examples:<br>— discipline<br>— forgiveness<br>— overcome fear<br>— keep every promise<br>— hard work</div></span>
     </div>
-    <input class="li" id="todayWord" type="text" placeholder="One word. How you show up today." style="margin-bottom:32px">
+    <input class="li" id="todayWord" type="text" placeholder="What matters today." style="margin-bottom:32px">
 
     <div class="plbl" id="mPlbl">0 / 5 complete</div>
     <div class="ptrack"><div class="pfill" id="mPfill" style="width:0%"></div></div>
@@ -1070,7 +1070,7 @@ function showDayDetail(key){
   var mDone=isToday?MS.filter(function(st){return !!S.morning[st.id];}).length:(snap&&snap.morningDone!==undefined?snap.morningDone:null);
   var mTotal=isToday?MS.length:(snap&&snap.morningTotal?snap.morningTotal:MS.length);
   var focusEl=document.getElementById('ddFocus');
-  var focusHtml=focus?'<span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase">word — </span>'+esc(focus):'<span style="color:rgba(244,240,232,0.2);font-size:0.7rem">no word recorded</span>';
+  var focusHtml=focus?'<span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase">focus — </span>'+esc(focus):'<span style="color:rgba(244,240,232,0.2);font-size:0.7rem">no focus recorded</span>';
   if(mDone!==null){
     focusHtml+='<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.62rem;color:'+(mDone===mTotal?'var(--lime)':'rgba(244,240,232,0.35)')+';margin-top:6px;">morning ritual — '+mDone+'/'+mTotal+(mDone===mTotal?' ✓':'')+'</div>';
   }
