@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LADDER</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 :root{--black:#080808;--white:#f4f0e8;--lime:#d4f000;--red:#ff2d2d;--dim:rgba(244,240,232,0.1);--dim2:rgba(244,240,232,0.05);--muted:rgba(244,240,232,0.3);--vmuted:rgba(244,240,232,0.15);}
@@ -237,12 +238,47 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
     </div>
     <input class="li" id="todayWord" type="text" placeholder="What matters today." style="margin-bottom:32px">
 
-    <div class="plbl" id="mPlbl">0 / 5 complete</div>
-    <div class="ptrack"><div class="pfill" id="mPfill" style="width:0%"></div></div>
-    <div class="rsteps" id="mSteps"></div>
     <div class="brow">
       <button class="bp" onclick="goTo('s-goals')">Go to your goals &rarr;</button>
       <button class="bg" onclick="goTo('s-ladder')">Ladder</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="s-wiring">
+  <div class="inner">
+    <div class="tbar" id="tW"></div>
+    <div class="lbl" style="margin-bottom:12px">Wiring</div>
+    <div class="big-q" style="margin-bottom:24px">Sit with <em>nothing.</em></div>
+
+    <div id="wiringStatic" style="border:1px solid var(--dim);height:320px;position:relative;overflow:hidden;margin-bottom:20px;background:rgba(212,240,0,0.015);">
+      <svg id="wiringSvg" width="100%" height="100%"></svg>
+      <div id="wiringEmpty" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:rgba(244,240,232,0.2);text-align:center;padding:0 30px;">Nothing built yet. Sit once, and the first point appears.</div>
+    </div>
+    <div id="wiringCount" style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;color:rgba(244,240,232,0.3);text-transform:uppercase;margin-bottom:24px;">0 sessions built</div>
+
+    <div id="wiringIdle" style="display:flex;gap:8px;margin-bottom:12px;">
+      <button class="wiring-dur on" data-min="3" onclick="setWiringDur(3,this)" style="flex:1;background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;padding:12px;cursor:pointer;">3 MIN</button>
+      <button class="wiring-dur" data-min="5" onclick="setWiringDur(5,this)" style="flex:1;background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;padding:12px;cursor:pointer;">5 MIN</button>
+      <button class="wiring-dur" data-min="10" onclick="setWiringDur(10,this)" style="flex:1;background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;padding:12px;cursor:pointer;">10 MIN</button>
+    </div>
+    <button id="wiringStartBtn" onclick="startWiring()" style="width:100%;background:var(--lime);border:none;color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:18px;cursor:pointer;margin-bottom:16px;">&#9654; Begin</button>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:rgba(244,240,232,0.3);line-height:1.8;margin-bottom:32px;">No phone. No music. No technique to hold your attention. When the timer ends, the network updates once &mdash; then goes still again until next time. Nothing to check in between.</div>
+
+    <div id="wiringRunning" style="display:none;text-align:center;margin-bottom:32px;">
+      <div id="wiringTimer" style="font-family:'Bebas Neue',sans-serif;font-size:3.2rem;color:var(--lime);letter-spacing:0.02em;">05:00</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:rgba(244,240,232,0.25);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:16px;">nothing to do. just sit.</div>
+      <button onclick="stopWiring()" style="background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;padding:10px 20px;cursor:pointer;">stop</button>
+    </div>
+
+    <div id="wiringReveal" style="display:none;position:fixed;inset:0;background:var(--black);z-index:998;flex-direction:column;align-items:center;justify-content:center;">
+      <svg id="wiringRevealSvg" width="100%" height="70%" style="max-height:70vh;"></svg>
+      <button id="wiringRevealDone" onclick="closeWiringReveal()" style="display:none;background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;padding:12px 24px;cursor:pointer;margin-top:20px;">continue</button>
+    </div>
+
+    <div class="brow">
+      <button class="bp" onclick="goTo('s-goals')">Go to your goals &rarr;</button>
+      <button class="bg" onclick="goTo('s-morning')">&larr; Morning</button>
     </div>
   </div>
 </div>
@@ -505,6 +541,7 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
 
 <nav id="nav" class="hidden">
   <button class="nb on" data-s="s-morning" onclick="goTo('s-morning')"><span class="ni">&#9728;&#65038;</span>morning</button>
+  <button class="nb" data-s="s-wiring" onclick="goTo('s-wiring')"><span class="ni">&#9889;</span>wiring</button>
   <button class="nb" data-s="s-goals" onclick="goTo('s-goals')"><span class="ni">&#9678;</span>goals</button>
   <button class="nb" data-s="s-mirror" onclick="goTo('s-mirror')"><span class="ni">&#9790;&#65038;</span>mirror</button>
   <button class="nb" data-s="s-ladder" onclick="goTo('s-ladder')"><span class="ni">&#9650;</span>ladder</button>
@@ -517,7 +554,9 @@ var MONTHS=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','D
 var MS=[
   {id:'m0',text:'Make the bed'},
   {id:'m1',text:'1L water, brush teeth'},
-  {id:'m2',text:'Affirmations, visualize',meta:'5 min'},
+  {id:'m2',text:'Affirmations',meta:'2 min',tip:"Say these out loud. Not to feel motivated \u2014 to remind yourself what's actually true.<br><br>\u2014 I don't need this to feel exciting. I need it done.<br>\u2014 The outcome isn't mine to control. The next hour is.<br>\u2014 Boredom is not the enemy. It's where consistency lives.<br>\u2014 I am not chasing a feeling. I am keeping a promise."},
+  {id:'m5',text:'Sit with the boredom',meta:'3 min',tip:"No phone. No music. No breathing technique to focus on. Just sit, and let your mind be bored.<br><br>This isn't meditation \u2014 meditation gives you something to do (breath, mantra). This gives you nothing. That's the point. You're training the exact muscle that lets you do boring, repetitive work without needing a hit to make it bearable."},
+  {id:'m6',text:'Visualize the process',meta:'2 min',tip:"Visualize the work, not the win. Not the finished book, not the money \u2014 picture yourself doing the boring part today. Sitting down. Starting. Showing up when it's not exciting.<br><br>Outcome-visualization builds attachment to a result you don't control. Process-visualization builds the habit you do control."},
   {id:'m3',text:'Read',meta:'10 min'},
   {id:'m4',text:'Write 1 gratitude'}
 ];
@@ -551,17 +590,18 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 function tick(){
   var n=new Date();
   var str=DAYS[n.getDay()]+' '+n.getDate()+' '+MONTHS[n.getMonth()]+' — '+n.toTimeString().slice(0,5);
-  ['tM','tMir','tGoals'].forEach(function(id){var e=document.getElementById(id);if(e)e.textContent=str;});
+  ['tM','tW','tMir','tGoals'].forEach(function(id){var e=document.getElementById(id);if(e)e.textContent=str;});
 }
 
 function buildSteps(cid,steps,key){
-  var c=document.getElementById(cid); c.innerHTML='';
+  var c=document.getElementById(cid); if(!c) return; c.innerHTML='';
   steps.forEach(function(step,i){
     var d=document.createElement('div');
     d.className='rs'+(S[key][step.id]?' done':'');
     d.setAttribute('data-step-key',key);
     d.setAttribute('data-step-id',step.id);
-    d.innerHTML='<span class="sn">'+String(i+1).padStart(2,'0')+'</span><span class="st">'+step.text+'</span>'+(step.meta?'<span class="smeta">'+step.meta+'</span>':'')+'<span class="sc">✓</span>';
+    var tipHtml=step.tip?'<span class="tip-wrap" style="margin-left:6px;"><span class="tip-icon" onclick="toggleTip(\'stiptip-'+step.id+'\')">i</span><div class="tip-box" id="stiptip-'+step.id+'">'+step.tip+'</div></span>':'';
+    d.innerHTML='<span class="sn">'+String(i+1).padStart(2,'0')+'</span><span class="st">'+step.text+tipHtml+'</span>'+(step.meta?'<span class="smeta">'+step.meta+'</span>':'')+'<span class="sc">✓</span>';
     c.appendChild(d);
   });
 }
@@ -580,6 +620,252 @@ function updateMP(){
   var fill=document.getElementById('mPfill'), lbl=document.getElementById('mPlbl');
   if(fill) fill.style.width=(done/total*100)+'%';
   if(lbl) lbl.textContent=done+' / '+total+' complete';
+}
+
+// ── THE WORK: boredom-tolerance practice + growing network graph ──
+function loadWiringLog(){
+  try{ return JSON.parse(localStorage.getItem('ladder_wiring_log')||'[]'); }catch(e){ return []; }
+}
+function saveWiringLog(log){
+  try{ localStorage.setItem('ladder_wiring_log', JSON.stringify(log)); }catch(e){}
+}
+function loadWiringLinks(){
+  try{ return JSON.parse(localStorage.getItem('ladder_wiring_links')||'[]'); }catch(e){ return []; }
+}
+function saveWiringLinks(links){
+  try{ localStorage.setItem('ladder_wiring_links', JSON.stringify(links)); }catch(e){}
+}
+function loadWiringPositions(){
+  try{ return JSON.parse(localStorage.getItem('ladder_wiring_positions')||'{}'); }catch(e){ return {}; }
+}
+function saveWiringPositions(pos){
+  try{ localStorage.setItem('ladder_wiring_positions', JSON.stringify(pos)); }catch(e){}
+}
+function loadEdgeStrength(){
+  try{ return JSON.parse(localStorage.getItem('ladder_practice_edge_strength')||'{}'); }catch(e){ return {}; }
+}
+function saveEdgeStrength(s){
+  try{ localStorage.setItem('ladder_practice_edge_strength', JSON.stringify(s)); }catch(e){}
+}
+function edgeKey(a,b){ return Math.min(a,b)+'-'+Math.max(a,b); }
+function seededRand(seed){ var x=Math.sin(seed*99991)*10000; return x-Math.floor(x); }
+
+var wiringDurMin=3;
+function setWiringDur(min,btn){
+  wiringDurMin=min;
+  document.querySelectorAll('.wiring-dur').forEach(function(b){
+    b.classList.remove('on'); b.style.borderColor='var(--dim)'; b.style.color='var(--muted)';
+  });
+  btn.classList.add('on'); btn.style.borderColor='var(--lime)'; btn.style.color='var(--lime)';
+}
+
+var wiringInterval=null, wiringEndsAt=null;
+function startWiring(){
+  document.getElementById('wiringIdle').style.display='none';
+  document.getElementById('wiringStartBtn').style.display='none';
+  document.getElementById('wiringRunning').style.display='block';
+  wiringEndsAt=Date.now()+wiringDurMin*60000;
+  tickWiringTimer();
+  wiringInterval=setInterval(tickWiringTimer,1000);
+}
+function tickWiringTimer(){
+  var remaining=Math.max(0,Math.round((wiringEndsAt-Date.now())/1000));
+  var m=Math.floor(remaining/60), s=remaining%60;
+  var el=document.getElementById('wiringTimer');
+  if(el) el.textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  if(remaining<=0){
+    clearInterval(wiringInterval); wiringInterval=null;
+    resetWiringIdleUI();
+    completeWiringSession();
+  }
+}
+function stopWiring(){
+  if(wiringInterval){ clearInterval(wiringInterval); wiringInterval=null; }
+  resetWiringIdleUI();
+}
+function resetWiringIdleUI(){
+  document.getElementById('wiringIdle').style.display='flex';
+  document.getElementById('wiringStartBtn').style.display='block';
+  document.getElementById('wiringRunning').style.display='none';
+}
+
+// ── The moment of payoff: bounded, one-time, never ambient. ──
+// This is the ONLY place the network is allowed to animate. Outside of
+// finishing a session, it never moves, never fires, never invites checking.
+function completeWiringSession(){
+  var log=loadWiringLog();
+  log.push({ts:Date.now()});
+  var newIndex=log.length-1;
+  var links=loadWiringLinks();
+  var newLink=null;
+  if(newIndex>0){
+    newLink={source:newIndex-1,target:newIndex};
+    links.push(newLink);
+    if(newIndex>2 && Math.random()<0.5){
+      var back=newIndex-1-Math.floor(Math.pow(Math.random(),2)*(newIndex-1));
+      if(back>=0 && back!==newIndex-1) links.push({source:back,target:newIndex});
+    }
+  }
+  saveWiringLog(log);
+  saveWiringLinks(links);
+  showWiringReveal(newIndex,links);
+}
+
+function showWiringReveal(newIndex,links){
+  if(typeof d3==='undefined'){ finalizeWiringNode(newIndex,links); return; }
+  var overlay=document.getElementById('wiringReveal');
+  var doneBtn=document.getElementById('wiringRevealDone');
+  overlay.style.display='flex'; doneBtn.style.display='none';
+  var svgEl=document.getElementById('wiringRevealSvg');
+  svgEl.innerHTML='';
+  var W=svgEl.clientWidth||360, H=svgEl.clientHeight||400;
+  var positions=loadWiringPositions();
+
+  var svg=d3.select(svgEl).attr('viewBox','0 0 '+W+' '+H);
+  var defs=svg.append('defs');
+  var glow=defs.append('filter').attr('id','revGlow').attr('x','-200%').attr('y','-200%').attr('width','500%').attr('height','500%');
+  glow.append('feGaussianBlur').attr('stdDeviation','5').attr('result','b');
+  var gm=glow.append('feMerge'); gm.append('feMergeNode').attr('in','b'); gm.append('feMergeNode').attr('in','SourceGraphic');
+
+  var oldLinks=links.filter(function(l){return l.target!==newIndex;});
+  var g=svg.append('g');
+  var linkSel=g.selectAll('line').data(oldLinks).enter().append('line')
+    .attr('x1',function(l){return (positions[l.source]||{x:W/2}).x;})
+    .attr('y1',function(l){return (positions[l.source]||{y:H/2}).y;})
+    .attr('x2',function(l){return (positions[l.target]||{x:W/2}).x;})
+    .attr('y2',function(l){return (positions[l.target]||{y:H/2}).y;})
+    .attr('stroke','#d4f000').attr('stroke-opacity',0.2).attr('stroke-width',1);
+  var nodeSel=g.selectAll('circle.old').data(Object.keys(positions)).enter().append('circle').attr('class','old')
+    .attr('cx',function(id){return positions[id].x;}).attr('cy',function(id){return positions[id].y;})
+    .attr('r',3).attr('fill','#d4f000').attr('opacity',0.55).attr('filter','url(#revGlow)');
+
+  if(newIndex===0){
+    var cx=W/2, cy=H/2;
+    var nn=g.append('circle').attr('cx',cx).attr('cy',cy).attr('r',0).attr('fill','#d4f000').attr('filter','url(#revGlow)');
+    nn.transition().delay(200).duration(400).attr('r',10).attr('opacity',1)
+      .transition().duration(500).attr('r',4).attr('opacity',0.9);
+    var pos={}; pos[0]={x:cx,y:cy}; saveWiringPositions(pos);
+    setTimeout(function(){ finalizeWiringReveal(newIndex,links); },1400);
+    return;
+  }
+
+  var anchor=positions[newIndex-1]||{x:W/2,y:H/2};
+  var angle=Math.random()*Math.PI*2;
+  var startX=anchor.x+Math.cos(angle)*70, startY=anchor.y+Math.sin(angle)*70;
+  startX=Math.max(20,Math.min(W-20,startX)); startY=Math.max(20,Math.min(H-20,startY));
+
+  var newLinkForNode=oldLinksOf(links,newIndex);
+  var growLine=g.append('line')
+    .attr('x1',startX).attr('y1',startY).attr('x2',startX).attr('y2',startY)
+    .attr('stroke','#d4f000').attr('stroke-opacity',0.5).attr('stroke-width',1.5);
+
+  var newNode=g.append('circle').attr('cx',startX).attr('cy',startY).attr('r',0).attr('fill','#d4f000').attr('filter','url(#revGlow)');
+
+  newNode.transition().delay(150).duration(300).attr('r',9).attr('opacity',1);
+  growLine.transition().delay(250).duration(500)
+    .attr('x2',anchor.x).attr('y2',anchor.y);
+
+  setTimeout(function(){
+    var pulse=g.append('circle').attr('r',4).attr('fill','#f4f0e8').attr('filter','url(#revGlow)')
+      .attr('cx',startX).attr('cy',startY);
+    var t0=Date.now(), dur=500;
+    var trav=setInterval(function(){
+      var p=Math.min(1,(Date.now()-t0)/dur);
+      pulse.attr('cx',startX+(anchor.x-startX)*p).attr('cy',startY+(anchor.y-startY)*p);
+      if(p>=1){ clearInterval(trav); pulse.remove(); }
+    },30);
+  },800);
+
+  newNode.transition().delay(1400).duration(400).attr('r',4).attr('opacity',0.9);
+
+  var pos=positions; pos[newIndex]={x:anchor.x,y:anchor.y}; saveWiringPositions(pos);
+
+  setTimeout(function(){ finalizeWiringReveal(newIndex,links); },2200);
+}
+
+function oldLinksOf(links,idx){ return links.filter(function(l){return l.target===idx||l.source===idx;}); }
+
+function finalizeWiringReveal(newIndex,links){
+  var doneBtn=document.getElementById('wiringRevealDone');
+  doneBtn.style.display='block';
+  doneBtn.onclick=function(){
+    document.getElementById('wiringReveal').style.display='none';
+    renderWiringStatic();
+  };
+}
+function finalizeWiringNode(){ renderWiringStatic(); }
+function closeWiringReveal(){
+  document.getElementById('wiringReveal').style.display='none';
+  renderWiringStatic();
+}
+
+// ── The resting state: completely still. Nothing animates here, ever. ──
+// Opening this tab shows exactly what you built. Nothing new happens
+// unless you actually go do the work again.
+function renderWiringStatic(){
+  var log=loadWiringLog();
+  var countEl=document.getElementById('wiringCount');
+  if(countEl) countEl.textContent=log.length+' session'+(log.length===1?'':'s')+' built';
+  var emptyEl=document.getElementById('wiringEmpty');
+  if(emptyEl) emptyEl.style.display=log.length?'none':'flex';
+
+  var svgEl=document.getElementById('wiringSvg');
+  if(!svgEl) return;
+  svgEl.innerHTML='';
+  if(!log.length) return;
+
+  var wrap=document.getElementById('wiringStatic');
+  var W=(wrap&&wrap.clientWidth)||400, H=(wrap&&wrap.clientHeight)||320;
+  var positions=loadWiringPositions();
+  var links=loadWiringLinks();
+  var strength=loadEdgeStrength();
+
+  var degree={};
+  links.forEach(function(l){ degree[l.source]=(degree[l.source]||0)+1; degree[l.target]=(degree[l.target]||0)+1; });
+
+  var svg=d3.select(svgEl).attr('viewBox','0 0 '+W+' '+H);
+  var defs=svg.append('defs');
+  var glow=defs.append('filter').attr('id','statGlow').attr('x','-200%').attr('y','-200%').attr('width','500%').attr('height','500%');
+  glow.append('feGaussianBlur').attr('stdDeviation','3.5').attr('result','b');
+  var gm=glow.append('feMerge'); gm.append('feMergeNode').attr('in','b'); gm.append('feMergeNode').attr('in','SourceGraphic');
+
+  var dustCount=Math.min(30,8+log.length);
+  var dust=svg.append('g');
+  for(var d=0;d<dustCount;d++){
+    dust.append('circle')
+      .attr('cx',seededRand(d*7+1)*W).attr('cy',seededRand(d*13+2)*H)
+      .attr('r',seededRand(d*17+3)*1.1+0.3)
+      .attr('fill','#d4f000').attr('opacity',seededRand(d*23+4)*0.1+0.03);
+  }
+
+  svg.selectAll('line').data(links).enter().append('line')
+    .attr('x1',function(l){return (positions[l.source]||{x:W/2}).x;})
+    .attr('y1',function(l){return (positions[l.source]||{y:H/2}).y;})
+    .attr('x2',function(l){return (positions[l.target]||{x:W/2}).x;})
+    .attr('y2',function(l){return (positions[l.target]||{y:H/2}).y;})
+    .attr('stroke','#d4f000')
+    .attr('stroke-opacity',function(l){return Math.min(0.5,0.14+(strength[edgeKey(l.source,l.target)]||0)*0.02);})
+    .attr('stroke-width',function(l){return Math.min(3,1+(strength[edgeKey(l.source,l.target)]||0)*0.08);});
+
+  var nodeG=svg.selectAll('g.node').data(Object.keys(positions).map(Number)).enter().append('g')
+    .attr('class','node')
+    .attr('transform',function(id){var p=positions[id]||{x:W/2,y:H/2}; return 'translate('+p.x+','+p.y+')';})
+    .attr('filter','url(#statGlow)');
+
+  nodeG.each(function(id){
+    var g=d3.select(this);
+    var tendrils=3+Math.floor(seededRand(id*3+1)*3);
+    for(var t=0;t<tendrils;t++){
+      var ang=seededRand(id*11+t)*Math.PI*2;
+      var len=4+seededRand(id*19+t)*5;
+      g.append('line').attr('x1',0).attr('y1',0).attr('x2',Math.cos(ang)*len).attr('y2',Math.sin(ang)*len)
+        .attr('stroke','#d4f000').attr('stroke-width',0.6).attr('stroke-opacity',0.3);
+    }
+  });
+
+  nodeG.append('circle')
+    .attr('r',function(id){return 2+Math.min(4,(degree[id]||0)*0.6);})
+    .attr('fill','#d4f000').attr('opacity',0.85);
 }
 
 function buildYBar(){
@@ -742,6 +1028,7 @@ function cycleRule(ruleId){
 }
 
 document.addEventListener('click',function(e){
+  if(e.target.classList.contains('tip-icon')){return;}
   var editBtn=e.target.closest('.rule-edit');
   if(editBtn){e.stopPropagation();openEditRule(editBtn.getAttribute('data-edit'));return;}
   var row=e.target.closest('.rule-row');
@@ -1255,8 +1542,9 @@ function goTo(id){
     document.getElementById('mGreet').innerHTML=g+'<br>Are you <em>ready?</em>';
     setIdentity();
     document.getElementById('todayWord').value=S.todayWord||'';
-    buildSteps('mSteps',MS,'morning'); updateMP(); buildYBar();
+    buildYBar();
   }
+  if(id==='s-wiring'){renderWiringStatic();}
   if(id==='s-ladder'){buildLadder();buildRewards();buildRules();}
   if(id==='s-mirror'){buildSteps('nSteps',NS,'night');buildMirrorQuestions();}
   if(id==='s-goals'){buildGoalsList();checkSunday();buildFreeTimers();}
@@ -1921,7 +2209,7 @@ document.addEventListener('keydown',function(e){
   if(curScreen==='s-boot') return;
   var tag=document.activeElement.tagName;
   if(tag==='INPUT'||tag==='TEXTAREA') return;
-  var map={'1':'s-morning','2':'s-goals','3':'s-mirror','4':'s-ladder'};
+  var map={'1':'s-morning','2':'s-wiring','3':'s-goals','4':'s-mirror','5':'s-ladder'};
   if(map[e.key]) goTo(map[e.key]);
 });
 
