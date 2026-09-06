@@ -6,6 +6,10 @@
 <title>LADDER</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script type="module">
+  import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+  window.THREE = THREE;
+</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 :root{--black:#080808;--white:#f4f0e8;--lime:#d4f000;--red:#ff2d2d;--dim:rgba(244,240,232,0.1);--dim2:rgba(244,240,232,0.05);--muted:rgba(244,240,232,0.3);--vmuted:rgba(244,240,232,0.15);}
@@ -234,7 +238,7 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
     <div class="idstmt" id="idStmt">Someone who does<br>what he <span class="acc">says.</span></div>
 
     <div class="lbl" style="margin-bottom:8px">Today's focus
-      <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tw1')">i</span><div class="tip-box" id="tw1">One word or short sentence that sets the tone for today. Not a task — a way of being.<br><br>Examples:<br>— discipline<br>— forgiveness<br>— overcome fear<br>— keep every promise<br>— hard work</div></span>
+      <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tw1')">i</span><div class="tip-box" id="tw1">One word or short sentence that sets the tone for today. Not a task. A way of being.<br><br>Examples:<br>• discipline<br>• forgiveness<br>• overcome fear<br>• keep every promise<br>• hard work</div></span>
     </div>
     <input class="li" id="todayWord" type="text" placeholder="What matters today." style="margin-bottom:32px">
 
@@ -251,11 +255,17 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
     <div class="lbl" style="margin-bottom:12px">Wiring</div>
     <div class="big-q" style="margin-bottom:24px">Sit with <em>nothing.</em></div>
 
-    <div id="wiringStatic" style="border:1px solid var(--dim);height:320px;position:relative;overflow:hidden;margin-bottom:20px;background:rgba(212,240,0,0.015);">
-      <svg id="wiringSvg" width="100%" height="100%"></svg>
+    <div id="wiringStatic" style="border:1px solid var(--dim);height:320px;position:relative;overflow:hidden;margin-bottom:14px;background:#050505;">
+      <div id="wiringCanvas" style="width:100%;height:100%;"></div>
       <div id="wiringEmpty" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:rgba(244,240,232,0.2);text-align:center;padding:0 30px;">Nothing built yet. Sit once, and the first point appears.</div>
     </div>
-    <div id="wiringCount" style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;color:rgba(244,240,232,0.3);text-transform:uppercase;margin-bottom:24px;">0 sessions built</div>
+    <div id="wiringReadout" style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.05em;color:rgba(244,240,232,0.4);line-height:2;margin-bottom:24px;border-left:2px solid rgba(212,240,0,0.2);padding-left:12px;">
+      <div>SESSIONS <span id="roCount" style="color:var(--lime);">0</span> / 100
+        <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('twiring')">i</span><div class="tip-box" id="twiring">Every sit counts as one rep, whatever length you picked. 3 min or 10 min counts the same. Length isn't the point. Showing up again is.<br><br>100 reps fills the sphere. Not a magic number, just enough that by the time you're done, showing up won't be a decision anymore. It'll just be what you do.</div></span>
+      </div>
+      <div>STAGE <span id="roStage" style="color:rgba(244,240,232,0.7);">n/a</span></div>
+      <div>NEXT THRESHOLD IN <span id="roNext" style="color:rgba(244,240,232,0.7);">n/a</span></div>
+    </div>
 
     <div id="wiringIdle" style="display:flex;gap:8px;margin-bottom:12px;">
       <button class="wiring-dur on" data-min="3" onclick="setWiringDur(3,this)" style="flex:1;background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;padding:12px;cursor:pointer;">3 MIN</button>
@@ -263,7 +273,7 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
       <button class="wiring-dur" data-min="10" onclick="setWiringDur(10,this)" style="flex:1;background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;padding:12px;cursor:pointer;">10 MIN</button>
     </div>
     <button id="wiringStartBtn" onclick="startWiring()" style="width:100%;background:var(--lime);border:none;color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:18px;cursor:pointer;margin-bottom:16px;">&#9654; Begin</button>
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:rgba(244,240,232,0.3);line-height:1.8;margin-bottom:32px;">No phone. No music. No technique to hold your attention. When the timer ends, the network updates once &mdash; then goes still again until next time. Nothing to check in between.</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:rgba(244,240,232,0.3);line-height:1.8;margin-bottom:32px;">Consistency requires withstanding boredom. Your mind panics without stimulus and reaches for an escape. This is where you train against that.<br><br>A walk suddenly feels urgent. A snack. A call you "need" to make. It's always a void you're trying to fill. Don't redirect it, don't fill it. No phone, no music. Sit with the silence until the timer ends.</div>
 
     <div id="wiringRunning" style="display:none;text-align:center;margin-bottom:32px;">
       <div id="wiringTimer" style="font-family:'Bebas Neue',sans-serif;font-size:3.2rem;color:var(--lime);letter-spacing:0.02em;">05:00</div>
@@ -272,7 +282,8 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
     </div>
 
     <div id="wiringReveal" style="display:none;position:fixed;inset:0;background:var(--black);z-index:998;flex-direction:column;align-items:center;justify-content:center;">
-      <svg id="wiringRevealSvg" width="100%" height="70%" style="max-height:70vh;"></svg>
+      <div id="wiringRevealCanvas" style="width:100%;height:65vh;"></div>
+      <div id="wiringRevealMsg" style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:rgba(212,240,0,0.6);text-align:center;padding:0 30px;min-height:20px;margin-top:12px;"></div>
       <button id="wiringRevealDone" onclick="closeWiringReveal()" style="display:none;background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;padding:12px 24px;cursor:pointer;margin-top:20px;">continue</button>
     </div>
 
@@ -294,7 +305,7 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
     <div id="timeLine" class="timeblock"></div>
 
     <div id="debtPanel" style="display:none;border-left:2px solid rgba(255,45,45,0.4);padding:2px 0 2px 18px;margin-bottom:28px;">
-      <div class="redlbl" style="margin-bottom:6px;">Run it off &mdash; no music</div>
+      <div class="redlbl" style="margin-bottom:6px;">Run it off: no music</div>
       <div id="debtDeadline" style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.08em;color:rgba(244,240,232,0.3);margin-bottom:16px;"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <button class="bg" onclick="payKm(1)">&#10003; 1km</button>
@@ -323,7 +334,7 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
       <div class="dd-mirror" id="ddMirror"></div>
     </div>
     <div class="csec">
-      <div class="cq">Close today &mdash; be honest.<br><span style="color:var(--white);font-size:0.85rem;">Did you show up?</span></div>
+      <div class="cq">Close today. Be honest.<br><span style="color:var(--white);font-size:0.85rem;">Did you show up?</span></div>
       <div class="crow">
         <button class="cwin" onclick="markToday(true)"><span class="cbig">W</span><span class="csub">that was a win</span></button>
         <button class="cmiss" onclick="markToday(false)"><span class="cbig">&#10007;</span><span class="csub">I missed</span></button>
@@ -335,7 +346,7 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
     </div>
     <div class="sdiv"></div>
     <div class="lbl" style="margin-bottom:8px">Unbreakable rules
-      <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tr1')">i</span><div class="tip-box" id="tr1">Your own rules. You set them, you hold them. Tap a rule to cycle: neutral → held → broke. Breaking a rule adds its consequence in km to your debt.<br><br>Examples:<br>— No porn. No masturbation. (10km)<br>— No social media until goal actions done (10km)<br>— No bed until the day is closed (5km)</div></span>
+      <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tr1')">i</span><div class="tip-box" id="tr1">Your own rules. You set them, you hold them. Tap a rule to cycle: neutral → held → broke. Breaking a rule adds its consequence in km to your debt.<br><br>Examples:<br>• No porn. No masturbation. (10km)<br>• No social media until goal actions done (10km)<br>• No bed until the day is closed (5km)</div></span>
     </div>
     <div id="rulesList"></div>
     <button onclick="openAddRule()" style="background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;padding:12px 20px;cursor:pointer;margin-top:10px;width:100%;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--lime)';this.style.color='var(--lime)'" onmouseout="this.style.borderColor='var(--dim)';this.style.color='var(--muted)'">+ Add rule</button>
@@ -363,7 +374,7 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
     </div>
 
     <div class="sdiv"></div>
-    <div class="lbl" style="margin-bottom:12px">Penalties &mdash; no music zone</div>
+    <div class="lbl" style="margin-bottom:12px">Penalties: no music zone</div>
     <div style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:rgba(244,240,232,0.35);line-height:2.2;margin-bottom:16px">
       Skip morning routine &rarr; <span style="color:var(--red)">+5km</span><br>
       Broken rule &rarr; <span style="color:var(--red)">its own consequence</span><br>
@@ -371,7 +382,7 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
       No music. That's the point.
     </div>
     <div class="sdiv"></div>
-    <div class="lbl" style="margin-bottom:16px">Rewards &mdash; earned not given</div>
+    <div class="lbl" style="margin-bottom:16px">Rewards: earned not given</div>
     <div id="rewardsList"></div>
 
     <div style="margin-top:40px;padding-top:20px;border-top:1px solid var(--dim2);">
@@ -389,7 +400,49 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
     <div id="mirrorQuestions"></div>
 
     <div class="sdiv"></div>
-    <div class="lbl" style="margin-bottom:12px">Night ritual &mdash; no phone after this</div>
+    <div class="lbl" style="margin-bottom:8px">One line</div>
+    <div class="big-q" style="margin-bottom:16px;font-size:1.3rem;">If today taught you<br><em>one thing,</em> what was it.</div>
+
+    <div id="webWrap" style="border:1px solid var(--dim);height:280px;position:relative;overflow:hidden;margin-bottom:8px;background:#050505;">
+      <div id="webCanvas" style="width:100%;height:100%;cursor:pointer;"></div>
+      <div id="webEmpty" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:rgba(244,240,232,0.2);text-align:center;padding:0 30px;">Nothing connected yet. Write your first line below.</div>
+      <div id="webNavOverlay" style="display:none;position:absolute;left:12px;right:12px;bottom:12px;background:rgba(8,8,8,0.9);border-left:2px solid rgba(212,240,0,0.4);padding:10px 12px;">
+        <div id="webNavDate" style="font-family:'IBM Plex Mono',monospace;font-size:0.55rem;color:var(--muted);margin-bottom:4px;"></div>
+        <div id="webNavText" style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:rgba(244,240,232,0.85);line-height:1.5;"></div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div id="webCount" style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;color:rgba(244,240,232,0.3);text-transform:uppercase;">0 connected. tap a point to enter.</div>
+      <button id="webBackBtn" onclick="webBackToOverview()" style="display:none;background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;padding:6px 10px;cursor:pointer;">&larr; overview</button>
+    </div>
+
+    <input class="li" id="oneLineInput" placeholder="One line. Not an essay." style="margin-bottom:10px;">
+    <button onclick="submitWebEntry()" id="webSubmitBtn" style="width:100%;background:var(--lime);border:none;color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:16px;cursor:pointer;margin-bottom:12px;">Add to the web &rarr;</button>
+    <button onclick="findPatterns()" id="patternBtn" style="width:100%;background:rgba(212,240,0,0.06);border:1px solid rgba(212,240,0,0.25);color:var(--lime);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;padding:14px;cursor:pointer;margin-bottom:24px;">&#9670; Find patterns in your reflections</button>
+
+    <div id="oneLineArchive" style="margin-bottom:8px;max-height:200px;overflow-y:auto;"></div>
+
+    <div id="facetDetail" style="display:none;position:fixed;inset:0;background:rgba(8,8,8,0.97);z-index:999;overflow-y:auto;padding:40px 28px;">
+      <div style="max-width:480px;margin:0 auto;">
+        <div class="lbl" style="margin-bottom:8px" id="facetDetailDate"></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.9rem;color:var(--white);line-height:1.7;margin-bottom:28px;" id="facetDetailText"></div>
+        <div style="display:flex;gap:10px;">
+          <button onclick="deleteFacetEntry()" style="background:none;border:1px solid rgba(255,45,45,0.3);color:rgba(255,45,45,0.7);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;padding:14px 20px;cursor:pointer;flex:1;">Delete this facet</button>
+          <button onclick="closeFacetDetail()" style="background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;padding:14px 20px;cursor:pointer;">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="patternResult" style="display:none;border:1px solid rgba(212,240,0,0.2);background:rgba(212,240,0,0.03);padding:18px;margin-bottom:24px;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:rgba(244,240,232,0.75);line-height:1.8;"></div>
+
+    <div id="webReveal" style="display:none;position:fixed;inset:0;background:var(--black);z-index:998;flex-direction:column;align-items:center;justify-content:center;">
+      <div id="webRevealCanvas" style="width:100%;height:65vh;"></div>
+      <div id="webRevealMsg" style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:rgba(212,240,0,0.6);text-align:center;padding:0 30px;min-height:20px;margin-top:12px;"></div>
+      <button id="webRevealDone" onclick="closeWebReveal()" style="display:none;background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;padding:12px 24px;cursor:pointer;margin-top:20px;">continue</button>
+    </div>
+
+    <div class="sdiv"></div>
+    <div class="lbl" style="margin-bottom:12px">Night ritual: no phone after this</div>
     <div class="rsteps" id="nSteps"></div>
     <div class="brow">
       <button class="bp" onclick="closeDay()">Close the day &rarr;</button>
@@ -405,7 +458,7 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
     <div class="big-q" style="margin-bottom:28px">Where you're <em>going.</em></div>
 
     <div id="sunBox" class="sunbox" style="display:none;margin-bottom:24px">
-      <div class="suntxt">It's Sunday &mdash; do your check-ins and set up the week.</div>
+      <div class="suntxt">It's Sunday. Do your check-ins and set up the week.</div>
     </div>
 
     <div id="goalsList"></div>
@@ -416,7 +469,7 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
     <div class="sdiv"></div>
 
     <div class="lbl" style="margin-bottom:8px">Timers
-      <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tfree')">i</span><div class="tip-box" id="tfree">These are separate from goals &mdash; not tied to an outcome, just for anything you want to time and stay honest about, like rest or a break. Goal timers live inside each goal above; these are freestanding. They keep running while you move between tabs.</div></span>
+      <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tfree')">i</span><div class="tip-box" id="tfree">These are separate from goals, not tied to an outcome, just for anything you want to time and stay honest about, like rest or a break. Goal timers live inside each goal above; these are freestanding. They keep running while you move between tabs.</div></span>
     </div>
     <div id="freeTimersList"></div>
     <button onclick="openAddFreeTimer()" style="background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;padding:12px 18px;cursor:pointer;margin-top:4px;width:100%;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--lime)';this.style.color='var(--lime)'" onmouseout="this.style.borderColor='var(--dim)';this.style.color='var(--muted)'">+ Add timer</button>
@@ -453,7 +506,7 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
         <div class="lbl" style="margin-bottom:8px">AI goal builder</div>
         <div class="big-q" style="margin-bottom:20px;font-size:1.6rem;">Just <em>talk.</em></div>
         <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:rgba(244,240,232,0.4);line-height:1.9;margin-bottom:20px;">
-          Write freely about what you want. What it is, why you want it, when you want it, what you're willing to do. Don't structure it — that's the AI's job. It will turn your words into a complete goal: outcome, daily action, milestones, check-in fields, adjustment rule. You review it before saving.
+          Write freely about what you want. What it is, why you want it, when you want it, what you're willing to do. Don't structure it. That's the AI's job. It will turn your words into a complete goal: outcome, daily action, milestones, check-in fields, adjustment rule. You review it before saving.
         </div>
 
         <textarea id="aiInput" style="width:100%;background:none;border:1px solid var(--dim);color:var(--white);font-family:'IBM Plex Mono',monospace;font-size:0.82rem;resize:vertical;min-height:180px;outline:none;padding:16px;caret-color:var(--lime);line-height:1.8;" placeholder="e.g. I want to have 10k saved by february 2027 because it gives me freedom to be myself without depending on anyone. I'm thinking remote work for like 200 a week plus I'm writing a book and building a website I want to sell subscriptions for. I can put in about 4 hours a day..."></textarea>
@@ -473,13 +526,13 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
         <div style="display:flex;flex-direction:column;gap:20px;">
           <div>
             <div class="lbl" style="margin-bottom:8px">Goal name
-              <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t1')">i</span><div class="tip-box" id="t1">Give your goal a short name. This is just for you to recognize it. Keep it simple — one to four words.<br><br>Examples:<br>— Freedom of action<br>— Graduation internship<br>— Build the body</div></span>
+              <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t1')">i</span><div class="tip-box" id="t1">Give your goal a short name. This is just for you to recognize it. Keep it simple: one to four words.<br><br>Examples:<br>• Freedom of action<br>• Graduation internship<br>• Build the body</div></span>
             </div>
             <input id="gName" class="li" placeholder="e.g. Freedom of action" style="font-size:0.9rem;">
           </div>
           <div>
             <div class="lbl" style="margin-bottom:8px">Outcome goal
-              <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t2')">i</span><div class="tip-box" id="t2">What exactly do you want to achieve, and by when? Be as specific as possible. A good outcome goal has a number and a date in it.<br><br>Examples:<br>— €10.000 balance by 16 feb 2027<br>— 3 interviews planned by 1 sept 2026<br>— Run a 10K in under 50 min by 1 jan 2027</div></span>
+              <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t2')">i</span><div class="tip-box" id="t2">What exactly do you want to achieve, and by when? Be as specific as possible. A good outcome goal has a number and a date in it.<br><br>Examples:<br>• €10.000 balance by 16 feb 2027<br>• 3 interviews planned by 1 sept 2026<br>• Run a 10K in under 50 min by 1 jan 2027</div></span>
             </div>
             <input id="gOutcome" class="li" placeholder="e.g. €10.000 balance by 16 feb 2027">
           </div>
@@ -491,26 +544,26 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
           </div>
           <div>
             <div class="lbl" style="margin-bottom:8px">Daily actions
-              <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t4')">i</span><div class="tip-box" id="t4">The things you do every day that move you toward this goal. Add as many as you need &mdash; most goals need just one, some need two or three separate blocks of work.<br><br>If an action has a time attached &mdash; "1 hour of calling", "3 hours on the book" &mdash; choose <strong style="color:var(--lime)">Timer</strong> and actually time it. A checkbox can't tell you if you did 10 minutes or the full hour. If it's a count or task with no fixed length &mdash; "call 5 organisations", "make the bed" &mdash; use <strong style="color:var(--lime)">Check off</strong>.<br><br>Example: a money goal might have two actions &mdash; "1 hour calling, emailing, LinkedIn" (Timer, 60 min) and "3 hours on the book and site" (Timer, 180 min).</div></span>
+              <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t4')">i</span><div class="tip-box" id="t4">The things you do every day that move you toward this goal. Add as many as you need. Most goals need just one, some need two or three separate blocks of work.<br><br>If an action has a time attached, like "1 hour of calling" or "3 hours on the book", choose <strong style="color:var(--lime)">Timer</strong> and actually time it. A checkbox can't tell you if you did 10 minutes or the full hour. If it's a count or task with no fixed length, like "call 5 organisations" or "make the bed", use <strong style="color:var(--lime)">Check off</strong>.<br><br>Example: a money goal might have two actions: "1 hour calling, emailing, LinkedIn" (Timer, 60 min) and "3 hours on the book and site" (Timer, 180 min).</div></span>
             </div>
             <div id="actionRows"></div>
             <button type="button" onclick="addActionRow()" style="background:none;border:1px dashed var(--dim);color:rgba(244,240,232,0.35);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;padding:12px;cursor:pointer;width:100%;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--lime)';this.style.color='var(--lime)'" onmouseout="this.style.borderColor='var(--dim)';this.style.color='rgba(244,240,232,0.35)'">+ Add action</button>
           </div>
           <div>
             <div class="lbl" style="margin-bottom:8px">Adjustment rule
-              <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t6')">i</span><div class="tip-box" id="t6">What do you do if your daily actions are consistently done (green) but the outcome still isn't moving? This rule forces you to change your approach instead of repeating what doesn't work.<br><br>Examples:<br>— 2 weeks green but no movement → switch from email to calling, or try a different sector<br>— 2 weeks green but no sales → change price or target audience</div></span>
+              <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t6')">i</span><div class="tip-box" id="t6">What do you do if your daily actions are consistently done (green) but the outcome still isn't moving? This rule forces you to change your approach instead of repeating what doesn't work.<br><br>Examples:<br>• 2 weeks green but no movement → switch from email to calling, or try a different sector<br>• 2 weeks green but no sales → change price or target audience</div></span>
             </div>
             <input id="gAdjust" class="li" placeholder="e.g. 2 weeks green but no movement → change price, channel or audience">
           </div>
           <div>
             <div class="lbl" style="margin-bottom:8px">Milestones
-              <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t7')">i</span><div class="tip-box" id="t7">Smaller checkpoints on the way to your big goal. One per line. You can tick them off when you hit them.<br><br>Format: what you want to achieve | by when<br><br>Examples:<br>— First paying client | 1 okt 2026<br>— First monthly user | 1 nov 2026<br>— €1.000 in the bank | 1 dec 2026</div></span>
+              <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t7')">i</span><div class="tip-box" id="t7">Smaller checkpoints on the way to your big goal. One per line. You can tick them off when you hit them.<br><br>Format: what you want to achieve | by when<br><br>Examples:<br>• First paying client | 1 okt 2026<br>• First monthly user | 1 nov 2026<br>• €1.000 in the bank | 1 dec 2026</div></span>
             </div>
             <textarea id="gMilestones" style="width:100%;background:none;border:none;border-bottom:1px solid var(--dim);color:var(--white);font-family:'IBM Plex Mono',monospace;font-size:0.82rem;resize:none;height:90px;outline:none;padding:8px 0;caret-color:var(--lime);" placeholder="First paying client | 1 okt 2026&#10;First monthly user | 1 nov 2026"></textarea>
           </div>
           <div>
             <div class="lbl" style="margin-bottom:8px">Sunday check-in fields
-              <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t8')">i</span><div class="tip-box" id="t8">This is how you measure progress. Every Sunday you fill these in, and the app keeps the history so you can see if the outcome is actually moving.<br><br>Write the things you want to track, separated by commas. Each becomes its own input box.<br><br>Examples:<br>— Balance, Sales this week, Active users<br>— Reactions received, Interviews planned<br>— Weight (kg), Workouts this week</div></span>
+              <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t8')">i</span><div class="tip-box" id="t8">This is how you measure progress. Every Sunday you fill these in, and the app keeps the history so you can see if the outcome is actually moving.<br><br>Write the things you want to track, separated by commas. Each becomes its own input box.<br><br>Examples:<br>• Balance, Sales this week, Active users<br>• Reactions received, Interviews planned<br>• Weight (kg), Workouts this week</div></span>
             </div>
             <input id="gCheckinFields" class="li" placeholder="e.g. Balance, Sales this week, Active users">
           </div>
@@ -527,7 +580,7 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
     <div id="checkinModal" style="display:none;position:fixed;inset:0;background:rgba(8,8,8,0.97);z-index:999;overflow-y:auto;padding:40px 28px;">
       <div style="max-width:680px;margin:0 auto;">
         <div class="lbl" style="margin-bottom:6px" id="checkinGoalName"></div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--muted);margin-bottom:24px;">Sunday check-in — <span id="checkinDate"></span></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--muted);margin-bottom:24px;">Sunday check-in. <span id="checkinDate"></span></div>
         <div id="checkinFields" style="display:flex;flex-direction:column;gap:16px;"></div>
         <div style="display:flex;gap:10px;margin-top:28px;">
           <button onclick="saveCheckinModal()" style="background:var(--lime);border:none;color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:16px 28px;cursor:pointer;flex:1;">Save</button>
@@ -554,9 +607,9 @@ var MONTHS=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','D
 var MS=[
   {id:'m0',text:'Make the bed'},
   {id:'m1',text:'1L water, brush teeth'},
-  {id:'m2',text:'Affirmations',meta:'2 min',tip:"Say these out loud. Not to feel motivated \u2014 to remind yourself what's actually true.<br><br>\u2014 I don't need this to feel exciting. I need it done.<br>\u2014 The outcome isn't mine to control. The next hour is.<br>\u2014 Boredom is not the enemy. It's where consistency lives.<br>\u2014 I am not chasing a feeling. I am keeping a promise."},
-  {id:'m5',text:'Sit with the boredom',meta:'3 min',tip:"No phone. No music. No breathing technique to focus on. Just sit, and let your mind be bored.<br><br>This isn't meditation \u2014 meditation gives you something to do (breath, mantra). This gives you nothing. That's the point. You're training the exact muscle that lets you do boring, repetitive work without needing a hit to make it bearable."},
-  {id:'m6',text:'Visualize the process',meta:'2 min',tip:"Visualize the work, not the win. Not the finished book, not the money \u2014 picture yourself doing the boring part today. Sitting down. Starting. Showing up when it's not exciting.<br><br>Outcome-visualization builds attachment to a result you don't control. Process-visualization builds the habit you do control."},
+  {id:'m2',text:'Affirmations',meta:'2 min',tip:"Say these out loud. Not to feel motivated. To remind yourself what's actually true.<br><br>\u2022 I don't need this to feel exciting. I need it done.<br>\u2022 The outcome isn't mine to control. The next hour is.<br>\u2022 Boredom is not the enemy. It's where consistency lives.<br>\u2022 I am not chasing a feeling. I am keeping a promise."},
+  {id:'m5',text:'Sit with the boredom',meta:'3 min',tip:"No phone. No music. No breathing technique to focus on. Just sit, and let your mind be bored.<br><br>This isn't meditation. Meditation gives you something to do (breath, mantra). This gives you nothing. That's the point. You're training the exact muscle that lets you do boring, repetitive work without needing a hit to make it bearable."},
+  {id:'m6',text:'Visualize the process',meta:'2 min',tip:"Visualize the work, not the win. Not the finished book, not the money. Picture yourself doing the boring part today. Sitting down. Starting. Showing up when it's not exciting.<br><br>Outcome-visualization builds attachment to a result you don't control. Process-visualization builds the habit you do control."},
   {id:'m3',text:'Read',meta:'10 min'},
   {id:'m4',text:'Write 1 gratitude'}
 ];
@@ -589,7 +642,7 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 
 function tick(){
   var n=new Date();
-  var str=DAYS[n.getDay()]+' '+n.getDate()+' '+MONTHS[n.getMonth()]+' — '+n.toTimeString().slice(0,5);
+  var str=DAYS[n.getDay()]+' '+n.getDate()+' '+MONTHS[n.getMonth()]+'. '+n.toTimeString().slice(0,5);
   ['tM','tW','tMir','tGoals'].forEach(function(id){var e=document.getElementById(id);if(e)e.textContent=str;});
 }
 
@@ -622,35 +675,8 @@ function updateMP(){
   if(lbl) lbl.textContent=done+' / '+total+' complete';
 }
 
-// ── THE WORK: boredom-tolerance practice + growing network graph ──
-function loadWiringLog(){
-  try{ return JSON.parse(localStorage.getItem('ladder_wiring_log')||'[]'); }catch(e){ return []; }
-}
-function saveWiringLog(log){
-  try{ localStorage.setItem('ladder_wiring_log', JSON.stringify(log)); }catch(e){}
-}
-function loadWiringLinks(){
-  try{ return JSON.parse(localStorage.getItem('ladder_wiring_links')||'[]'); }catch(e){ return []; }
-}
-function saveWiringLinks(links){
-  try{ localStorage.setItem('ladder_wiring_links', JSON.stringify(links)); }catch(e){}
-}
-function loadWiringPositions(){
-  try{ return JSON.parse(localStorage.getItem('ladder_wiring_positions')||'{}'); }catch(e){ return {}; }
-}
-function saveWiringPositions(pos){
-  try{ localStorage.setItem('ladder_wiring_positions', JSON.stringify(pos)); }catch(e){}
-}
-function loadEdgeStrength(){
-  try{ return JSON.parse(localStorage.getItem('ladder_practice_edge_strength')||'{}'); }catch(e){ return {}; }
-}
-function saveEdgeStrength(s){
-  try{ localStorage.setItem('ladder_practice_edge_strength', JSON.stringify(s)); }catch(e){}
-}
-function edgeKey(a,b){ return Math.min(a,b)+'-'+Math.max(a,b); }
-function seededRand(seed){ var x=Math.sin(seed*99991)*10000; return x-Math.floor(x); }
+// ── THE WORK: boredom-tolerance practice + growing 3D network ──
 
-var wiringDurMin=3;
 function setWiringDur(min,btn){
   wiringDurMin=min;
   document.querySelectorAll('.wiring-dur').forEach(function(b){
@@ -692,180 +718,619 @@ function resetWiringIdleUI(){
 // ── The moment of payoff: bounded, one-time, never ambient. ──
 // This is the ONLY place the network is allowed to animate. Outside of
 // finishing a session, it never moves, never fires, never invites checking.
+// ── FIBONACCI SPHERE: fixed, deterministic point positions ──
+// Every point's position depends only on its index and the total capacity.
+// Nothing here is random and nothing is recomputed differently between visits.
+var WIRING_TOTAL=100;
+var WIRING_RADIUS=95;
+function fibSpherePoint(i,total,radius){
+  var goldenAngle=Math.PI*(3-Math.sqrt(5));
+  var y=1-(i/(total-1))*2;
+  var r=Math.sqrt(Math.max(0,1-y*y));
+  var theta=goldenAngle*i;
+  return {x:Math.cos(theta)*r*radius, y:y*radius, z:Math.sin(theta)*r*radius};
+}
+function dist3(a,b){ return Math.sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y)+(a.z-b.z)*(a.z-b.z)); }
+function nearestRevealedNeighbors(idx,revealedCount,k){
+  var p=fibSpherePoint(idx,WIRING_TOTAL,WIRING_RADIUS);
+  var candidates=[];
+  for(var j=0;j<revealedCount;j++){
+    if(j===idx) continue;
+    var q=fibSpherePoint(j,WIRING_TOTAL,WIRING_RADIUS);
+    candidates.push({id:j,d:dist3(p,q)});
+  }
+  candidates.sort(function(a,b){return a.d-b.d;});
+  return candidates.slice(0,k).map(function(c){return c.id;});
+}
+
+// ── Simple, self-contained progress. Quarter-marks, nothing borrowed. ──
+function wiringStageInfo(count){
+  if(count<25) return {name:'BUILDING',next:25-count,label:'quarter full'};
+  if(count<50) return {name:'BUILDING',next:50-count,label:'halfway'};
+  if(count<75) return {name:'HOLDING',next:75-count,label:'three quarters'};
+  if(count<100) return {name:'HOLDING',next:100-count,label:'complete'};
+  return {name:'WIRED IN',next:0,label:'sphere complete'};
+}
+function updateWiringReadout(count){
+  var c=document.getElementById('roCount'); if(c) c.textContent=count;
+  var stage=wiringStageInfo(count);
+  var s=document.getElementById('roStage'); if(s) s.textContent=stage.name;
+  var n=document.getElementById('roNext');
+  if(n) n.textContent=stage.next>0?(stage.next+' sessions to '+stage.label):'complete';
+}
+
+function loadWiringLog(){
+  try{ return JSON.parse(localStorage.getItem('ladder_wiring_log')||'[]'); }catch(e){ return []; }
+}
+function saveWiringLog(log){
+  try{ localStorage.setItem('ladder_wiring_log', JSON.stringify(log)); }catch(e){}
+}
+
+var wiringDurMin=3;
+function setWiringDur(min,btn){
+  wiringDurMin=min;
+  document.querySelectorAll('.wiring-dur').forEach(function(b){
+    b.classList.remove('on'); b.style.borderColor='var(--dim)'; b.style.color='var(--muted)';
+  });
+  btn.classList.add('on'); btn.style.borderColor='var(--lime)'; btn.style.color='var(--lime)';
+}
+
+var wiringInterval=null, wiringEndsAt=null;
+function startWiring(){
+  document.getElementById('wiringIdle').style.display='none';
+  document.getElementById('wiringStartBtn').style.display='none';
+  document.getElementById('wiringRunning').style.display='block';
+  wiringEndsAt=Date.now()+wiringDurMin*60000;
+  tickWiringTimer();
+  wiringInterval=setInterval(tickWiringTimer,1000);
+}
+function tickWiringTimer(){
+  var remaining=Math.max(0,Math.round((wiringEndsAt-Date.now())/1000));
+  var m=Math.floor(remaining/60), s=remaining%60;
+  var el=document.getElementById('wiringTimer');
+  if(el) el.textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  if(remaining<=0){
+    clearInterval(wiringInterval); wiringInterval=null;
+    resetWiringIdleUI();
+    completeWiringSession();
+  }
+}
+function stopWiring(){
+  if(wiringInterval){ clearInterval(wiringInterval); wiringInterval=null; }
+  resetWiringIdleUI();
+}
+function resetWiringIdleUI(){
+  document.getElementById('wiringIdle').style.display='flex';
+  document.getElementById('wiringStartBtn').style.display='block';
+  document.getElementById('wiringRunning').style.display='none';
+}
+
 function completeWiringSession(){
   var log=loadWiringLog();
   log.push({ts:Date.now()});
-  var newIndex=log.length-1;
-  var links=loadWiringLinks();
-  var newLink=null;
-  if(newIndex>0){
-    newLink={source:newIndex-1,target:newIndex};
-    links.push(newLink);
-    if(newIndex>2 && Math.random()<0.5){
-      var back=newIndex-1-Math.floor(Math.pow(Math.random(),2)*(newIndex-1));
-      if(back>=0 && back!==newIndex-1) links.push({source:back,target:newIndex});
-    }
-  }
   saveWiringLog(log);
-  saveWiringLinks(links);
-  showWiringReveal(newIndex,links);
+  var newIndex=Math.min(log.length-1,WIRING_TOTAL-1);
+  showWiringReveal(newIndex);
 }
 
-function showWiringReveal(newIndex,links){
-  if(typeof d3==='undefined'){ finalizeWiringNode(newIndex,links); return; }
+// ── soft point sprite: a small precise dot with a restrained halo, ──
+// generated once, reused for every point. Not a heavy neon blur.
+var wiringSpriteTexCache=null;
+function wiringSpriteTexture(){
+  if(wiringSpriteTexCache) return wiringSpriteTexCache;
+  var cnv=document.createElement('canvas'); cnv.width=64; cnv.height=64;
+  var ctx=cnv.getContext('2d');
+  var grad=ctx.createRadialGradient(32,32,0,32,32,32);
+  grad.addColorStop(0,'rgba(212,240,0,1)');
+  grad.addColorStop(0.5,'rgba(212,240,0,0.7)');
+  grad.addColorStop(1,'rgba(212,240,0,0)');
+  ctx.fillStyle=grad; ctx.fillRect(0,0,64,64);
+  wiringSpriteTexCache=new THREE.CanvasTexture(cnv);
+  return wiringSpriteTexCache;
+}
+
+var wiringAnimHandle=null;
+function stopWiringAnim(){
+  if(wiringAnimHandle){ cancelAnimationFrame(wiringAnimHandle); wiringAnimHandle=null; }
+}
+
+// Builds the 3D scene. revealCount points shown, connected to nearest
+// already-revealed neighbors. Returns handles so callers can add a reveal
+// animation for one extra point, or just render statically and rotate.
+function buildWiringScene(container,revealCount){
+  container.innerHTML='';
+  if(typeof THREE==='undefined') return null;
+  var W=container.clientWidth||360, H=container.clientHeight||320;
+
+  var scene=new THREE.Scene();
+  var camera=new THREE.PerspectiveCamera(45,W/H,1,2000);
+  camera.position.z=280;
+  var renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setSize(W,H); renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+  renderer.domElement.style.display='block';
+  renderer.domElement.style.width='100%';
+  renderer.domElement.style.height='100%';
+  container.appendChild(renderer.domElement);
+
+  var group=new THREE.Group();
+  scene.add(group);
+
+  var wireGeo=new THREE.SphereGeometry(WIRING_RADIUS,16,12);
+  var wireMat=new THREE.LineBasicMaterial({color:0xd4f000,transparent:true,opacity:0.16});
+  var wire=new THREE.LineSegments(new THREE.WireframeGeometry(wireGeo),wireMat);
+  group.add(wire);
+
+  var lineGeo=new THREE.BufferGeometry();
+  var linePositions=[];
+  for(var i=0;i<revealCount;i++){
+    var neighbors=nearestRevealedNeighbors(i,i,2);
+    var p=fibSpherePoint(i,WIRING_TOTAL,WIRING_RADIUS);
+    neighbors.forEach(function(nId){
+      var q=fibSpherePoint(nId,WIRING_TOTAL,WIRING_RADIUS);
+      linePositions.push(p.x,p.y,p.z, q.x,q.y,q.z);
+    });
+  }
+  lineGeo.setAttribute('position',new THREE.Float32BufferAttribute(linePositions,3));
+  var lineMat=new THREE.LineBasicMaterial({color:0xd4f000,transparent:true,opacity:0.32});
+  var linesObj=new THREE.LineSegments(lineGeo,lineMat);
+  group.add(linesObj);
+
+  var pointPositions=[];
+  for(var j=0;j<revealCount;j++){
+    var pt=fibSpherePoint(j,WIRING_TOTAL,WIRING_RADIUS);
+    pointPositions.push(pt.x,pt.y,pt.z);
+  }
+  var ptGeo=new THREE.BufferGeometry();
+  ptGeo.setAttribute('position',new THREE.Float32BufferAttribute(pointPositions,3));
+  var ptMat=new THREE.PointsMaterial({size:11,map:wiringSpriteTexture(),transparent:true,depthWrite:false,opacity:1});
+  var points=new THREE.Points(ptGeo,ptMat);
+  group.add(points);
+
+  return {scene:scene,camera:camera,renderer:renderer,group:group,W:W,H:H};
+}
+
+function renderWiringStatic(){
+  var log=loadWiringLog();
+  var count=Math.min(log.length,WIRING_TOTAL);
+  updateWiringReadout(count);
+  var emptyEl=document.getElementById('wiringEmpty');
+  if(emptyEl) emptyEl.style.display=count?'none':'flex';
+
+  stopWiringAnim();
+  var container=document.getElementById('wiringCanvas');
+  if(!container) return;
+  container.innerHTML='';
+  if(!count) return;
+
+  var handles=buildWiringScene(container,count);
+  if(!handles) return;
+
+  function animate(){
+    handles.group.rotation.y+=0.0016;
+    handles.group.rotation.x=Math.sin(Date.now()*0.00008)*0.15;
+    handles.renderer.render(handles.scene,handles.camera);
+    wiringAnimHandle=requestAnimationFrame(animate);
+  }
+  animate();
+}
+
+function showWiringReveal(newIndex){
   var overlay=document.getElementById('wiringReveal');
   var doneBtn=document.getElementById('wiringRevealDone');
-  overlay.style.display='flex'; doneBtn.style.display='none';
-  var svgEl=document.getElementById('wiringRevealSvg');
-  svgEl.innerHTML='';
-  var W=svgEl.clientWidth||360, H=svgEl.clientHeight||400;
-  var positions=loadWiringPositions();
+  var msgEl=document.getElementById('wiringRevealMsg');
+  overlay.style.display='flex'; doneBtn.style.display='none'; msgEl.textContent='';
 
-  var svg=d3.select(svgEl).attr('viewBox','0 0 '+W+' '+H);
-  var defs=svg.append('defs');
-  var glow=defs.append('filter').attr('id','revGlow').attr('x','-200%').attr('y','-200%').attr('width','500%').attr('height','500%');
-  glow.append('feGaussianBlur').attr('stdDeviation','5').attr('result','b');
-  var gm=glow.append('feMerge'); gm.append('feMergeNode').attr('in','b'); gm.append('feMergeNode').attr('in','SourceGraphic');
+  var container=document.getElementById('wiringRevealCanvas');
+  if(typeof THREE==='undefined'){ finalizeWiringReveal(); return; }
+  var handles=buildWiringScene(container,newIndex); // shows everything EXCEPT the new point yet
+  if(!handles){ finalizeWiringReveal(); return; }
 
-  var oldLinks=links.filter(function(l){return l.target!==newIndex;});
-  var g=svg.append('g');
-  var linkSel=g.selectAll('line').data(oldLinks).enter().append('line')
-    .attr('x1',function(l){return (positions[l.source]||{x:W/2}).x;})
-    .attr('y1',function(l){return (positions[l.source]||{y:H/2}).y;})
-    .attr('x2',function(l){return (positions[l.target]||{x:W/2}).x;})
-    .attr('y2',function(l){return (positions[l.target]||{y:H/2}).y;})
-    .attr('stroke','#d4f000').attr('stroke-opacity',0.2).attr('stroke-width',1);
-  var nodeSel=g.selectAll('circle.old').data(Object.keys(positions)).enter().append('circle').attr('class','old')
-    .attr('cx',function(id){return positions[id].x;}).attr('cy',function(id){return positions[id].y;})
-    .attr('r',3).attr('fill','#d4f000').attr('opacity',0.55).attr('filter','url(#revGlow)');
+  var newPos=fibSpherePoint(newIndex,WIRING_TOTAL,WIRING_RADIUS);
+  var newNeighbors=nearestRevealedNeighbors(newIndex,newIndex,2);
 
-  if(newIndex===0){
-    var cx=W/2, cy=H/2;
-    var nn=g.append('circle').attr('cx',cx).attr('cy',cy).attr('r',0).attr('fill','#d4f000').attr('filter','url(#revGlow)');
-    nn.transition().delay(200).duration(400).attr('r',10).attr('opacity',1)
-      .transition().duration(500).attr('r',4).attr('opacity',0.9);
-    var pos={}; pos[0]={x:cx,y:cy}; saveWiringPositions(pos);
-    setTimeout(function(){ finalizeWiringReveal(newIndex,links); },1400);
-    return;
+  var newPtGeo=new THREE.BufferGeometry();
+  newPtGeo.setAttribute('position',new THREE.Float32BufferAttribute([newPos.x,newPos.y,newPos.z],3));
+  var newPtMat=new THREE.PointsMaterial({size:0,map:wiringSpriteTexture(),transparent:true,depthWrite:false,opacity:0});
+  var newPoint=new THREE.Points(newPtGeo,newPtMat);
+  handles.group.add(newPoint);
+
+  var newLinePositions=[];
+  newNeighbors.forEach(function(nId){
+    var q=fibSpherePoint(nId,WIRING_TOTAL,WIRING_RADIUS);
+    newLinePositions.push(newPos.x,newPos.y,newPos.z, q.x,q.y,q.z);
+  });
+  var newLineGeo=new THREE.BufferGeometry();
+  newLineGeo.setAttribute('position',new THREE.Float32BufferAttribute(newLinePositions,3));
+  var newLineMat=new THREE.LineBasicMaterial({color:0xd4f000,transparent:true,opacity:0});
+  var newLines=new THREE.LineSegments(newLineGeo,newLineMat);
+  handles.group.add(newLines);
+
+  var t0=Date.now();
+  var count=newIndex+1;
+  var stage=wiringStageInfo(count);
+  var thresholdHit=(count===25||count===50||count===75||count===100);
+  var finalized=false;
+
+  function animate(){
+    var t=(Date.now()-t0)/1000;
+    handles.group.rotation.y+=0.0016;
+    var growP=Math.min(1,t/1.1);
+    newPtMat.size=9*Math.min(1,growP*1.4);
+    newPtMat.opacity=0.9*growP;
+    newLineMat.opacity=0.18*Math.min(1,(t-0.3)/0.8>0?(t-0.3)/0.8:0);
+    handles.renderer.render(handles.scene,handles.camera);
+    if(t>=2.6 && !finalized){
+      finalized=true;
+      if(thresholdHit){
+        msgEl.textContent=count+' sessions. '+(count===25?'A quarter of the way. Still building.':count===50?'Halfway. This is where most people stop.':count===75?'Three quarters. Nearly permanent.':'The sphere is complete. This is just what you do now.');
+      }
+      finalizeWiringReveal();
+    }
+    wiringAnimHandle=requestAnimationFrame(animate);
   }
-
-  var anchor=positions[newIndex-1]||{x:W/2,y:H/2};
-  var angle=Math.random()*Math.PI*2;
-  var startX=anchor.x+Math.cos(angle)*70, startY=anchor.y+Math.sin(angle)*70;
-  startX=Math.max(20,Math.min(W-20,startX)); startY=Math.max(20,Math.min(H-20,startY));
-
-  var newLinkForNode=oldLinksOf(links,newIndex);
-  var growLine=g.append('line')
-    .attr('x1',startX).attr('y1',startY).attr('x2',startX).attr('y2',startY)
-    .attr('stroke','#d4f000').attr('stroke-opacity',0.5).attr('stroke-width',1.5);
-
-  var newNode=g.append('circle').attr('cx',startX).attr('cy',startY).attr('r',0).attr('fill','#d4f000').attr('filter','url(#revGlow)');
-
-  newNode.transition().delay(150).duration(300).attr('r',9).attr('opacity',1);
-  growLine.transition().delay(250).duration(500)
-    .attr('x2',anchor.x).attr('y2',anchor.y);
-
-  setTimeout(function(){
-    var pulse=g.append('circle').attr('r',4).attr('fill','#f4f0e8').attr('filter','url(#revGlow)')
-      .attr('cx',startX).attr('cy',startY);
-    var t0=Date.now(), dur=500;
-    var trav=setInterval(function(){
-      var p=Math.min(1,(Date.now()-t0)/dur);
-      pulse.attr('cx',startX+(anchor.x-startX)*p).attr('cy',startY+(anchor.y-startY)*p);
-      if(p>=1){ clearInterval(trav); pulse.remove(); }
-    },30);
-  },800);
-
-  newNode.transition().delay(1400).duration(400).attr('r',4).attr('opacity',0.9);
-
-  var pos=positions; pos[newIndex]={x:anchor.x,y:anchor.y}; saveWiringPositions(pos);
-
-  setTimeout(function(){ finalizeWiringReveal(newIndex,links); },2200);
+  animate();
 }
 
-function oldLinksOf(links,idx){ return links.filter(function(l){return l.target===idx||l.source===idx;}); }
-
-function finalizeWiringReveal(newIndex,links){
-  var doneBtn=document.getElementById('wiringRevealDone');
-  doneBtn.style.display='block';
-  doneBtn.onclick=function(){
-    document.getElementById('wiringReveal').style.display='none';
-    renderWiringStatic();
-  };
+function finalizeWiringReveal(){
+  document.getElementById('wiringRevealDone').style.display='block';
 }
-function finalizeWiringNode(){ renderWiringStatic(); }
 function closeWiringReveal(){
+  stopWiringAnim();
   document.getElementById('wiringReveal').style.display='none';
+  document.getElementById('wiringRevealCanvas').innerHTML='';
   renderWiringStatic();
 }
 
-// ── The resting state: completely still. Nothing animates here, ever. ──
-// Opening this tab shows exactly what you built. Nothing new happens
-// unless you actually go do the work again.
-function renderWiringStatic(){
-  var log=loadWiringLog();
-  var countEl=document.getElementById('wiringCount');
-  if(countEl) countEl.textContent=log.length+' session'+(log.length===1?'':'s')+' built';
-  var emptyEl=document.getElementById('wiringEmpty');
-  if(emptyEl) emptyEl.style.display=log.length?'none':'flex';
+// ── THE MIRROR: one line a day, connected into a navigable web ──
+var WEB_TOTAL=100;
+function loadWebLog(){
+  try{ return JSON.parse(localStorage.getItem('ladder_web_log')||'[]'); }catch(e){ return []; }
+}
+function saveWebLog(log){
+  try{ localStorage.setItem('ladder_web_log', JSON.stringify(log)); }catch(e){}
+}
+function loadWebLinks(){
+  try{ return JSON.parse(localStorage.getItem('ladder_web_links')||'[]'); }catch(e){ return []; }
+}
+function saveWebLinks(links){
+  try{ localStorage.setItem('ladder_web_links', JSON.stringify(links)); }catch(e){}
+}
+function webNodePosition(i,total){ return fibSpherePoint(i,total,90); }
 
-  var svgEl=document.getElementById('wiringSvg');
-  if(!svgEl) return;
-  svgEl.innerHTML='';
-  if(!log.length) return;
+async function submitWebEntry(){
+  var input=document.getElementById('oneLineInput');
+  var text=input.value.trim();
+  if(!text) return;
+  var btn=document.getElementById('webSubmitBtn');
+  btn.disabled=true; btn.style.opacity='0.5'; btn.textContent='Connecting...';
 
-  var wrap=document.getElementById('wiringStatic');
-  var W=(wrap&&wrap.clientWidth)||400, H=(wrap&&wrap.clientHeight)||320;
-  var positions=loadWiringPositions();
-  var links=loadWiringLinks();
-  var strength=loadEdgeStrength();
+  var log=loadWebLog();
+  var existing=log.map(function(e,i){return {index:i,entry:e};}).filter(function(x){return !x.entry.deleted;})
+    .map(function(x){return {index:x.index,text:x.entry.text};});
 
-  var degree={};
-  links.forEach(function(l){ degree[l.source]=(degree[l.source]||0)+1; degree[l.target]=(degree[l.target]||0)+1; });
+  var connections=[];
+  try{
+    var response=await fetch('/api/find-connections',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({newText:text,existing:existing})
+    });
+    if(response.ok){
+      var data=await response.json();
+      var raw=data.content.map(function(i){return i.type==='text'?i.text:'';}).join('');
+      var clean=raw.replace(/```json|```/g,'').trim();
+      var parsed=JSON.parse(clean);
+      if(Array.isArray(parsed.connections)) connections=parsed.connections;
+    }
+  }catch(err){ console.error(err); }
 
-  var svg=d3.select(svgEl).attr('viewBox','0 0 '+W+' '+H);
-  var defs=svg.append('defs');
-  var glow=defs.append('filter').attr('id','statGlow').attr('x','-200%').attr('y','-200%').attr('width','500%').attr('height','500%');
-  glow.append('feGaussianBlur').attr('stdDeviation','3.5').attr('result','b');
-  var gm=glow.append('feMerge'); gm.append('feMergeNode').attr('in','b'); gm.append('feMergeNode').attr('in','SourceGraphic');
+  log.push({ts:Date.now(),date:TODAY,text:text});
+  var newIndex=log.length-1;
+  var links=loadWebLinks();
+  connections.forEach(function(idx){
+    if(typeof idx==='number' && idx>=0 && idx<newIndex) links.push({source:idx,target:newIndex});
+  });
+  saveWebLog(log);
+  saveWebLinks(links);
+  input.value='';
+  btn.disabled=false; btn.style.opacity='1'; btn.textContent='Add to the web \u2192';
 
-  var dustCount=Math.min(30,8+log.length);
-  var dust=svg.append('g');
-  for(var d=0;d<dustCount;d++){
-    dust.append('circle')
-      .attr('cx',seededRand(d*7+1)*W).attr('cy',seededRand(d*13+2)*H)
-      .attr('r',seededRand(d*17+3)*1.1+0.3)
-      .attr('fill','#d4f000').attr('opacity',seededRand(d*23+4)*0.1+0.03);
+  showWebReveal(newIndex,connections);
+}
+
+function renderOneLineArchive(){
+  var log=loadWebLog();
+  var el=document.getElementById('oneLineArchive');
+  if(!el) return;
+  var visible=log.map(function(e,i){return {entry:e,idx:i};}).filter(function(x){return !x.entry.deleted;});
+  if(!visible.length){ el.innerHTML=''; return; }
+  el.innerHTML=visible.slice().reverse().slice(0,20).map(function(x){
+    return '<div class="tapzone" onclick="showFacetDetail('+x.idx+')" style="padding:10px 0;border-bottom:1px solid var(--dim2);cursor:pointer;">'
+      +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;color:var(--muted);margin-bottom:4px;">'+esc(x.entry.date)+'</div>'
+      +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.75rem;color:rgba(244,240,232,0.75);">'+esc(x.entry.text)+'</div>'
+    +'</div>';
+  }).join('');
+}
+
+var facetDetailIndex=null;
+function showFacetDetail(index){
+  var log=loadWebLog();
+  var entry=log[index];
+  if(!entry||entry.deleted) return;
+  facetDetailIndex=index;
+  document.getElementById('facetDetailDate').textContent=entry.date;
+  document.getElementById('facetDetailText').textContent=entry.text;
+  document.getElementById('facetDetail').style.display='block';
+}
+function closeFacetDetail(){
+  document.getElementById('facetDetail').style.display='none';
+  facetDetailIndex=null;
+}
+function deleteFacetEntry(){
+  if(facetDetailIndex===null) return;
+  if(!confirm('Delete this point? The slot stays empty, nothing else moves.')) return;
+  var log=loadWebLog();
+  log[facetDetailIndex]={ts:log[facetDetailIndex].ts,date:log[facetDetailIndex].date,text:'',deleted:true};
+  saveWebLog(log);
+  closeFacetDetail();
+  renderWebStatic();
+}
+
+async function findPatterns(){
+  var log=loadWebLog().filter(function(e){return !e.deleted;});
+  var btn=document.getElementById('patternBtn');
+  var resultEl=document.getElementById('patternResult');
+  if(!log.length){
+    resultEl.style.display='block';
+    resultEl.textContent='No entries yet. Write a few one-line reflections first.';
+    return;
+  }
+  btn.disabled=true; btn.style.opacity='0.4'; btn.textContent='Reading through your entries...';
+  resultEl.style.display='none';
+  try{
+    var response=await fetch('/api/analyze-patterns',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({entries:log.map(function(e){return {date:e.date,text:e.text};})})
+    });
+    if(!response.ok){
+      resultEl.style.display='block';
+      resultEl.textContent='Request failed. Try again.';
+      btn.disabled=false; btn.style.opacity='1'; btn.textContent='\u25c6 Find patterns in your reflections';
+      return;
+    }
+    var data=await response.json();
+    var text=data.content.map(function(i){return i.type==='text'?i.text:'';}).join('');
+    resultEl.style.display='block';
+    resultEl.textContent=text;
+  }catch(err){
+    console.error(err);
+    resultEl.style.display='block';
+    resultEl.textContent='Something went wrong. Try again.';
+  }
+  btn.disabled=false; btn.style.opacity='1'; btn.textContent='\u25c6 Find patterns in your reflections';
+}
+
+// ── THE WEB: soft glowing points, real thematic connections, click through it ──
+var webAnimHandle=null;
+function stopWebAnim(){
+  if(webAnimHandle){ cancelAnimationFrame(webAnimHandle); webAnimHandle=null; }
+}
+
+function buildWebScene(container,log,links,revealCount){
+  container.innerHTML='';
+  if(typeof THREE==='undefined') return null;
+  var W=container.clientWidth||360, H=container.clientHeight||280;
+
+  var scene=new THREE.Scene();
+  var camera=new THREE.PerspectiveCamera(45,W/H,1,2000);
+  camera.position.set(0,0,240);
+  var renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setSize(W,H); renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+  renderer.domElement.style.display='block';
+  renderer.domElement.style.width='100%';
+  renderer.domElement.style.height='100%';
+  container.appendChild(renderer.domElement);
+
+  var group=new THREE.Group();
+  scene.add(group);
+
+  var tex=wiringSpriteTexture();
+  var nodes={};
+  for(var i=0;i<revealCount;i++){
+    if(log[i] && log[i].deleted) continue;
+    var pos=webNodePosition(i,WEB_TOTAL);
+    var mat=new THREE.SpriteMaterial({map:tex,color:0xd4f000,transparent:true,depthWrite:false,opacity:0.85});
+    var sprite=new THREE.Sprite(mat);
+    sprite.scale.set(14,14,1);
+    sprite.position.set(pos.x,pos.y,pos.z);
+    sprite.userData.entryIndex=i;
+    group.add(sprite);
+    nodes[i]=sprite;
   }
 
-  svg.selectAll('line').data(links).enter().append('line')
-    .attr('x1',function(l){return (positions[l.source]||{x:W/2}).x;})
-    .attr('y1',function(l){return (positions[l.source]||{y:H/2}).y;})
-    .attr('x2',function(l){return (positions[l.target]||{x:W/2}).x;})
-    .attr('y2',function(l){return (positions[l.target]||{y:H/2}).y;})
-    .attr('stroke','#d4f000')
-    .attr('stroke-opacity',function(l){return Math.min(0.5,0.14+(strength[edgeKey(l.source,l.target)]||0)*0.02);})
-    .attr('stroke-width',function(l){return Math.min(3,1+(strength[edgeKey(l.source,l.target)]||0)*0.08);});
-
-  var nodeG=svg.selectAll('g.node').data(Object.keys(positions).map(Number)).enter().append('g')
-    .attr('class','node')
-    .attr('transform',function(id){var p=positions[id]||{x:W/2,y:H/2}; return 'translate('+p.x+','+p.y+')';})
-    .attr('filter','url(#statGlow)');
-
-  nodeG.each(function(id){
-    var g=d3.select(this);
-    var tendrils=3+Math.floor(seededRand(id*3+1)*3);
-    for(var t=0;t<tendrils;t++){
-      var ang=seededRand(id*11+t)*Math.PI*2;
-      var len=4+seededRand(id*19+t)*5;
-      g.append('line').attr('x1',0).attr('y1',0).attr('x2',Math.cos(ang)*len).attr('y2',Math.sin(ang)*len)
-        .attr('stroke','#d4f000').attr('stroke-width',0.6).attr('stroke-opacity',0.3);
-    }
+  var lineSegs=[];
+  links.forEach(function(l){
+    if(!nodes[l.source]||!nodes[l.target]) return;
+    var p1=nodes[l.source].position, p2=nodes[l.target].position;
+    var geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.Float32BufferAttribute([p1.x,p1.y,p1.z,p2.x,p2.y,p2.z],3));
+    var mat=new THREE.LineBasicMaterial({color:0xd4f000,transparent:true,opacity:0.2});
+    var line=new THREE.Line(geo,mat);
+    line.userData.source=l.source; line.userData.target=l.target;
+    group.add(line);
+    lineSegs.push(line);
   });
 
-  nodeG.append('circle')
-    .attr('r',function(id){return 2+Math.min(4,(degree[id]||0)*0.6);})
-    .attr('fill','#d4f000').attr('opacity',0.85);
+  return {scene:scene,camera:camera,renderer:renderer,group:group,nodes:nodes,lines:lineSegs,W:W,H:H};
+}
+
+function animateCamera(camera,toPos,toLook,duration,onDone){
+  var fromPos=camera.position.clone();
+  var t0=Date.now();
+  function step(){
+    var t=Math.min(1,(Date.now()-t0)/duration);
+    var ease=1-Math.pow(1-t,3);
+    camera.position.lerpVectors(fromPos,toPos,ease);
+    camera.lookAt(toLook);
+    if(t<1) requestAnimationFrame(step);
+    else if(onDone) onDone();
+  }
+  step();
+}
+
+var webMode='overview';
+var webCurrentIndex=null;
+var webHandles=null;
+
+function renderWebStatic(){
+  var log=loadWebLog();
+  var visibleCount=log.filter(function(e){return !e.deleted;}).length;
+  var countEl=document.getElementById('webCount');
+  if(countEl) countEl.textContent=visibleCount+' connected. tap a point to enter.';
+  var emptyEl=document.getElementById('webEmpty');
+  if(emptyEl) emptyEl.style.display=visibleCount?'none':'flex';
+  renderOneLineArchive();
+
+  webMode='overview'; webCurrentIndex=null;
+  document.getElementById('webNavOverlay').style.display='none';
+  document.getElementById('webBackBtn').style.display='none';
+
+  stopWebAnim();
+  var container=document.getElementById('webCanvas');
+  if(!container) return;
+  container.innerHTML='';
+  if(!visibleCount) return;
+
+  var links=loadWebLinks();
+  var count=Math.min(log.length,WEB_TOTAL);
+  var handles=buildWebScene(container,log,links,count);
+  if(!handles) return;
+  webHandles=handles;
+
+  var raycaster=new THREE.Raycaster();
+  var mouse=new THREE.Vector2();
+  container.onclick=function(e){
+    var rect=container.getBoundingClientRect();
+    mouse.x=((e.clientX-rect.left)/rect.width)*2-1;
+    mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
+    raycaster.setFromCamera(mouse,handles.camera);
+    var hits=raycaster.intersectObjects(Object.values(handles.nodes));
+    if(hits.length) enterWebNode(hits[0].object.userData.entryIndex,log,links);
+  };
+
+  function animate(){
+    if(webMode==='overview') handles.group.rotation.y+=0.0012;
+    handles.renderer.render(handles.scene,handles.camera);
+    webAnimHandle=requestAnimationFrame(animate);
+  }
+  animate();
+}
+
+function enterWebNode(index,log,links){
+  if(!webHandles) return;
+  webMode='nav'; webCurrentIndex=index;
+  var entry=log[index];
+  document.getElementById('webNavDate').textContent=entry.date;
+  document.getElementById('webNavText').textContent=entry.text;
+  document.getElementById('webNavOverlay').style.display='block';
+  document.getElementById('webBackBtn').style.display='block';
+
+  var neighborIds={};
+  links.forEach(function(l){
+    if(l.source===index) neighborIds[l.target]=true;
+    if(l.target===index) neighborIds[l.source]=true;
+  });
+
+  Object.keys(webHandles.nodes).forEach(function(id){
+    var n=parseInt(id);
+    var sprite=webHandles.nodes[id];
+    if(n===index){ sprite.material.opacity=1; sprite.material.color.setHex(0xf4f0e8); }
+    else if(neighborIds[n]){ sprite.material.opacity=0.95; sprite.material.color.setHex(0xd4f000); }
+    else{ sprite.material.opacity=0.12; sprite.material.color.setHex(0xd4f000); }
+  });
+  webHandles.lines.forEach(function(line){
+    var involved=(line.userData.source===index||line.userData.target===index);
+    line.material.opacity=involved?0.55:0.03;
+  });
+
+  var target=webHandles.nodes[index].position.clone();
+  var camPos=target.clone().normalize().multiplyScalar(target.length()+55);
+  animateCamera(webHandles.camera,camPos,target,700);
+}
+
+function webBackToOverview(){
+  if(!webHandles) return;
+  webMode='overview'; webCurrentIndex=null;
+  document.getElementById('webNavOverlay').style.display='none';
+  document.getElementById('webBackBtn').style.display='none';
+  Object.values(webHandles.nodes).forEach(function(sprite){
+    sprite.material.opacity=0.85; sprite.material.color.setHex(0xd4f000);
+  });
+  webHandles.lines.forEach(function(line){ line.material.opacity=0.2; });
+  animateCamera(webHandles.camera,new THREE.Vector3(0,0,240),new THREE.Vector3(0,0,0),700);
+}
+
+function showWebReveal(newIndex,connections){
+  var overlay=document.getElementById('webReveal');
+  var doneBtn=document.getElementById('webRevealDone');
+  var msgEl=document.getElementById('webRevealMsg');
+  overlay.style.display='flex'; doneBtn.style.display='none'; msgEl.textContent='';
+
+  var container=document.getElementById('webRevealCanvas');
+  if(typeof THREE==='undefined'){ finalizeWebReveal(connections); return; }
+  var log=loadWebLog();
+  var links=loadWebLinks();
+  var handles=buildWebScene(container,log,links,newIndex);
+  if(!handles){ finalizeWebReveal(connections); return; }
+
+  var newPos=webNodePosition(newIndex,WEB_TOTAL);
+  var mat=new THREE.SpriteMaterial({map:wiringSpriteTexture(),color:0xf4f0e8,transparent:true,depthWrite:false,opacity:0});
+  var sprite=new THREE.Sprite(mat);
+  sprite.scale.set(0.1,0.1,1);
+  sprite.position.set(newPos.x,newPos.y,newPos.z);
+  handles.group.add(sprite);
+
+  var newLines=[];
+  connections.forEach(function(idx){
+    if(!handles.nodes[idx]) return;
+    var p2=handles.nodes[idx].position;
+    var geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.Float32BufferAttribute([newPos.x,newPos.y,newPos.z,p2.x,p2.y,p2.z],3));
+    var lmat=new THREE.LineBasicMaterial({color:0xd4f000,transparent:true,opacity:0});
+    var line=new THREE.Line(geo,lmat);
+    handles.group.add(line);
+    newLines.push(line);
+  });
+
+  var t0=Date.now(); var finalized=false;
+  function animate(){
+    var t=(Date.now()-t0)/1000;
+    handles.group.rotation.y+=0.0012;
+    var growP=Math.min(1,t/1.0);
+    sprite.scale.set(14*growP,14*growP,1);
+    mat.opacity=0.9*growP;
+    newLines.forEach(function(l){ l.material.opacity=0.5*Math.min(1,(t-0.3)/0.7>0?(t-0.3)/0.7:0); });
+    handles.renderer.render(handles.scene,handles.camera);
+    if(t>=2.0 && !finalized){
+      finalized=true;
+      finalizeWebReveal(connections);
+    }
+    webAnimHandle=requestAnimationFrame(animate);
+  }
+  animate();
+}
+
+function finalizeWebReveal(connections){
+  var msgEl=document.getElementById('webRevealMsg');
+  msgEl.textContent=connections.length?('Connected to '+connections.length+' earlier reflection'+(connections.length===1?'':'s')+'.'):'A new starting point. Nothing to connect it to yet.';
+  document.getElementById('webRevealDone').style.display='block';
+}
+function closeWebReveal(){
+  stopWebAnim();
+  document.getElementById('webReveal').style.display='none';
+  document.getElementById('webRevealCanvas').innerHTML='';
+  renderWebStatic();
 }
 
 function buildYBar(){
@@ -876,7 +1341,7 @@ function buildYBar(){
   if(!hist.length){el.innerHTML='This is your first day.<br><span class="g">Start here. Start now.</span>';return;}
   if(!yest){el.innerHTML='No entry for yesterday.<br><span style="color:rgba(244,240,232,0.28)">Close each day on the Ladder screen.</span>';return;}
   var dn=DAYS[yd.getDay()];
-  if(yest.win) el.innerHTML=dn+' was a <span class="g">W</span> — '+streak+' day'+(streak!==1?'s':'')+' in a row.<br>Finish it. Today counts.';
+  if(yest.win) el.innerHTML=dn+' was a <span class="g">W</span>. '+streak+' day'+(streak!==1?'s':'')+' in a row.<br>Finish it. Today counts.';
   else el.innerHTML=dn+' was a miss. <span class="r">KM debt added.</span><br>Today you repair it. No drama. Just go.';
 }
 
@@ -911,8 +1376,8 @@ function loadRules(){
   if(!r){
     r=[
       {id:'r0', text:'No porn. No masturbation.', km:10},
-      {id:'r1', text:'No social media — until goal actions are done', km:10},
-      {id:'r2', text:'No bed — until the day is closed', km:10},
+      {id:'r1', text:'No social media until goal actions are done', km:10},
+      {id:'r2', text:'No bed until the day is closed', km:10},
     ];
     localStorage.setItem('ladder_rules',JSON.stringify(r));
   }
@@ -973,9 +1438,9 @@ var REWARDS=[
   {days:14, title:'2 weeks',  desc:'Buy something you\'ve been wanting. Up to €50. No guilt.'},
   {days:21, title:'21 days',  desc:'A full day completely off. Sleep in. Do nothing. You built the right to rest.'},
   {days:30, title:'30 days',  desc:'Plan and book a weekend trip somewhere. You\'re going.'},
-  {days:45, title:'45 days',  desc:'Upgrade something real — gear, course, clothing. Invest in the new version of you.'},
+  {days:45, title:'45 days',  desc:'Upgrade something real: gear, course, clothing. Invest in the new version of you.'},
   {days:60, title:'60 days',  desc:'Two full days off. Go somewhere, do something memorable. Take someone with you.'},
-  {days:90, title:'90 days',  desc:'Big reward — your choice. A trip, a purchase, an experience. Something you\'ll remember. You\'ve become a different person.'},
+  {days:90, title:'90 days',  desc:'Big reward: your choice. A trip, a purchase, an experience. Something you\'ll remember. You\'ve become a different person.'},
 ];
 
 function buildRules(){
@@ -988,7 +1453,7 @@ function buildRules(){
     var div=document.createElement('div');
     div.className='rule-row'+(state===true?' held':state===false?' broke':'');
     div.setAttribute('data-rid',rule.id);
-    var statusTxt=state===true?'held ✓':state===false?'broke +'+rule.km+'km':'—';
+    var statusTxt=state===true?'held ✓':state===false?'broke +'+rule.km+'km':'.';
     div.innerHTML='<div class="rule-indicator"></div><span class="rule-name">'+esc(rule.text)+'</span><span class="rule-status">'+statusTxt+'</span><span class="rule-edit" data-edit="'+rule.id+'" style="color:rgba(244,240,232,0.15);font-size:0.6rem;padding:16px 6px 16px 18px;cursor:pointer;">edit</span>';
     c.appendChild(div);
   });
@@ -997,7 +1462,7 @@ function buildRules(){
     var totalKm=brokeRules.reduce(function(sum,r){return sum+r.km;},0);
     var info=document.createElement('div');
     info.className='rednote';info.style.cssText='margin-top:14px;padding:12px 0 0;border-top:1px solid rgba(255,45,45,0.15);';
-    info.textContent=brokeRules.length+' rule'+(brokeRules.length>1?'s':'')+' broke today — '+totalKm+'km added to debt';
+    info.textContent=brokeRules.length+' rule'+(brokeRules.length>1?'s':'')+' broke today. '+totalKm+'km added to debt';
     c.appendChild(info);
   }
 }
@@ -1057,8 +1522,8 @@ function calcCleanStreak(){
 }
 
 var REWARDS_DAILY=[
-  {id:'d0', title:'Social media', desc:'2 hours. Guilt-free. The work is done — scroll without the voice in your head.'},
-  {id:'d1', title:'The evening is yours', desc:'Series, gaming, chilling — free after the night ritual. You closed the day, you own the night.'},
+  {id:'d0', title:'Social media', desc:'2 hours. Guilt-free. The work is done. Scroll without the voice in your head.'},
+  {id:'d1', title:'The evening is yours', desc:'Series, gaming, chilling, free after the night ritual. You closed the day, you own the night.'},
 ];
 var REWARDS_RECURRING=[
   {every:3,  title:'Every 3 days',  pool:[
@@ -1070,14 +1535,14 @@ var REWARDS_RECURRING=[
   {every:7,  title:'Every 7 days',  pool:[
     'One night out. See people. No agenda.',
     'Full evening off. No laptop, no guilt.',
-    'Something physical you enjoy — sauna, swim, football.',
+    'Something physical you enjoy: sauna, swim, football.',
     'A whole afternoon on a personal project. Nothing to do with the goal.',
   ]},
   {every:14, title:'Every 2 weeks', pool:[
     'Take one thing off your wishlist. No price debate.',
     'Day trip somewhere you haven\'t been.',
     'Proper dinner out. Sit down, no takeaway.',
-    'Invest in the work — a book, a course, gear.',
+    'Invest in the work: a book, a course, gear.',
   ]},
 ];
 
@@ -1100,9 +1565,9 @@ function claimReward(every,idx){
 var REWARDS_MILESTONE=[
   {days:21, title:'21 days',  desc:'Full day off. Sleep in. Do nothing. You built the right to rest.'},
   {days:30, title:'30 days',  desc:'Plan and book a weekend trip. You\'re going.'},
-  {days:45, title:'45 days',  desc:'Upgrade something real — gear, course, clothing.'},
+  {days:45, title:'45 days',  desc:'Upgrade something real: gear, course, clothing.'},
   {days:60, title:'60 days',  desc:'Two full days off. Go somewhere. Take someone with you.'},
-  {days:90, title:'90 days',  desc:'Big reward — your choice. A trip, an experience. You\'re a different person.'},
+  {days:90, title:'90 days',  desc:'Big reward: your choice. A trip, an experience. You\'re a different person.'},
 ];
 
 function dailyRewardEarned(){
@@ -1128,10 +1593,10 @@ function buildRewards(){
   var c=document.getElementById('rewardsList'); c.innerHTML='';
   var streak=calcCleanStreak();
 
-  // DAILY — earned today, reset tomorrow
+  // DAILY. earned today, reset tomorrow
   var dayLabel=document.createElement('div');
   dayLabel.style.cssText='font-family:"IBM Plex Mono",monospace;font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(244,240,232,0.3);margin-bottom:12px;';
-  dayLabel.textContent='Daily — earned, not given';
+  dayLabel.textContent='Daily: earned, not given';
   c.appendChild(dayLabel);
 
   var earned=dailyRewardEarned();
@@ -1143,7 +1608,7 @@ function buildRewards(){
     var pct=prog.total?Math.round(prog.done/prog.total*100):0;
     div.innerHTML=
       '<span class="reward-lock" style="'+(earned?'color:var(--lime)':'')+'">'+
-        (earned?'✓ unlocked — now':prog.done+'/'+prog.total+' '+prog.label)+
+        (earned?'✓ unlocked now':prog.done+'/'+prog.total+' '+prog.label)+
       '</span>'+
       '<div class="reward-streak">1</div>'+
       '<div class="reward-title">'+r.title+'</div>'+
@@ -1152,7 +1617,7 @@ function buildRewards(){
         '<div style="position:absolute;left:0;top:0;height:100%;width:'+(earned?100:pct)+'%;background:'+(earned?'var(--lime)':'rgba(212,240,0,0.3)')+';transition:width 0.4s;"></div>'+
       '</div>'+
       '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;color:rgba(244,240,232,0.25);margin-top:6px;">'+
-        (earned?'earned by doing the work — tomorrow you earn it fresh':'unlocks the moment your '+prog.label+' are done')+
+        (earned?'earned by doing the work, tomorrow you earn it fresh':'unlocks the moment your '+prog.label+' are done')+
       '</div>';
     c.appendChild(div);
   });
@@ -1189,8 +1654,8 @@ function buildRewards(){
       return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(244,240,232,0.03);"><span style="width:6px;height:6px;border-radius:50%;border:1px solid rgba(244,240,232,0.15);flex-shrink:0;"></span><span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.7rem;color:rgba(244,240,232,0.32);">'+p+'</span></div>';
     }).join('');
 
-    var poolHtml='<div class="reward-desc">Pick 1 of '+r.pool.length+' rewards. Each one can only be taken once — when the pool is empty it refills.</div>'
-      +(justEarned?'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.55rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--lime);margin-top:12px;margin-bottom:4px;">Choose your reward — '+left+' left</div>':'')
+    var poolHtml='<div class="reward-desc">Pick 1 of '+r.pool.length+' rewards. Each one can only be taken once. When the pool is empty it refills.</div>'
+      +(justEarned?'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.55rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--lime);margin-top:12px;margin-bottom:4px;">Choose your reward. '+left+' left</div>':'')
       +'<div id="pool-'+r.every+'" style="display:'+(isOpen?'block':'none')+';margin-top:'+(justEarned?'0':'10px')+';">'+poolLines+'</div>'
       +(justEarned?'':'<div onclick="togglePool('+r.every+')" class="tapzone" style="font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;color:rgba(244,240,232,0.25);margin-top:6px;padding:12px 0;cursor:pointer;text-align:right;transition:color 0.2s;" onmouseover="this.style.color=\'var(--lime)\'" onmouseout="this.style.color=\'rgba(244,240,232,0.25)\'">'+(isOpen?'hide pool ↑':'see pool ('+left+' left) ↓')+'</div>');
 
@@ -1232,11 +1697,11 @@ function buildRewards(){
 }
 
 var MIRROR_QS=[
-  {id:'q1', label:'01 — the promise', q:'Did you keep your promise to yourself today?', ph:'Not "kind of". Not "mostly". Yes or no — then explain.'},
-  {id:'q2', label:'02 — the move', q:'What did you actually do today that moves you forward?', ph:'Name it. One real thing. Not what you planned — what you did.'},
-  {id:'q3', label:'03 — the pattern', q:'What did you do today that the old you would do?', ph:'Be honest. What habit showed up that you said you were done with?'},
-  {id:'q4', label:'04 — the moment', q:'Was there a moment today where you chose comfort over growth?', ph:'When was it. What did you choose instead of the hard thing.'},
-  {id:'q5', label:'05 — tomorrow', q:'What is the one thing you will do tomorrow. No matter what.', ph:'Write it like a contract with yourself. Specific. No escape.'},
+  {id:'q1', label:'01: the promise', q:'Did you keep your promise to yourself today?', ph:'Not "kind of". Not "mostly". Yes or no, then explain.'},
+  {id:'q2', label:'02: the move', q:'What did you actually do today that moves you forward?', ph:'Name it. One real thing. Not what you planned, what you did.'},
+  {id:'q3', label:'03: the pattern', q:'What did you do today that the old you would do?', ph:'Be honest. What habit showed up that you said you were done with?'},
+  {id:'q4', label:'04: the moment', q:'Was there a moment today where you chose comfort over growth?', ph:'When was it. What did you choose instead of the hard thing.'},
+  {id:'q5', label:'05: tomorrow', q:'What is the one thing you will do tomorrow. No matter what.', ph:'Write it like a contract with yourself. Specific. No escape.'},
 ];
 
 function buildMirrorQuestions(){
@@ -1253,7 +1718,7 @@ function buildMirrorQuestions(){
       S.mirrorAnswers[q.id]=ta.value;
       // also build combined mirrorNote for snapshot
       S.mirrorNote=MIRROR_QS.map(function(qq){
-        return qq.q+'\n'+(S.mirrorAnswers[qq.id]||'—');
+        return qq.q+'\n'+(S.mirrorAnswers[qq.id]||'.');
       }).join('\n\n');
       save();
     });
@@ -1349,24 +1814,24 @@ function showDayDetail(key){
   var isToday=key===TODAY;
   var panel=document.getElementById('dayDetail');
   var dateLabel=DAYS[d.getDay()]+' '+d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear();
-  if(isToday) dateLabel+=' — today';
-  else if(entry) dateLabel+=(entry.win?' — W':' — miss');
+  if(isToday) dateLabel+=', today';
+  else if(entry) dateLabel+=(entry.win?', W':', miss');
   document.getElementById('ddDate').textContent=dateLabel;
   // word + morning ritual count
   var focus=isToday?(S.todayWord||''):(snap&&snap.focus?snap.focus:'');
   var mDone=isToday?MS.filter(function(st){return !!S.morning[st.id];}).length:(snap&&snap.morningDone!==undefined?snap.morningDone:null);
   var mTotal=isToday?MS.length:(snap&&snap.morningTotal?snap.morningTotal:MS.length);
   var focusEl=document.getElementById('ddFocus');
-  var focusHtml=focus?'<span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase">focus — </span>'+esc(focus):'<span style="color:rgba(244,240,232,0.2);font-size:0.7rem">no focus recorded</span>';
+  var focusHtml=focus?'<span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase">focus. </span>'+esc(focus):'<span style="color:rgba(244,240,232,0.2);font-size:0.7rem">no focus recorded</span>';
   if(mDone!==null){
-    focusHtml+='<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.62rem;color:'+(mDone===mTotal?'var(--lime)':'rgba(244,240,232,0.35)')+';margin-top:6px;">morning ritual — '+mDone+'/'+mTotal+(mDone===mTotal?' ✓':'')+'</div>';
+    focusHtml+='<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.62rem;color:'+(mDone===mTotal?'var(--lime)':'rgba(244,240,232,0.35)')+';margin-top:6px;">morning ritual. '+mDone+'/'+mTotal+(mDone===mTotal?' ✓':'')+'</div>';
   }
   focusEl.innerHTML=focusHtml;
   // goal actions
   var tasks;
   if(isToday){
     tasks=loadGoals().reduce(function(acc,g){
-      (g.actions||[]).forEach(function(a){ acc.push({text:g.name+' — '+a.text, done:isActionDone(a)}); });
+      (g.actions||[]).forEach(function(a){ acc.push({text:g.name+'. '+a.text, done:isActionDone(a)}); });
       return acc;
     },[]);
   } else {
@@ -1375,7 +1840,7 @@ function showDayDetail(key){
   var tasksEl=document.getElementById('ddTasks');
   if(!tasks.length){tasksEl.innerHTML='<span style="color:rgba(244,240,232,0.18);font-size:0.68rem;">no goal actions</span>';}
   else{tasksEl.innerHTML='<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.55rem;letter-spacing:0.14em;text-transform:uppercase;color:rgba(244,240,232,0.25);margin-bottom:8px;">goal actions</div>'+tasks.map(function(t){return '<div class="'+(t.done?'dk':'')+'" style="display:flex;align-items:center;gap:10px;padding:4px 0;"><span style="width:6px;height:6px;border-radius:50%;flex-shrink:0;'+(t.done?'background:var(--lime);':'border:1px solid rgba(244,240,232,0.25);')+'"></span><span>'+esc(t.text)+'</span></div>';}).join('');}
-  // mirror answers — per question
+  // mirror answers. per question
   var answers=isToday?(S.mirrorAnswers||{}):((snap&&snap.answers)?snap.answers:{});
   var answered=MIRROR_QS.filter(function(q){return answers[q.id]&&answers[q.id].trim();});
   var mirrorEl2=document.getElementById('ddMirror');
@@ -1429,16 +1894,16 @@ function updateStats(){
   var kb=document.getElementById('kmBlock');
   if(kb) kb.style.borderColor=(S.kmDebt||0)>0?'rgba(255,45,45,0.35)':'var(--dim)';
 
-  // debt deadline — everything must be run off before Sunday ends
+  // debt deadline. everything must be run off before Sunday ends
   var dd=document.getElementById('debtDeadline');
   if(dd && (S.kmDebt||0)>0){
     var nw=new Date();
     var dow=nw.getDay(); // 0=Sun
     var daysLeft=dow===0?0:7-dow;
     var txt;
-    if(daysLeft===0) txt='Deadline today — Sunday. Run it or it doubles.';
-    else if(daysLeft===1) txt='Due by Sunday — 1 day left.';
-    else txt='Due by Sunday — '+daysLeft+' days left.';
+    if(daysLeft===0) txt='Deadline today. Sunday. Run it or it doubles.';
+    else if(daysLeft===1) txt='Due by Sunday. 1 day left.';
+    else txt='Due by Sunday. '+daysLeft+' days left.';
     dd.innerHTML=txt+' <span style="color:rgba(244,240,232,0.18)">'+(S.kmDebt||0)+'km outstanding</span>';
   }
 
@@ -1546,7 +2011,7 @@ function goTo(id){
   }
   if(id==='s-wiring'){renderWiringStatic();}
   if(id==='s-ladder'){buildLadder();buildRewards();buildRules();}
-  if(id==='s-mirror'){buildSteps('nSteps',NS,'night');buildMirrorQuestions();}
+  if(id==='s-mirror'){buildSteps('nSteps',NS,'night');buildMirrorQuestions();renderWebStatic();}
   if(id==='s-goals'){buildGoalsList();checkSunday();buildFreeTimers();}
   document.getElementById(id).scrollTop=0;
 }
@@ -1632,7 +2097,7 @@ function renderGoalTimerHTML(a){
       +'<button class="gt-play'+(t.running?' on':'')+'" id="tbtn-'+a.id+'" onclick="toggleGoalTimer(\''+a.id+'\')">'+(t.running?'&#10073;&#10073; pause':'&#9654; start')+'</button>'
       +'<button class="gt-reset" onclick="resetGoalTimer(\''+a.id+'\')">reset</button>'
     +'</div>'
-    +(overtime?'<div class="gt-donebadge">&#10003; done &mdash; '+fmtHMS(elapsed)+' logged</div>':'')
+    +(overtime?'<div class="gt-donebadge">&#10003; done. '+fmtHMS(elapsed)+' logged</div>':'')
   +'</div>';
 }
 function renderGoalTimer(actionId){
@@ -1660,10 +2125,10 @@ function renderGoalTimer(actionId){
     if(wrap&&!badge){
       var b=document.createElement('div');
       b.className='gt-donebadge';
-      b.innerHTML='&#10003; done &mdash; '+fmtHMS(elapsed)+' logged';
+      b.innerHTML='&#10003; done. '+fmtHMS(elapsed)+' logged';
       wrap.appendChild(b);
     } else if(badge){
-      badge.innerHTML='&#10003; done &mdash; '+fmtHMS(elapsed)+' logged';
+      badge.innerHTML='&#10003; done. '+fmtHMS(elapsed)+' logged';
     }
   }
 }
@@ -1748,7 +2213,7 @@ function renderFreeTimer(id){
   if(row){ row.classList.toggle('f-running',t.running); row.classList.toggle('f-done',overtime); }
 }
 
-// GLOBAL TICK — updates every visible running timer once per second
+// GLOBAL TICK. updates every visible running timer once per second
 setInterval(function(){
   if(typeof curScreen!=='undefined' && curScreen!=='s-goals') return;
   allDailyActions().forEach(function(x){
@@ -1763,7 +2228,7 @@ setInterval(function(){
   });
 },1000);
 
-// LADDER TICK — keeps the hours-left countdown fresh once a minute
+// LADDER TICK. keeps the hours-left countdown fresh once a minute
 setInterval(function(){
   if(typeof curScreen==='undefined' || curScreen!=='s-ladder') return;
   if(document.getElementById('heroHours')) updateStats();
@@ -1870,7 +2335,7 @@ async function generateGoal(fromQuestions){
     document.getElementById('gAdjust').value=g.adjust||'';
     document.getElementById('gMilestones').value=(g.milestones||[]).map(function(m){return m.text+' | '+m.date;}).join('\n');
     document.getElementById('gCheckinFields').value=(g.checkinFields||[]).join(', ');
-    document.getElementById('modalTitle').textContent='Review your goal — then save';
+    document.getElementById('modalTitle').textContent='Review your goal, then save';
   }catch(err){
     console.error(err);
     status.textContent='Something went wrong. Try again.';
@@ -1917,7 +2382,7 @@ function renderActionRows(){
   if(!currentActions.length){
     var empty=document.createElement('div');
     empty.style.cssText='font-family:"IBM Plex Mono",monospace;font-size:0.68rem;color:rgba(244,240,232,0.2);padding:6px 0 14px;';
-    empty.textContent='No actions yet — add at least one.';
+    empty.textContent='No actions yet. Add at least one.';
     c.appendChild(empty);
   }
   currentActions.forEach(function(a,idx){
@@ -1972,7 +2437,7 @@ function buildGoalsList(){
           +'A goal here has three parts: what you want <span style="color:rgba(244,240,232,0.8)">(outcome)</span>, what you do for it every day <span style="color:rgba(244,240,232,0.8)">(actions)</span>, and how you\'ll know it\'s working <span style="color:rgba(244,240,232,0.8)">(check-ins)</span>.'
         +'</div>'
         +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.78rem;color:rgba(244,240,232,0.4);line-height:1.9;">'
-          +'Not sure how to structure yours? Describe it in your own words with <span style="color:var(--lime)">Build my goal with AI</span> below and it fills in the rest &mdash; you review before saving.'
+          +'Not sure how to structure yours? Describe it in your own words with <span style="color:var(--lime)">Build my goal with AI</span> below and it fills in the rest. You review before saving.'
         +'</div>'
       +'</div>';
     return;
@@ -1996,7 +2461,7 @@ function buildGoalsList(){
         +'</div>'
       +'</div>'
 
-      // Daily actions — one or more, each checkbox or timer
+      // Daily actions. one or more, each checkbox or timer
       +((g.actions&&g.actions.length)?g.actions.map(function(a){
         if(a.type==='timer'&&a.minutes>0) return renderGoalTimerHTML(a);
         var done=isActionDone(a);
@@ -2016,7 +2481,7 @@ function buildGoalsList(){
           return '<div style="display:flex;align-items:center;gap:10px;padding:13px 0;min-height:44px;border-bottom:1px solid rgba(244,240,232,0.03);cursor:pointer;" onclick="toggleMilestone(\''+g.id+'\','+mi+')" class="tapzone">'
             +'<div style="width:6px;height:6px;border-radius:50%;border:1.5px solid '+dotColor+';background:'+(m.done||overdue?dotColor:'none')+';flex-shrink:0;"></div>'
             +'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.72rem;color:'+textColor+';flex:1;'+(m.done?'text-decoration:line-through;':'')+'">'+esc(m.text)+'</span>'
-            +(m.date?'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;color:'+(overdue?'rgba(255,45,45,0.6)':'var(--muted)')+';">'+(overdue?'overdue — ':'')+esc(m.date)+'</span>':'')
+            +(m.date?'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;color:'+(overdue?'rgba(255,45,45,0.6)':'var(--muted)')+';">'+(overdue?'overdue. ':'')+esc(m.date)+'</span>':'')
           +'</div>';
         }).join('')
       +'</div>':'')
@@ -2028,7 +2493,7 @@ function buildGoalsList(){
         +(function(){
           var missed=(g.milestones||[]).filter(function(m){return !m.done&&isMilestoneOverdue(m.date);}).length;
           if(!missed) return '';
-          return '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.68rem;color:rgba(255,45,45,0.75);margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,45,45,0.15);">'+missed+' milestone'+(missed>1?'s':'')+' missed — this is your moment to adjust.</div>';
+          return '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.68rem;color:rgba(255,45,45,0.75);margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,45,45,0.15);">'+missed+' milestone'+(missed>1?'s':'')+' missed. This is your moment to adjust.</div>';
         })()
       +'</div>':'')
 
