@@ -30,8 +30,16 @@ Following the feeling, or a line that is just a mood or observation with no acti
 
 If genuinely too ambiguous to call, use "unclear".
 
+Task 3, tag the pillar. Which of these three does the line relate to, if any.
+
+"resistance": doing something hard despite not wanting to, or holding back from something despite wanting to, in a daily action.
+"detachment": not checking or chasing a result or outcome, or the opposite, checking or chasing one.
+"boredom": tolerating stillness or silence, or the opposite, filling it.
+
+If none clearly apply, use "none".
+
 Respond ONLY with raw JSON, no markdown, no backticks, exactly this shape:
-{"connections":[index1,index2],"classification":{"type":"decision","subtype":"pushThrough"}}
+{"connections":[index1,index2],"classification":{"type":"decision","subtype":"pushThrough","pillar":"resistance"}}
 
 Set subtype to null when type is "feeling" or "unclear". Use an empty array when there are no real connections.`;
 
@@ -45,7 +53,7 @@ Set subtype to null when type is "feeling" or "unclear". Use an empty array when
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 300,
+        max_tokens: 350,
         messages: [{ role: 'user', content: prompt }],
       }),
     });

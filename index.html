@@ -237,10 +237,10 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
     <div class="lbl" style="margin-bottom:10px">Today I am</div>
     <div class="idstmt" id="idStmt">Someone who does<br>what he <span class="acc">says.</span></div>
 
-    <div class="lbl" style="margin-bottom:8px">Today's focus
-      <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tw1')">i</span><div class="tip-box" id="tw1">One word or short sentence that sets the tone for today. Not a task. A way of being.<br><br>Examples:<br>• discipline<br>• forgiveness<br>• overcome fear<br>• keep every promise<br>• hard work</div></span>
+    <div class="lbl" style="margin-bottom:8px">What do you need to do today to go home satisfied?
+      <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tw1')">i</span><div class="tip-box" id="tw1">One thing. Not a list. The one thing that, if you do it, makes today count.</div></span>
     </div>
-    <input class="li" id="todayWord" type="text" placeholder="What matters today." style="margin-bottom:32px">
+    <input class="li" id="todayWord" type="text" placeholder="the one thing that matters today" style="margin-bottom:32px">
 
     <div class="brow">
       <button class="bp" onclick="goTo('s-goals')">Go to your goals &rarr;</button>
@@ -394,6 +394,18 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
 <div class="screen" id="s-mirror">
   <div class="inner">
     <div class="tbar" id="tMir"></div>
+
+    <div id="flashcardWrap" style="display:none;border:1px solid var(--dim);border-top:3px solid var(--lime);padding:20px 18px;margin-bottom:28px;background:#070707;">
+      <div class="lbl" id="fcMeta" style="margin-bottom:10px;"></div>
+      <div id="fcText" style="font-family:'IBM Plex Mono',monospace;font-size:0.9rem;color:var(--white);line-height:1.6;margin-bottom:14px;"></div>
+      <div id="fcConn" style="display:none;font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:rgba(212,240,0,0.75);line-height:1.5;margin-bottom:16px;"><span></span></div>
+      <div style="display:flex;gap:8px;">
+        <button id="fcYes" onclick="renewFlashcard()" style="flex:1;background:rgba(212,240,0,0.1);border:1px solid rgba(212,240,0,0.4);color:var(--lime);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;padding:14px;cursor:pointer;">renew</button>
+        <button id="fcNo" onclick="letGoFlashcard()" style="flex:1;background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;padding:14px;cursor:pointer;">let it go</button>
+      </div>
+      <div id="fcResponse" style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--muted);margin-top:8px;min-height:14px;"></div>
+    </div>
+
     <div class="lbl" style="margin-bottom:12px">Evening mirror</div>
     <div class="big-q" style="margin-bottom:28px">Answer these.<br><em>Honestly.</em></div>
 
@@ -421,6 +433,11 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
     <button onclick="findPatterns()" id="patternBtn" style="width:100%;background:rgba(212,240,0,0.06);border:1px solid rgba(212,240,0,0.25);color:var(--lime);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;padding:14px;cursor:pointer;margin-bottom:24px;">&#9670; Find patterns in your reflections</button>
 
     <div id="oneLineArchive" style="margin-bottom:8px;max-height:200px;overflow-y:auto;"></div>
+
+    <div class="tapzone" onclick="toggleCounter()" style="cursor:pointer;margin-bottom:8px;">
+      <span class="lbl">This week &darr;</span>
+    </div>
+    <div id="counterBody" style="display:none;margin-bottom:8px;"></div>
 
     <div id="facetDetail" style="display:none;position:fixed;inset:0;background:rgba(8,8,8,0.97);z-index:999;overflow-y:auto;padding:40px 28px;">
       <div style="max-width:480px;margin:0 auto;">
@@ -821,9 +838,9 @@ function wiringSpriteTexture(){
   var cnv=document.createElement('canvas'); cnv.width=64; cnv.height=64;
   var ctx=cnv.getContext('2d');
   var grad=ctx.createRadialGradient(32,32,0,32,32,32);
-  grad.addColorStop(0,'rgba(212,240,0,1)');
-  grad.addColorStop(0.5,'rgba(212,240,0,0.7)');
-  grad.addColorStop(1,'rgba(212,240,0,0)');
+  grad.addColorStop(0,'rgba(255,255,255,1)');
+  grad.addColorStop(0.5,'rgba(255,255,255,0.7)');
+  grad.addColorStop(1,'rgba(255,255,255,0)');
   ctx.fillStyle=grad; ctx.fillRect(0,0,64,64);
   wiringSpriteTexCache=new THREE.CanvasTexture(cnv);
   return wiringSpriteTexCache;
@@ -882,7 +899,7 @@ function buildWiringScene(container,revealCount){
   }
   var ptGeo=new THREE.BufferGeometry();
   ptGeo.setAttribute('position',new THREE.Float32BufferAttribute(pointPositions,3));
-  var ptMat=new THREE.PointsMaterial({size:11,map:wiringSpriteTexture(),transparent:true,depthWrite:false,opacity:1});
+  var ptMat=new THREE.PointsMaterial({size:11,map:wiringSpriteTexture(),color:0xd4f000,transparent:true,depthWrite:false,opacity:1});
   var points=new THREE.Points(ptGeo,ptMat);
   group.add(points);
 
@@ -930,7 +947,7 @@ function showWiringReveal(newIndex){
 
   var newPtGeo=new THREE.BufferGeometry();
   newPtGeo.setAttribute('position',new THREE.Float32BufferAttribute([newPos.x,newPos.y,newPos.z],3));
-  var newPtMat=new THREE.PointsMaterial({size:0,map:wiringSpriteTexture(),transparent:true,depthWrite:false,opacity:0});
+  var newPtMat=new THREE.PointsMaterial({size:0,map:wiringSpriteTexture(),color:0xd4f000,transparent:true,depthWrite:false,opacity:0});
   var newPoint=new THREE.Points(newPtGeo,newPtMat);
   handles.group.add(newPoint);
 
@@ -983,6 +1000,7 @@ function closeWiringReveal(){
 
 // ── THE MIRROR: one line a day, connected into a navigable web ──
 var WEB_TOTAL=100;
+var DAY_MS=24*60*60*1000;
 function loadWebLog(){
   try{ return JSON.parse(localStorage.getItem('ladder_web_log')||'[]'); }catch(e){ return []; }
 }
@@ -1009,6 +1027,7 @@ async function submitWebEntry(){
     .map(function(x){return {index:x.index,text:x.entry.text};});
 
   var connections=[];
+  var classification={type:'unclear',subtype:null,pillar:'none'};
   try{
     var response=await fetch('/api/find-connections',{
       method:'POST',
@@ -1021,10 +1040,23 @@ async function submitWebEntry(){
       var clean=raw.replace(/```json|```/g,'').trim();
       var parsed=JSON.parse(clean);
       if(Array.isArray(parsed.connections)) connections=parsed.connections;
+      if(parsed.classification && typeof parsed.classification.type==='string'){
+        classification={
+          type:parsed.classification.type,
+          subtype:parsed.classification.subtype||null,
+          pillar:parsed.classification.pillar||'none'
+        };
+      }
     }
   }catch(err){ console.error(err); }
 
-  log.push({ts:Date.now(),date:TODAY,text:text});
+  var newEntry={ts:Date.now(),date:TODAY,text:text,classification:classification};
+  if(classification.type==='decision'){
+    newEntry.nextDue=Date.now()+DAY_MS;
+    newEntry.renewCount=0;
+    newEntry.active=true;
+  }
+  log.push(newEntry);
   var newIndex=log.length-1;
   var links=loadWebLinks();
   connections.forEach(function(idx){
@@ -1140,7 +1172,7 @@ function buildWebScene(container,log,links,revealCount){
   for(var i=0;i<revealCount;i++){
     if(log[i] && log[i].deleted) continue;
     var pos=webNodePosition(i,WEB_TOTAL);
-    var mat=new THREE.SpriteMaterial({map:tex,color:0xd4f000,transparent:true,depthWrite:false,opacity:0.85});
+    var mat=new THREE.SpriteMaterial({map:tex,color:0xf4f0e8,transparent:true,depthWrite:false,opacity:0.65});
     var sprite=new THREE.Sprite(mat);
     sprite.scale.set(14,14,1);
     sprite.position.set(pos.x,pos.y,pos.z);
@@ -1155,7 +1187,7 @@ function buildWebScene(container,log,links,revealCount){
     var p1=nodes[l.source].position, p2=nodes[l.target].position;
     var geo=new THREE.BufferGeometry();
     geo.setAttribute('position',new THREE.Float32BufferAttribute([p1.x,p1.y,p1.z,p2.x,p2.y,p2.z],3));
-    var mat=new THREE.LineBasicMaterial({color:0xd4f000,transparent:true,opacity:0.2});
+    var mat=new THREE.LineBasicMaterial({color:0xf4f0e8,transparent:true,opacity:0.12});
     var line=new THREE.Line(geo,mat);
     line.userData.source=l.source; line.userData.target=l.target;
     group.add(line);
@@ -1191,6 +1223,9 @@ function renderWebStatic(){
   var emptyEl=document.getElementById('webEmpty');
   if(emptyEl) emptyEl.style.display=visibleCount?'none':'flex';
   renderOneLineArchive();
+  renderFlashcard();
+  var counterBodyEl=document.getElementById('counterBody');
+  if(counterBodyEl) counterBodyEl.style.display='none';
 
   webMode='overview'; webCurrentIndex=null;
   document.getElementById('webNavOverlay').style.display='none';
@@ -1245,9 +1280,9 @@ function enterWebNode(index,log,links){
   Object.keys(webHandles.nodes).forEach(function(id){
     var n=parseInt(id);
     var sprite=webHandles.nodes[id];
-    if(n===index){ sprite.material.opacity=1; sprite.material.color.setHex(0xf4f0e8); }
-    else if(neighborIds[n]){ sprite.material.opacity=0.95; sprite.material.color.setHex(0xd4f000); }
-    else{ sprite.material.opacity=0.12; sprite.material.color.setHex(0xd4f000); }
+    if(n===index){ sprite.material.opacity=1; sprite.material.color.setHex(0xd4f000); }
+    else if(neighborIds[n]){ sprite.material.opacity=0.9; sprite.material.color.setHex(0xf4f0e8); }
+    else{ sprite.material.opacity=0.1; sprite.material.color.setHex(0xf4f0e8); }
   });
   webHandles.lines.forEach(function(line){
     var involved=(line.userData.source===index||line.userData.target===index);
@@ -1265,7 +1300,7 @@ function webBackToOverview(){
   document.getElementById('webNavOverlay').style.display='none';
   document.getElementById('webBackBtn').style.display='none';
   Object.values(webHandles.nodes).forEach(function(sprite){
-    sprite.material.opacity=0.85; sprite.material.color.setHex(0xd4f000);
+    sprite.material.opacity=0.65; sprite.material.color.setHex(0xf4f0e8);
   });
   webHandles.lines.forEach(function(line){ line.material.opacity=0.2; });
   animateCamera(webHandles.camera,new THREE.Vector3(0,0,240),new THREE.Vector3(0,0,0),700);
@@ -1703,6 +1738,127 @@ var MIRROR_QS=[
   {id:'q4', label:'04: the moment', q:'Was there a moment today where you chose comfort over growth?', ph:'When was it. What did you choose instead of the hard thing.'},
   {id:'q5', label:'05: tomorrow', q:'What is the one thing you will do tomorrow. No matter what.', ph:'Write it like a contract with yourself. Specific. No escape.'},
 ];
+
+// ── FLASHCARD: resurfacing decisions, renew or let go ──
+var fcCurrentIndex=null;
+
+function getDueFlashcard(){
+  var log=loadWebLog();
+  var now=Date.now();
+  var due=null;
+  for(var i=0;i<log.length;i++){
+    var e=log[i];
+    if(e.deleted) continue;
+    if(!e.classification || e.classification.type!=='decision') continue;
+    if(e.active===false) continue;
+    if(typeof e.nextDue!=='number') continue;
+    if(e.nextDue<=now){
+      if(!due || e.nextDue<due.entry.nextDue) due={index:i,entry:e};
+    }
+  }
+  return due;
+}
+
+function getOneConnection(index){
+  var links=loadWebLinks();
+  var log=loadWebLog();
+  for(var i=0;i<links.length;i++){
+    var l=links[i];
+    if(l.source===index && log[l.target] && !log[l.target].deleted) return log[l.target].text;
+    if(l.target===index && log[l.source] && !log[l.source].deleted) return log[l.source].text;
+  }
+  return null;
+}
+
+function renderFlashcard(){
+  var wrap=document.getElementById('flashcardWrap');
+  if(!wrap) return;
+  var due=getDueFlashcard();
+  if(!due){ wrap.style.display='none'; fcCurrentIndex=null; return; }
+  wrap.style.display='block';
+  fcCurrentIndex=due.index;
+  var daysAgo=Math.floor((Date.now()-due.entry.ts)/DAY_MS);
+  document.getElementById('fcMeta').textContent='resurfacing \u00b7 written '+(daysAgo<=0?'today':daysAgo+' day'+(daysAgo===1?'':'s')+' ago');
+  document.getElementById('fcText').textContent=due.entry.text;
+  var conn=getOneConnection(due.index);
+  var connEl=document.getElementById('fcConn');
+  if(conn){ connEl.style.display='block'; connEl.querySelector('span').textContent='"'+conn+'"'; }
+  else{ connEl.style.display='none'; }
+  document.getElementById('fcYes').style.display='';
+  document.getElementById('fcNo').style.display='';
+  document.getElementById('fcYes').disabled=false;
+  document.getElementById('fcNo').disabled=false;
+  document.getElementById('fcResponse').textContent='';
+}
+
+function renewFlashcard(){
+  if(fcCurrentIndex===null) return;
+  var log=loadWebLog();
+  var e=log[fcCurrentIndex];
+  if(!e) return;
+  e.renewCount=(e.renewCount||0)+1;
+  e.nextDue=Date.now()+(e.renewCount===1?7*DAY_MS:30*DAY_MS);
+  saveWebLog(log);
+  document.getElementById('fcResponse').textContent='renewed. comes back again in '+(e.renewCount===1?'a week':'a month')+'.';
+  document.getElementById('fcYes').disabled=true;
+  document.getElementById('fcNo').disabled=true;
+}
+
+function letGoFlashcard(){
+  if(fcCurrentIndex===null) return;
+  var log=loadWebLog();
+  var e=log[fcCurrentIndex];
+  if(!e) return;
+  e.active=false;
+  saveWebLog(log);
+  document.getElementById('fcResponse').textContent='let go. won\'t come back again.';
+  document.getElementById('fcYes').disabled=true;
+  document.getElementById('fcNo').disabled=true;
+}
+
+// ── WEEKLY COUNTER: collapsed by default, tucked below the archive ──
+var PILLARS=['resistance','detachment','boredom'];
+var PILLAR_PLAIN={
+  resistance:'broke through a wall, or held one up',
+  detachment:'resisted checking the number',
+  boredom:'sat with the boredom instead of filling it'
+};
+
+function computeWeekCounts(){
+  var log=loadWebLog();
+  var weekAgo=Date.now()-7*DAY_MS;
+  var counts={resistance:{against:0,withF:0},detachment:{against:0,withF:0},boredom:{against:0,withF:0}};
+  log.forEach(function(e){
+    if(e.deleted || !e.classification) return;
+    if(e.ts<weekAgo) return;
+    var p=e.classification.pillar;
+    if(!counts[p]) return;
+    if(e.classification.type==='decision') counts[p].against++;
+    else if(e.classification.type==='feeling') counts[p].withF++;
+  });
+  return counts;
+}
+
+function renderCounter(){
+  var counts=computeWeekCounts();
+  var el=document.getElementById('counterBody');
+  if(!el) return;
+  el.innerHTML=PILLARS.map(function(p){
+    var c=counts[p];
+    return '<div style="border-bottom:1px solid var(--dim2);padding:12px 0;">'
+      +'<div class="lbl" style="margin-bottom:4px;">'+p+'</div>'
+      +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.78rem;color:var(--white);margin-bottom:6px;">'+PILLAR_PLAIN[p]+'</div>'
+      +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.65rem;color:var(--muted);">'+c.against+' times this week &middot; gave in '+c.withF+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function toggleCounter(){
+  var body=document.getElementById('counterBody');
+  var opening=body.style.display!=='block';
+  body.style.display=opening?'block':'none';
+  if(opening) renderCounter();
+}
 
 function buildMirrorQuestions(){
   var c=document.getElementById('mirrorQuestions'); c.innerHTML='';
