@@ -60,6 +60,8 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
 .li{width:100%;background:none;border:none;border-bottom:1px solid var(--dim);color:var(--white);font-family:'IBM Plex Mono',monospace;font-size:0.82rem;font-weight:300;padding:10px 0;outline:none;transition:border-color 0.25s;caret-color:var(--lime);}
 .li::placeholder{color:var(--vmuted);}
 .li:focus{border-bottom-color:var(--lime);}
+button{outline:none;-webkit-tap-highlight-color:transparent;}
+button:focus{outline:none;}
 .tip-wrap{position:relative;display:inline-block;}
 .tip-icon{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;border:1px solid rgba(212,240,0,0.3);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:rgba(212,240,0,0.4);cursor:pointer;margin-left:8px;vertical-align:middle;transition:all 0.2s;user-select:none;font-style:italic;font-weight:500;flex-shrink:0;}
 .tip-icon:hover{border-color:var(--lime);color:var(--lime);background:rgba(212,240,0,0.06);}
@@ -236,6 +238,10 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
 
     <div class="lbl" style="margin-bottom:10px">Today I am</div>
     <div class="idstmt" id="idStmt">Someone who does<br>what he <span class="acc">says.</span></div>
+
+    <div class="lbl" style="margin-bottom:8px">Where you're headed</div>
+    <input class="li" id="destination" type="text" placeholder="the thing you're actually building toward" style="margin-bottom:12px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:rgba(244,240,232,0.4);line-height:1.6;margin-bottom:32px;">To get there, you'll do things you don't want to do. And refuse things you do want right now, because they'd take you further away.</div>
 
     <div class="lbl" style="margin-bottom:8px">What do you need to do today to go home satisfied?
       <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tw1')">i</span><div class="tip-box" id="tw1">One thing. Not a list. The one thing that, if you do it, makes today count.</div></span>
@@ -444,7 +450,7 @@ html,body{width:100%;height:100%;background:var(--black);color:var(--white);font
         <div class="lbl" style="margin-bottom:8px" id="facetDetailDate"></div>
         <div style="font-family:'IBM Plex Mono',monospace;font-size:0.9rem;color:var(--white);line-height:1.7;margin-bottom:28px;" id="facetDetailText"></div>
         <div style="display:flex;gap:10px;">
-          <button onclick="deleteFacetEntry()" style="background:none;border:1px solid rgba(255,45,45,0.3);color:rgba(255,45,45,0.7);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;padding:14px 20px;cursor:pointer;flex:1;">Delete this facet</button>
+          <button id="facetDeleteBtn" onclick="deleteFacetEntry()" style="background:none;border:1px solid rgba(255,45,45,0.3);color:rgba(255,45,45,0.7);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;padding:14px 20px;cursor:pointer;flex:1;">Delete this facet</button>
           <button onclick="closeFacetDetail()" style="background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;padding:14px 20px;cursor:pointer;">Close</button>
         </div>
       </div>
@@ -646,14 +652,14 @@ function load(){
     var r=localStorage.getItem(KEY);
     if(!r) return fresh();
     var s=JSON.parse(r);
-    if(s.date!==TODAY) return Object.assign(fresh(),{history:s.history||[],kmDebt:s.kmDebt||0,snapshots:s.snapshots||{},mirrorAnswers:{}});
+    if(s.date!==TODAY) return Object.assign(fresh(),{history:s.history||[],kmDebt:s.kmDebt||0,snapshots:s.snapshots||{},mirrorAnswers:{},destination:s.destination||''});
     // merge stored data onto today's defaults so any field missing from an
     // older/earlier version of the app (before this field existed) safely
     // gets a valid default instead of staying undefined.
     return Object.assign(fresh(), s);
   }catch(e){return fresh();}
 }
-function fresh(){return {date:TODAY,morning:{},night:{},todayWord:'',mirrorNote:'',mirrorAnswers:{},rules:{},goalActions:{},history:[],kmDebt:0,todayClosed:false};}
+function fresh(){return {date:TODAY,morning:{},night:{},todayWord:'',destination:'',mirrorNote:'',mirrorAnswers:{},rules:{},goalActions:{},history:[],kmDebt:0,todayClosed:false};}
 var S=load();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 
@@ -1085,22 +1091,38 @@ function renderOneLineArchive(){
 }
 
 var facetDetailIndex=null;
+var facetDeleteArmed=false;
 function showFacetDetail(index){
   var log=loadWebLog();
   var entry=log[index];
   if(!entry||entry.deleted) return;
   facetDetailIndex=index;
+  facetDeleteArmed=false;
   document.getElementById('facetDetailDate').textContent=entry.date;
   document.getElementById('facetDetailText').textContent=entry.text;
+  var btn=document.getElementById('facetDeleteBtn');
+  if(btn){ btn.textContent='Delete this facet'; btn.style.borderColor='rgba(255,45,45,0.3)'; btn.style.color='rgba(255,45,45,0.7)'; }
   document.getElementById('facetDetail').style.display='block';
 }
 function closeFacetDetail(){
   document.getElementById('facetDetail').style.display='none';
   facetDetailIndex=null;
+  facetDeleteArmed=false;
 }
 function deleteFacetEntry(){
   if(facetDetailIndex===null) return;
-  if(!confirm('Delete this point? The slot stays empty, nothing else moves.')) return;
+  var btn=document.getElementById('facetDeleteBtn');
+  if(!facetDeleteArmed){
+    facetDeleteArmed=true;
+    if(btn){ btn.textContent='Tap again to confirm'; btn.style.borderColor='rgba(255,45,45,0.9)'; btn.style.color='#ff2d2d'; }
+    setTimeout(function(){
+      if(!facetDeleteArmed) return;
+      facetDeleteArmed=false;
+      if(btn){ btn.textContent='Delete this facet'; btn.style.borderColor='rgba(255,45,45,0.3)'; btn.style.color='rgba(255,45,45,0.7)'; }
+    },3000);
+    return;
+  }
+  facetDeleteArmed=false;
   var log=loadWebLog();
   log[facetDetailIndex]={ts:log[facetDetailIndex].ts,date:log[facetDetailIndex].date,text:'',deleted:true};
   saveWebLog(log);
@@ -1413,7 +1435,11 @@ function loadRules(){
       {id:'r0', text:'No porn. No masturbation.', km:10},
       {id:'r1', text:'No social media until goal actions are done', km:10},
       {id:'r2', text:'No bed until the day is closed', km:10},
+      {id:'r3', text:'Mattress stays off the bed frame until today\'s to dos are done', km:10},
     ];
+    localStorage.setItem('ladder_rules',JSON.stringify(r));
+  }else if(!r.some(function(x){return x.id==='r3';})){
+    r.push({id:'r3', text:'Mattress stays off the bed frame until today\'s to dos are done', km:10});
     localStorage.setItem('ladder_rules',JSON.stringify(r));
   }
   return r;
@@ -1434,8 +1460,13 @@ function openEditRule(ruleId){
   var r=rules.find(function(x){return x.id===ruleId;});
   if(!r) return;
   editingRuleId=ruleId;
+  ruleDeleteArmed=false;
   document.getElementById('ruleModalTitle').textContent='Edit rule';
-  document.getElementById('deleteRuleBtn').style.display='block';
+  var delBtn=document.getElementById('deleteRuleBtn');
+  delBtn.style.display='block';
+  delBtn.textContent='Delete this rule';
+  delBtn.style.borderColor='rgba(255,45,45,0.3)';
+  delBtn.style.color='var(--red)';
   document.getElementById('rText').value=r.text;
   document.getElementById('rKm').value=r.km;
   document.getElementById('ruleModal').style.display='block';
@@ -1455,9 +1486,21 @@ function saveRule(){
   closeRuleModal();
   buildRules();
 }
+var ruleDeleteArmed=false;
 function deleteRule(){
   if(!editingRuleId) return;
-  if(!confirm('Delete this rule?')) return;
+  var btn=document.getElementById('deleteRuleBtn');
+  if(!ruleDeleteArmed){
+    ruleDeleteArmed=true;
+    if(btn){ btn.textContent='Tap again to confirm'; btn.style.borderColor='rgba(255,45,45,0.9)'; btn.style.color='#ff2d2d'; }
+    setTimeout(function(){
+      if(!ruleDeleteArmed) return;
+      ruleDeleteArmed=false;
+      if(btn){ btn.textContent='Delete this rule'; btn.style.borderColor='rgba(255,45,45,0.3)'; btn.style.color='var(--red)'; }
+    },3000);
+    return;
+  }
+  ruleDeleteArmed=false;
   var rules=loadRules().filter(function(x){return x.id!==editingRuleId;});
   saveRulesList(rules);
   if(S.rules) delete S.rules[editingRuleId];
@@ -1733,9 +1776,9 @@ function buildRewards(){
 
 var MIRROR_QS=[
   {id:'q1', label:'01: the promise', q:'Did you keep your promise to yourself today?', ph:'Not "kind of". Not "mostly". Yes or no, then explain.'},
-  {id:'q2', label:'02: the move', q:'What did you actually do today that moves you forward?', ph:'Name it. One real thing. Not what you planned, what you did.'},
-  {id:'q3', label:'03: the pattern', q:'What did you do today that the old you would do?', ph:'Be honest. What habit showed up that you said you were done with?'},
-  {id:'q4', label:'04: the moment', q:'Was there a moment today where you chose comfort over growth?', ph:'When was it. What did you choose instead of the hard thing.'},
+  {id:'q2', label:'02: the wall', q:'Where today did you break through the wall, or hold it up against what you wanted?', ph:'Name the moment. Was it perseverance or restraint.', pillar:'resistance'},
+  {id:'q3', label:'03: the work', q:'Did you stay with the work today, or chase the outcome?', ph:'The moment you wanted to check, compare, or already know. What did you do instead.', pillar:'detachment'},
+  {id:'q4', label:'04: the stillness', q:'Where did you sit with boredom today, instead of filling it?', ph:'Or where did you reach for something to escape it. Either way, be honest.', pillar:'boredom'},
   {id:'q5', label:'05: tomorrow', q:'What is the one thing you will do tomorrow. No matter what.', ph:'Write it like a contract with yourself. Specific. No escape.'},
 ];
 
@@ -1750,6 +1793,7 @@ function getDueFlashcard(){
     var e=log[i];
     if(e.deleted) continue;
     if(!e.classification || e.classification.type!=='decision') continue;
+    if(e.quickLog) continue;
     if(e.active===false) continue;
     if(typeof e.nextDue!=='number') continue;
     if(e.nextDue<=now){
@@ -1819,10 +1863,53 @@ function letGoFlashcard(){
 // ── WEEKLY COUNTER: collapsed by default, tucked below the archive ──
 var PILLARS=['resistance','detachment','boredom'];
 var PILLAR_PLAIN={
-  resistance:'broke through a wall, or held one up',
-  detachment:'resisted checking the number',
-  boredom:'sat with the boredom instead of filling it'
+  resistance:'perseverance, or restraint',
+  detachment:'focus on the work, the fruit will come',
+  boredom:'sat with it, didn\'t fill it'
 };
+var PILLAR_TIP={
+  resistance:'A wall stands between you and what you want. Sometimes discipline means breaking through it, doing the hard thing anyway. Sometimes it means holding it up, keeping desire out. Perseverance breaks the wall. Restraint holds it.',
+  detachment:'Getting attached to the outcome creates friction with where you are right now. The work is what you can actually act on. The fruit comes on its own. Staying with the work is the mindset that gets you there.',
+  boredom:'Stillness is uncomfortable by design. The moment you want to scroll, snack, or put on music to escape it, that\'s the test. Sitting through it is the point.'
+};
+var PILLAR_LABEL={
+  resistance:'The Art of Resistance',
+  detachment:'The Art of Detachment',
+  boredom:'The Art of Boredom'
+};
+var PILLAR_ACTION={
+  resistance:{pos:'resisted',neg:'wall gave way',push:'broke the wall',hold:'held the wall'},
+  detachment:{pos:'detached',neg:'chased the outcome',push:'stayed with the work',hold:'outcome-focused'},
+  boredom:{pos:'endured',neg:'filled it',push:'sat with it',hold:'filled it'}
+};
+
+function closeQuickLog(pillar){
+  var chooser=document.getElementById('ql-'+pillar);
+  if(chooser) chooser.style.display='none';
+}
+
+function quickLogDecision(pillar,subtype){
+  var log=loadWebLog();
+  var label=subtype==='push'?PILLAR_ACTION[pillar].push:subtype==='hold'?PILLAR_ACTION[pillar].hold:PILLAR_ACTION[pillar].pos;
+  var mappedSubtype=subtype==='push'?'pushThrough':subtype==='hold'?'holdBack':null;
+  var entry={
+    ts:Date.now(),
+    date:TODAY,
+    text:label,
+    quickLog:true,
+    classification:{type:'decision',subtype:mappedSubtype,pillar:pillar}
+  };
+  log.push(entry);
+  saveWebLog(log);
+  closeQuickLog(pillar);
+  renderCounter();
+}
+
+function toggleQuickLog(p){
+  var el=document.getElementById('ql-'+p);
+  if(!el) return;
+  el.style.display=el.style.display==='flex'?'none':'flex';
+}
 
 function computeWeekCounts(){
   var log=loadWebLog();
@@ -1839,18 +1926,85 @@ function computeWeekCounts(){
   return counts;
 }
 
+function getWeekEntries(pillar){
+  var log=loadWebLog();
+  var weekAgo=Date.now()-7*DAY_MS;
+  return log.filter(function(e){
+    return !e.deleted && e.classification && e.classification.pillar===pillar && e.ts>=weekAgo;
+  }).sort(function(a,b){ return a.ts-b.ts; });
+}
+
+var counterOpenPillar=null;
+
 function renderCounter(){
   var counts=computeWeekCounts();
   var el=document.getElementById('counterBody');
   if(!el) return;
-  el.innerHTML=PILLARS.map(function(p){
+  el.innerHTML=PILLARS.map(function(p,pIdx){
+    var tipId='artTip'+pIdx;
     var c=counts[p];
-    return '<div style="border-bottom:1px solid var(--dim2);padding:12px 0;">'
-      +'<div class="lbl" style="margin-bottom:4px;">'+p+'</div>'
-      +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.78rem;color:var(--white);margin-bottom:6px;">'+PILLAR_PLAIN[p]+'</div>'
-      +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.65rem;color:var(--muted);">'+c.against+' times this week &middot; gave in '+c.withF+'</div>'
+    var total=c.against+c.withF;
+    var pct=total?Math.round((c.against/total)*100):0;
+    var barInner=total?('<div style="width:'+pct+'%;height:100%;background:var(--lime);"></div>'):'';
+    var openNow=counterOpenPillar===p;
+    var listHtml='';
+    if(openNow){
+      var entries=getWeekEntries(p);
+      listHtml=entries.length
+        ? entries.map(function(e){
+            var label=e.classification.type==='decision'?(e.classification.subtype==='holdBack'?'held back':'pushed through'):'gave in';
+            return '<div style="padding:9px 2px;border-top:1px solid var(--dim2);">'
+              +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
+                +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.55rem;color:rgba(212,240,0,0.7);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">'+esc(e.date)+' \u00b7 '+label+'</div>'
+                +'<span onclick="event.stopPropagation();deleteCounterEntry('+e.ts+')" style="font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;color:'+(counterDeleteArmed===e.ts?'#ff2d2d':'rgba(244,240,232,0.3)')+';cursor:pointer;flex-shrink:0;">'+(counterDeleteArmed===e.ts?'tap again':'delete')+'</span>'
+              +'</div>'
+              +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.72rem;color:rgba(244,240,232,0.8);line-height:1.5;">'+esc(e.text)+'</div>'
+              +'</div>';
+          }).join('')
+        : '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.65rem;color:rgba(244,240,232,0.3);padding:8px 2px;">Nothing yet this week.</div>';
+    }
+    var chooserBtns =
+      '<button onclick="event.stopPropagation();quickLogDecision(\''+p+'\',\'push\')" style="flex:1;background:rgba(212,240,0,0.08);border:1px solid rgba(212,240,0,0.4);color:var(--lime);font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;letter-spacing:0.03em;padding:10px 4px;cursor:pointer;border-radius:6px;">'+PILLAR_ACTION[p].push+'</button>'
+      +'<button onclick="event.stopPropagation();quickLogDecision(\''+p+'\',\'hold\')" style="flex:1;background:rgba(212,240,0,0.08);border:1px solid rgba(212,240,0,0.4);color:var(--lime);font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;letter-spacing:0.03em;padding:10px 4px;cursor:pointer;border-radius:6px;">'+PILLAR_ACTION[p].hold+'</button>';
+    return '<div style="border-bottom:1px solid var(--dim2);padding:14px 0;">'
+      +'<div class="lbl" style="margin-bottom:4px;">'+PILLAR_LABEL[p]
+        +'<span class="tip-wrap"><span class="tip-icon" onclick="toggleTip(\''+tipId+'\')">i</span><div class="tip-box" id="'+tipId+'" style="text-transform:none;left:auto;right:0;">'+PILLAR_TIP[p]+'</div></span>'
+      +'</div>'
+      +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.82rem;color:var(--white);margin-bottom:12px;">'+PILLAR_PLAIN[p]+'</div>'
+      +'<div class="tapzone" onclick="toggleCounterPillar(\''+p+'\')" style="cursor:pointer;">'
+        +'<div style="height:6px;background:rgba(244,240,232,0.08);border-radius:3px;overflow:hidden;margin-bottom:8px;">'+barInner+'</div>'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;">'
+          +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;color:var(--muted);">'+c.against+' '+PILLAR_ACTION[p].pos+', '+c.withF+' '+PILLAR_ACTION[p].neg+'</div>'
+          +'<span onclick="event.stopPropagation();toggleQuickLog(\''+p+'\')" style="width:20px;height:20px;border-radius:50%;border:1px solid rgba(212,240,0,0.35);color:rgba(212,240,0,0.7);display:inline-flex;align-items:center;justify-content:center;font-size:0.75rem;cursor:pointer;flex-shrink:0;">+</span>'
+        +'</div>'
+      +'</div>'
+      +'<div id="ql-'+p+'" style="display:none;gap:8px;margin-top:10px;">'+chooserBtns+'</div>'
+      +listHtml
       +'</div>';
   }).join('');
+}
+
+var counterDeleteArmed=null;
+
+function deleteCounterEntry(ts){
+  if(counterDeleteArmed!==ts){
+    counterDeleteArmed=ts;
+    renderCounter();
+    setTimeout(function(){ if(counterDeleteArmed===ts) counterDeleteArmed=null; },3000);
+    return;
+  }
+  counterDeleteArmed=null;
+  var log=loadWebLog();
+  var idx=log.findIndex(function(e){ return e.ts===ts; });
+  if(idx===-1) return;
+  log[idx]={ts:log[idx].ts,date:log[idx].date,text:'',deleted:true};
+  saveWebLog(log);
+  renderCounter();
+}
+
+function toggleCounterPillar(p){
+  counterOpenPillar=counterOpenPillar===p?null:p;
+  renderCounter();
 }
 
 function toggleCounter(){
@@ -1860,13 +2014,54 @@ function toggleCounter(){
   if(opening) renderCounter();
 }
 
+function logMirrorAnswer(qId,pillar,kind){
+  var ta=document.querySelector('textarea[data-qid="'+qId+'"]');
+  var text=ta?ta.value.trim():'';
+  var statusEl=document.querySelector('.mq-logstatus[data-qid="'+qId+'"]');
+  if(!text){
+    if(statusEl) statusEl.textContent='Write something first.';
+    return;
+  }
+  var label=kind==='push'?PILLAR_ACTION[pillar].push:kind==='hold'?PILLAR_ACTION[pillar].hold:kind==='neg'?PILLAR_ACTION[pillar].neg:PILLAR_ACTION[pillar].pos;
+  var subtype=kind==='push'?'pushThrough':kind==='hold'?'holdBack':null;
+  var classification={type:kind==='neg'?'feeling':'decision',subtype:subtype,pillar:pillar};
+
+  if(!S.mirrorLogged) S.mirrorLogged={};
+  var log=loadWebLog();
+  var key=qId+'_'+TODAY;
+  var existingTs=S.mirrorLogged[key];
+  var idx=existingTs?log.findIndex(function(e){return e.ts===existingTs;}):-1;
+
+  if(idx!==-1){
+    log[idx].text=text;
+    log[idx].classification=classification;
+    saveWebLog(log);
+  }else{
+    var entry={ts:Date.now(),date:TODAY,text:text,classification:classification};
+    if(classification.type==='decision'){ entry.nextDue=Date.now()+DAY_MS; entry.renewCount=0; entry.active=true; }
+    log.push(entry);
+    saveWebLog(log);
+    S.mirrorLogged[key]=entry.ts;
+    save();
+  }
+  if(statusEl) statusEl.textContent='Logged as '+label+'.';
+}
+
 function buildMirrorQuestions(){
   var c=document.getElementById('mirrorQuestions'); c.innerHTML='';
   if(!S.mirrorAnswers) S.mirrorAnswers={};
   MIRROR_QS.forEach(function(q){
     var block=document.createElement('div');
     block.className='mq-block';
-    block.innerHTML='<div class="mq-label">'+q.label+'</div><div class="mq-question">'+q.q+'</div><textarea class="mq-ta" data-qid="'+q.id+'" placeholder="'+q.ph+'"></textarea>';
+    var logRow='';
+    if(q.pillar){
+      var btns='<button data-kind="push" onclick="logMirrorAnswer(\''+q.id+'\',\''+q.pillar+'\',\'push\')" style="flex:1;background:rgba(212,240,0,0.08);border:1px solid rgba(212,240,0,0.4);color:var(--lime);font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;letter-spacing:0.03em;padding:10px 4px;cursor:pointer;border-radius:6px;">'+PILLAR_ACTION[q.pillar].push+'</button>'
+        +'<button data-kind="hold" onclick="logMirrorAnswer(\''+q.id+'\',\''+q.pillar+'\',\'hold\')" style="flex:1;background:rgba(212,240,0,0.08);border:1px solid rgba(212,240,0,0.4);color:var(--lime);font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;letter-spacing:0.03em;padding:10px 4px;cursor:pointer;border-radius:6px;">'+PILLAR_ACTION[q.pillar].hold+'</button>';
+      logRow='<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;color:rgba(244,240,232,0.35);margin:12px 0 8px;">which was it</div>'
+        +'<div style="display:flex;gap:8px;">'+btns+'</div>'
+        +'<div class="mq-logstatus" data-qid="'+q.id+'" style="font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;color:var(--muted);margin-top:6px;min-height:14px;"></div>';
+    }
+    block.innerHTML='<div class="mq-label">'+q.label+'</div><div class="mq-question">'+q.q+'</div><textarea class="mq-ta" data-qid="'+q.id+'" placeholder="'+q.ph+'"></textarea>'+logRow;
     var ta=block.querySelector('textarea');
     ta.value=S.mirrorAnswers[q.id]||'';
     ta.addEventListener('input',function(){
@@ -1879,6 +2074,10 @@ function buildMirrorQuestions(){
       save();
     });
     c.appendChild(block);
+    if(q.pillar){
+      var statusEl=block.querySelector('.mq-logstatus[data-qid="'+q.id+'"]');
+      if(statusEl && S.mirrorLogged && S.mirrorLogged[q.id+'_'+TODAY]) statusEl.textContent='Logged already today. Tap again to update.';
+    }
   });
 }
 
@@ -2163,6 +2362,7 @@ function goTo(id){
     document.getElementById('mGreet').innerHTML=g+'<br>Are you <em>ready?</em>';
     setIdentity();
     document.getElementById('todayWord').value=S.todayWord||'';
+    document.getElementById('destination').value=S.destination||'';
     buildYBar();
   }
   if(id==='s-wiring'){renderWiringStatic();}
@@ -2182,6 +2382,7 @@ function goToBoot(){
 function enterApp(){
   document.getElementById('nav').classList.remove('hidden');
   document.getElementById('todayWord').addEventListener('input',function(){S.todayWord=this.value;save();});
+  document.getElementById('destination').addEventListener('input',function(){S.destination=this.value;save();});
   setIdentity();
   goTo('s-morning');
 }
@@ -2224,8 +2425,19 @@ function toggleGoalTimer(actionId){
   saveGoalTimerState(actionId,t);
   renderGoalTimer(actionId);
 }
-function resetGoalTimer(actionId){
-  if(!confirm('Reset this timer to zero?')) return;
+var timerResetArmed={};
+function resetGoalTimer(actionId,btn){
+  if(!timerResetArmed[actionId]){
+    timerResetArmed[actionId]=true;
+    if(btn){ btn.textContent='tap again'; btn.style.color='#ff2d2d'; }
+    setTimeout(function(){
+      if(!timerResetArmed[actionId]) return;
+      timerResetArmed[actionId]=false;
+      if(btn){ btn.textContent='reset'; btn.style.color=''; }
+    },3000);
+    return;
+  }
+  timerResetArmed[actionId]=false;
   saveGoalTimerState(actionId,{accumulated:0,running:false,startedAt:null});
   if(S.goalActions&&S.goalActions[TODAY]) delete S.goalActions[TODAY][actionId];
   save();
@@ -2251,7 +2463,7 @@ function renderGoalTimerHTML(a){
     +'<div class="gtimer-bar"><div class="gtimer-fill" id="tfill-'+a.id+'" style="width:'+Math.min(100,(elapsed/target)*100)+'%"></div></div>'
     +'<div class="gtimer-controls">'
       +'<button class="gt-play'+(t.running?' on':'')+'" id="tbtn-'+a.id+'" onclick="toggleGoalTimer(\''+a.id+'\')">'+(t.running?'&#10073;&#10073; pause':'&#9654; start')+'</button>'
-      +'<button class="gt-reset" onclick="resetGoalTimer(\''+a.id+'\')">reset</button>'
+      +'<button class="gt-reset" onclick="resetGoalTimer(\''+a.id+'\',this)">reset</button>'
     +'</div>'
     +(overtime?'<div class="gt-donebadge">&#10003; done. '+fmtHMS(elapsed)+' logged</div>':'')
   +'</div>';
@@ -2314,8 +2526,19 @@ function saveFreeTimer(){
   closeFreeTimerModal();
   buildFreeTimers();
 }
-function deleteFreeTimer(id){
-  if(!confirm('Delete this timer?')) return;
+var freeTimerDeleteArmed={};
+function deleteFreeTimer(id,el){
+  if(!freeTimerDeleteArmed[id]){
+    freeTimerDeleteArmed[id]=true;
+    if(el){ el.innerHTML='sure?'; el.style.color='#ff2d2d'; }
+    setTimeout(function(){
+      if(!freeTimerDeleteArmed[id]) return;
+      freeTimerDeleteArmed[id]=false;
+      if(el){ el.innerHTML='&#10005;'; el.style.color=''; }
+    },3000);
+    return;
+  }
+  freeTimerDeleteArmed[id]=false;
   saveFreeTimerTemplates(loadFreeTimerTemplates().filter(function(t){return t.id!==id;}));
   buildFreeTimers();
 }
@@ -2346,7 +2569,7 @@ function buildFreeTimers(){
         +'<div class="ftimer-bar"><div class="ftimer-fill" id="ftfill-'+tpl.id+'" style="width:'+Math.min(100,(elapsed/target)*100)+'%"></div></div>'
       +'</div>'
       +'<div class="ftimer-time" id="fttime-'+tpl.id+'">'+(overtime?'+':'')+fmtHMS(overtime?elapsed-target:target-elapsed)+'</div>'
-      +'<span class="ftimer-del" onclick="deleteFreeTimer(\''+tpl.id+'\')" style="padding:14px 10px;display:inline-block;">&#10005;</span>';
+      +'<span class="ftimer-del" onclick="deleteFreeTimer(\''+tpl.id+'\',this)" style="padding:14px 10px;display:inline-block;">&#10005;</span>';
     c.appendChild(row);
   });
 }
@@ -2710,8 +2933,13 @@ function openEditGoal(goalId){
   var g=goals.find(function(g){return g.id===goalId;});
   if(!g) return;
   editingGoalId=goalId;
+  goalDeleteArmed=false;
   document.getElementById('modalTitle').textContent='Edit goal';
-  document.getElementById('deleteGoalBtn').style.display='block';
+  var delBtn=document.getElementById('deleteGoalBtn');
+  delBtn.style.display='block';
+  delBtn.textContent='Delete this goal';
+  delBtn.style.borderColor='rgba(255,45,45,0.3)';
+  delBtn.style.color='var(--red)';
   document.getElementById('gName').value=g.name||'';
   document.getElementById('gOutcome').value=g.outcome||'';
   document.getElementById('gDeadline').value=g.deadline||'';
@@ -2754,9 +2982,21 @@ function saveGoal(){
   buildGoalsList();
 }
 
+var goalDeleteArmed=false;
 function deleteGoal(){
   if(!editingGoalId) return;
-  if(!confirm('Delete this goal?')) return;
+  var btn=document.getElementById('deleteGoalBtn');
+  if(!goalDeleteArmed){
+    goalDeleteArmed=true;
+    if(btn){ btn.textContent='Tap again to confirm'; btn.style.borderColor='rgba(255,45,45,0.9)'; btn.style.color='#ff2d2d'; }
+    setTimeout(function(){
+      if(!goalDeleteArmed) return;
+      goalDeleteArmed=false;
+      if(btn){ btn.textContent='Delete this goal'; btn.style.borderColor='rgba(255,45,45,0.3)'; btn.style.color='var(--red)'; }
+    },3000);
+    return;
+  }
+  goalDeleteArmed=false;
   var goals=loadGoals().filter(function(g){return g.id!==editingGoalId;});
   saveGoals(goals);
   closeGoalModal();
@@ -2811,16 +3051,28 @@ function renderCheckinHistory(goalId){
             return '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.72rem;display:flex;gap:12px;"><span style="color:rgba(244,240,232,0.4);min-width:80px;">'+esc(k)+'</span><span style="color:var(--white);">'+esc(h.values[k])+'</span></div>';
           }).join('')
         +'</div>'
-        +'<span onclick="deleteCheckinEntry(\''+goalId+'\','+i+')" style="color:rgba(244,240,232,0.15);font-size:0.62rem;cursor:pointer;padding:14px 10px;flex-shrink:0;transition:color 0.2s;" onmouseover="this.style.color=\'rgba(255,45,45,0.7)\'" onmouseout="this.style.color=\'rgba(244,240,232,0.15)\'">&#10005;</span>'
+        +'<span onclick="deleteCheckinEntry(\''+goalId+'\','+i+',this)" style="color:rgba(244,240,232,0.15);font-size:0.62rem;cursor:pointer;padding:14px 10px;flex-shrink:0;transition:color 0.2s;" onmouseover="this.style.color=\'rgba(255,45,45,0.7)\'" onmouseout="this.style.color=\'rgba(244,240,232,0.15)\'">&#10005;</span>'
       +'</div>';
     }).join('');
 }
-function deleteCheckinEntry(goalId,index){
-  if(!confirm('Delete this check-in entry?')) return;
-  var key='ladder_checkin_'+goalId;
-  var history=JSON.parse(localStorage.getItem(key)||'[]');
+var checkinDeleteArmed={};
+function deleteCheckinEntry(goalId,index,el){
+  var key=goalId+'_'+index;
+  if(!checkinDeleteArmed[key]){
+    checkinDeleteArmed[key]=true;
+    if(el){ el.innerHTML='sure?'; el.style.color='rgba(255,45,45,0.9)'; }
+    setTimeout(function(){
+      if(!checkinDeleteArmed[key]) return;
+      checkinDeleteArmed[key]=false;
+      if(el){ el.innerHTML='&#10005;'; el.style.color='rgba(244,240,232,0.15)'; }
+    },3000);
+    return;
+  }
+  checkinDeleteArmed[key]=false;
+  var storeKey='ladder_checkin_'+goalId;
+  var history=JSON.parse(localStorage.getItem(storeKey)||'[]');
   history.splice(index,1);
-  localStorage.setItem(key,JSON.stringify(history));
+  localStorage.setItem(storeKey,JSON.stringify(history));
   renderCheckinHistory(goalId);
 }
 
