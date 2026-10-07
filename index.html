@@ -239,14 +239,36 @@ button:focus{outline:none;}
     <div class="lbl" style="margin-bottom:10px">Today I am</div>
     <div class="idstmt" id="idStmt">Someone who does<br>what he <span class="acc">says.</span></div>
 
-    <div class="lbl" style="margin-bottom:8px">Where you're headed</div>
-    <input class="li" id="destination" type="text" placeholder="the thing you're actually building toward" style="margin-bottom:12px">
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:rgba(244,240,232,0.4);line-height:1.6;margin-bottom:32px;">To get there, you'll do things you don't want to do. And refuse things you do want right now, because they'd take you further away.</div>
+    <div class="lbl" style="margin-bottom:8px">What will you want today that you won't give in to?
+      <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tw2')">i</span><div class="tip-box" id="tw2" style="text-transform:none;">One thing you'll probably want today that won't take you where you're going. Decide now, before the want shows up.</div></span>
+    </div>
+    <input class="li" id="refuseToday" type="text" placeholder="the one thing I refuse today" oninput="S.refuseToday=this.value;save();" style="margin-bottom:32px">
 
     <div class="lbl" style="margin-bottom:8px">What do you need to do today to go home satisfied?
       <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tw1')">i</span><div class="tip-box" id="tw1">One thing. Not a list. The one thing that, if you do it, makes today count.</div></span>
     </div>
-    <input class="li" id="todayWord" type="text" placeholder="the one thing that matters today" style="margin-bottom:32px">
+    <input class="li" id="todayWord" type="text" placeholder="the one thing that matters today" style="margin-bottom:24px">
+
+    <div class="lbl" style="margin-bottom:8px">First task, and by when
+      <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tw3')">i</span><div class="tip-box" id="tw3" style="text-transform:none;">Not a time block. One specific thing to finish, with a deadline. An hour can pass and feel like work. A task either gets done, or it didn't.</div></span>
+    </div>
+    <div id="planForm">
+      <input class="li" id="todayTask" type="text" placeholder="the first thing to finish" style="margin-bottom:10px">
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input class="li" id="todayBy" type="time" style="flex:1;margin-bottom:0;">
+        <button onclick="startPlan()" style="flex:1;background:var(--lime);border:none;color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:14px;cursor:pointer;">Start</button>
+      </div>
+      <div id="planMsg" style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--muted);min-height:14px;"></div>
+    </div>
+    <div id="planRun" style="display:none;border-left:2px solid var(--lime);padding:4px 0 4px 14px;">
+      <div id="planRunText" style="font-family:'IBM Plex Mono',monospace;font-size:0.9rem;color:var(--white);line-height:1.5;margin-bottom:6px;"></div>
+      <div id="planRunTime" style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.08em;color:var(--lime);margin-bottom:14px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button id="planDoneBtn" onclick="donePlan()" style="flex:1;background:rgba(212,240,0,0.1);border:1px solid rgba(212,240,0,0.4);color:var(--lime);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;padding:14px;cursor:pointer;">Done</button>
+        <button onclick="editPlan()" style="background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;padding:14px 18px;cursor:pointer;">Edit</button>
+      </div>
+    </div>
+    <div style="height:32px"></div>
 
     <div class="brow">
       <button class="bp" onclick="goTo('s-goals')">Go to your goals &rarr;</button>
@@ -652,14 +674,14 @@ function load(){
     var r=localStorage.getItem(KEY);
     if(!r) return fresh();
     var s=JSON.parse(r);
-    if(s.date!==TODAY) return Object.assign(fresh(),{history:s.history||[],kmDebt:s.kmDebt||0,snapshots:s.snapshots||{},mirrorAnswers:{},destination:s.destination||''});
+    if(s.date!==TODAY) return Object.assign(fresh(),{history:s.history||[],kmDebt:s.kmDebt||0,snapshots:s.snapshots||{},mirrorAnswers:{},bookAffirmations:s.bookAffirmations||[],affirmationDay:(s.affirmationDay||0)+1});
     // merge stored data onto today's defaults so any field missing from an
     // older/earlier version of the app (before this field existed) safely
     // gets a valid default instead of staying undefined.
     return Object.assign(fresh(), s);
   }catch(e){return fresh();}
 }
-function fresh(){return {date:TODAY,morning:{},night:{},todayWord:'',destination:'',mirrorNote:'',mirrorAnswers:{},rules:{},goalActions:{},history:[],kmDebt:0,todayClosed:false};}
+function fresh(){return {date:TODAY,morning:{},night:{},todayWord:'',todayTask:null,refuseToday:'',bookAffirmations:[],affirmationDay:0,mirrorNote:'',mirrorAnswers:{},rules:{},goalActions:{},history:[],kmDebt:0,todayClosed:false};}
 var S=load();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 
@@ -2362,7 +2384,8 @@ function goTo(id){
     document.getElementById('mGreet').innerHTML=g+'<br>Are you <em>ready?</em>';
     setIdentity();
     document.getElementById('todayWord').value=S.todayWord||'';
-    document.getElementById('destination').value=S.destination||'';
+    document.getElementById('refuseToday').value=S.refuseToday||'';
+    renderPlan();
     buildYBar();
   }
   if(id==='s-wiring'){renderWiringStatic();}
@@ -2371,6 +2394,70 @@ function goTo(id){
   if(id==='s-goals'){buildGoalsList();checkSunday();buildFreeTimers();}
   document.getElementById(id).scrollTop=0;
 }
+
+function renderRelentless(){
+  var el=document.getElementById('relentlessToday');
+  if(!el) return;
+  var list=S.bookAffirmations||[];
+  if(!list.length){
+    el.textContent='Nothing yet. Add your first Do This Now answer below.';
+    el.style.color='rgba(244,240,232,0.3)';
+    return;
+  }
+  var idx=(S.affirmationDay||0)%list.length;
+  el.textContent=list[idx];
+  el.style.color='var(--white)';
+}
+function addRelentless(){
+  var input=document.getElementById('relentlessInput');
+  var text=input.value.trim();
+  if(!text) return;
+  if(!S.bookAffirmations) S.bookAffirmations=[];
+  S.bookAffirmations.push(text);
+  save();
+  input.value='';
+  renderRelentless();
+}
+
+
+// MORNING PLAN: one question, then a task with a deadline, then start
+function fmtClock(ms){var d=new Date(ms);return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
+function planDeadline(by){var p=by.split(':');var d=new Date();d.setHours(+p[0],+p[1],0,0);return d.getTime();}
+function renderPlan(){
+  var t=S.todayTask;
+  var form=document.getElementById('planForm'), run=document.getElementById('planRun');
+  if(!form||!run) return;
+  if(!t||!t.startedAt){
+    form.style.display='block'; run.style.display='none';
+    document.getElementById('todayTask').value=t?t.text:'';
+    document.getElementById('todayBy').value=t?t.by:'';
+    return;
+  }
+  form.style.display='none'; run.style.display='block';
+  document.getElementById('planRunText').textContent=t.text;
+  var tm=document.getElementById('planRunTime'), btn=document.getElementById('planDoneBtn');
+  if(t.doneAt){
+    tm.textContent='Done at '+fmtClock(t.doneAt)+'. Due was '+t.by+'.';
+    tm.style.color='var(--lime)'; btn.style.display='none';
+  } else {
+    btn.style.display='block';
+    var left=planDeadline(t.by)-Date.now();
+    if(left>=0){var m=Math.ceil(left/60000);tm.textContent='Due '+t.by+'. '+Math.floor(m/60)+'h '+('0'+(m%60)).slice(-2)+'m left.';tm.style.color='var(--lime)';}
+    else{tm.textContent='Due '+t.by+'. Past the deadline.';tm.style.color='var(--red)';}
+  }
+}
+function startPlan(){
+  var text=document.getElementById('todayTask').value.trim();
+  var by=document.getElementById('todayBy').value;
+  var msg=document.getElementById('planMsg');
+  if(!text){msg.textContent='Write the task first.';return;}
+  if(!by){msg.textContent='Set a deadline. No deadline, no task.';return;}
+  S.todayTask={text:text,by:by,startedAt:Date.now(),doneAt:null};
+  save(); msg.textContent=''; renderPlan();
+}
+function donePlan(){if(!S.todayTask) return;S.todayTask.doneAt=Date.now();save();renderPlan();}
+function editPlan(){if(!S.todayTask) return;S.todayTask.startedAt=null;S.todayTask.doneAt=null;save();renderPlan();}
+setInterval(function(){if(curScreen==='s-morning') renderPlan();},30000);
 
 function goToBoot(){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
@@ -2382,7 +2469,6 @@ function goToBoot(){
 function enterApp(){
   document.getElementById('nav').classList.remove('hidden');
   document.getElementById('todayWord').addEventListener('input',function(){S.todayWord=this.value;save();});
-  document.getElementById('destination').addEventListener('input',function(){S.destination=this.value;save();});
   setIdentity();
   goTo('s-morning');
 }
