@@ -209,6 +209,8 @@ button:focus{outline:none;}
 .nb:hover{color:rgba(244,240,232,0.5);}
 .nb.on{color:var(--lime);border-top:2px solid var(--lime);margin-top:-2px;}
 #nav.hidden{display:none;}
+#catchFab{position:fixed;right:14px;bottom:68px;z-index:601;background:var(--lime);border:none;color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:500;letter-spacing:0.15em;text-transform:uppercase;padding:15px 20px;cursor:pointer;box-shadow:0 0 0 1px rgba(8,8,8,0.9),0 4px 18px rgba(212,240,0,0.25);}
+#nav.hidden + #catchFab{display:none;}
 @keyframes slideUp{from{transform:translateY(110%);}to{transform:translateY(0);}}
 @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
 @keyframes blinkAnim{0%,100%{opacity:1;}50%{opacity:0.2;}}
@@ -502,6 +504,8 @@ button:focus{outline:none;}
     <div class="lbl" style="margin-bottom:12px">Goals</div>
     <div class="big-q" style="margin-bottom:28px">Where you're <em>going.</em></div>
 
+    <button onclick="openCatch('detachment')" style="background:rgba(212,240,0,0.08);border:1px solid var(--lime);color:var(--lime);font-family:'IBM Plex Mono',monospace;font-size:0.66rem;letter-spacing:0.18em;text-transform:uppercase;padding:18px 24px;cursor:pointer;margin-bottom:24px;width:100%;">The Art of Detachment: I'm chasing the outcome</button>
+
     <div id="sunBox" class="sunbox" style="display:none;margin-bottom:24px">
       <div class="suntxt">It's Sunday. Do your check-ins and set up the week.</div>
     </div>
@@ -644,6 +648,26 @@ button:focus{outline:none;}
   <button class="nb" data-s="s-mirror" onclick="goTo('s-mirror')"><span class="ni">&#9790;&#65038;</span>mirror</button>
   <button class="nb" data-s="s-ladder" onclick="goTo('s-ladder')"><span class="ni">&#9650;</span>ladder</button>
 </nav>
+<div id="toast" style="display:none;position:fixed;left:14px;right:14px;top:14px;z-index:1100;background:#0c0c0c;border:1px solid var(--lime);padding:14px 16px;font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--white);line-height:1.5;"></div>
+<button id="catchFab" onclick="openCatch('resistance')">I feel it</button>
+<div id="catchModal" style="display:none;position:fixed;inset:0;background:rgba(8,8,8,0.98);z-index:1000;overflow-y:auto;padding:40px 28px;">
+  <div style="max-width:480px;margin:0 auto;">
+    <div class="lbl" id="catchPillar" style="margin-bottom:20px"></div>
+    <div id="catchSub" style="margin-bottom:16px;"></div>
+    <div id="catchStepQ" class="big-q" style="margin-bottom:20px;font-size:1.5rem;"></div>
+    <div id="catchChoice" style="display:none;flex-direction:column;gap:10px;margin-bottom:16px;"></div>
+    <input class="li" id="catchInput" type="text" style="margin-bottom:16px;">
+    <div id="catchGo" style="display:none;">
+      <div id="catchGoText" class="big-q" style="font-size:1.8rem;margin-bottom:14px;"></div>
+      <div id="catchTimer" style="font-family:'Bebas Neue',sans-serif;font-size:3.2rem;color:var(--lime);margin-bottom:16px;">10</div>
+      <div id="catchDoneRow" style="display:none;gap:8px;"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button id="catchNext" onclick="catchNext()" style="background:var(--lime);border:none;color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:16px 28px;cursor:pointer;flex:1;">Next &rarr;</button>
+      <button onclick="closeCatch()" style="background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;padding:16px 20px;cursor:pointer;">Close</button>
+    </div>
+  </div>
+</div>
 
 <script>
 var KEY='ladder_v5', TODAY=new Date().toDateString();
@@ -841,6 +865,7 @@ function tickWiringTimer(){
   }
 }
 function stopWiring(){
+  if(wiringInterval&&wiringEndsAt){var el=wiringDurMin*60000-(wiringEndsAt-Date.now());if(el>=10000) logAuto('boredom','feeling',null,'Stopped after '+Math.round(el/60000)+' min. Filled it.');}
   if(wiringInterval){ clearInterval(wiringInterval); wiringInterval=null; }
   resetWiringIdleUI();
 }
@@ -854,6 +879,7 @@ function completeWiringSession(){
   var log=loadWiringLog();
   log.push({ts:Date.now()});
   saveWiringLog(log);
+  logAuto('boredom','decision','pushThrough','Sat with it for '+wiringDurMin+' min.');
   var newIndex=Math.min(log.length-1,WIRING_TOTAL-1);
   showWiringReveal(newIndex);
 }
@@ -1905,6 +1931,107 @@ var PILLAR_ACTION={
   boredom:{pos:'endured',neg:'filled it',push:'sat with it',hold:'filled it'}
 };
 
+// CATCH: name it, then do the opposite without hesitation. Logs to the counter.
+var CATCH={
+  resistance:{go:{push:'Do it. Now.',hold:'Hold it. Now.'}},
+  detachment:{q:['What outcome are you looking at?','What can you do right now?'],go:'Go to the work. Now.',btns:[['push','stayed with the work']]}
+};
+var catchState={pillar:null,step:0,a:[],tInt:null};
+function catchBtnStyle(){return "flex:1;background:rgba(212,240,0,0.1);border:1px solid rgba(212,240,0,0.4);color:var(--lime);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;padding:16px;cursor:pointer;line-height:1.5;";}
+function openCatch(pillar){
+  catchState={pillar:pillar,step:0,a:[],tInt:null};
+  document.getElementById('catchPillar').textContent=PILLAR_LABEL[pillar];
+  document.getElementById('catchGo').style.display='none';
+  document.getElementById('catchModal').style.display='block';
+  showCatchStep();
+}
+function showCatchStep(){
+  var p=catchState.pillar, sub=document.getElementById('catchSub'), q=document.getElementById('catchStepQ');
+  var inp=document.getElementById('catchInput'), next=document.getElementById('catchNext'), ch=document.getElementById('catchChoice');
+  sub.innerHTML=''; ch.style.display='none'; ch.innerHTML='';
+  inp.style.display='block'; next.style.display='block';
+  if(p==='resistance'){
+    if(catchState.step===0){
+      q.textContent='Which wall is it?';
+      sub.innerHTML='<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.68rem;color:rgba(212,240,0,0.75);line-height:1.6;">Same muscle, two directions. Understand what you feel, and go against it.</div>';
+      inp.style.display='none'; next.style.display='none'; ch.style.display='flex';
+      [['push',"I don't want to do something I need to"],['hold',"I want to do something I shouldn't"]].forEach(function(o){
+        var el=document.createElement('button'); el.textContent=o[1]; el.setAttribute('style',catchBtnStyle()+'text-align:left;');
+        el.onclick=function(){catchState.a=[o[0]];catchState.step=1;showCatchStep();};
+        ch.appendChild(el);
+      });
+      return;
+    }
+    var push=catchState.a[0]==='push';
+    q.textContent=push?'What do you need to do?':'What do you want that you shouldn\'t?';
+    sub.innerHTML='<div class="lbl">'+(push?'The wall: you don\'t want to':'The wall: you want to')+'</div>';
+  } else {
+    q.textContent=CATCH[p].q[catchState.step];
+    if(p==='detachment'&&catchState.step===1){
+      sub.innerHTML='<div class="lbl" style="margin-bottom:6px;">Out of your reach</div>'
+        +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.8rem;color:rgba(244,240,232,0.3);text-decoration:line-through;margin-bottom:10px;">'+esc(catchState.a[0])+'</div>'
+        +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.68rem;color:rgba(212,240,0,0.75);line-height:1.6;">You don\'t control the outcome. You control your effort.</div>';
+    }
+  }
+  inp.value=''; inp.focus();
+}
+function catchNext(){
+  var p=catchState.pillar, inp=document.getElementById('catchInput'), v=inp.value.trim();
+  if(!v){inp.focus();return;}
+  catchState.a.push(v);
+  if(p==='detachment'&&catchState.step===0){catchState.step=1;showCatchStep();return;}
+  startCatchGo();
+}
+function startCatchGo(){
+  var p=catchState.pillar, a=catchState.a, row=document.getElementById('catchDoneRow');
+  document.getElementById('catchInput').style.display='none';
+  document.getElementById('catchNext').style.display='none';
+  document.getElementById('catchChoice').style.display='none';
+  var btns, goText, shown, label;
+  if(p==='resistance'){
+    var push=a[0]==='push';
+    btns=[[a[0],push?'broke the wall':'held the wall']];
+    goText=CATCH.resistance.go[a[0]]; shown=a[1]; label=push?'The wall: you don\'t want to':'The wall: you want to';
+  } else {
+    btns=CATCH.detachment.btns; goText=CATCH.detachment.go; shown=a[1]; label='Yours to control';
+  }
+  document.getElementById('catchStepQ').textContent=shown;
+  document.getElementById('catchSub').innerHTML='<div class="lbl">'+label+'</div>';
+  document.getElementById('catchGoText').textContent=goText;
+  row.style.display='none'; row.innerHTML='';
+  btns.forEach(function(b){
+    var el=document.createElement('button'); el.textContent=b[1]; el.setAttribute('style',catchBtnStyle());
+    el.onclick=function(){finishCatch(b[0]);};
+    row.appendChild(el);
+  });
+  document.getElementById('catchGo').style.display='block';
+  var n=10, t=document.getElementById('catchTimer'); t.textContent=n;
+  clearInterval(catchState.tInt);
+  catchState.tInt=setInterval(function(){
+    n--; t.textContent=n>0?n:'go';
+    if(n<=0){clearInterval(catchState.tInt);row.style.display='flex';}
+  },1000);
+}
+function finishCatch(subtype){
+  var p=catchState.pillar, a=catchState.a, text;
+  if(p==='resistance') text=(subtype==='push'?'Needed to, didn\'t want to: ':'Wanted, shouldn\'t: ')+a[1]+'. '+PILLAR_ACTION[p][subtype]+'.';
+  else text='Looking at: '+a[0]+'. I can: '+a[1]+'. '+PILLAR_ACTION[p][subtype]+'.';
+  logAuto(p,'decision',subtype==='push'?'pushThrough':'holdBack',text);
+  closeCatch();
+}
+function closeCatch(){
+  clearInterval(catchState.tInt);
+  document.getElementById('catchModal').style.display='none';
+}
+function logAuto(pillar,type,subtype,text){
+  var log=loadWebLog();
+  log.push({ts:Date.now(),date:TODAY,text:text,quickLog:true,classification:{type:type,subtype:subtype,pillar:pillar}});
+  saveWebLog(log);
+  try{renderCounter();}catch(e){}
+  var t=document.getElementById('toast');
+  if(t){t.innerHTML='<span style="color:var(--lime)">Logged.</span> '+PILLAR_LABEL[pillar]+': '+(type==='decision'?'decision':'feeling')+'. See it in Mirror, This week.';t.style.display='block';clearTimeout(window._toastT);window._toastT=setTimeout(function(){t.style.display='none';},3500);}
+}
+
 function closeQuickLog(pillar){
   var chooser=document.getElementById('ql-'+pillar);
   if(chooser) chooser.style.display='none';
@@ -2217,7 +2344,11 @@ function showDayDetail(key){
   var tasksEl=document.getElementById('ddTasks');
   if(!tasks.length){tasksEl.innerHTML='<span style="color:rgba(244,240,232,0.18);font-size:0.68rem;">no goal actions</span>';}
   else{tasksEl.innerHTML='<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.55rem;letter-spacing:0.14em;text-transform:uppercase;color:rgba(244,240,232,0.25);margin-bottom:8px;">goal actions</div>'+tasks.map(function(t){return '<div class="'+(t.done?'dk':'')+'" style="display:flex;align-items:center;gap:10px;padding:4px 0;"><span style="width:6px;height:6px;border-radius:50%;flex-shrink:0;'+(t.done?'background:var(--lime);':'border:1px solid rgba(244,240,232,0.25);')+'"></span><span>'+esc(t.text)+'</span></div>';}).join('');}
-  // mirror answers. per question
+  // what this day taught: the one line entries of that date
+  var learned=loadWebLog().filter(function(e){return !e.deleted&&!e.quickLog&&e.date===key;});
+  var learnedHtml=learned.length?('<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.55rem;letter-spacing:0.14em;text-transform:uppercase;color:rgba(212,240,0,0.55);margin-bottom:8px;">what this day taught</div>'
+      +learned.map(function(e){return '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.78rem;color:var(--white);line-height:1.7;margin-bottom:6px;">'+esc(e.text)+'</div>';}).join('')):'';
+  // mirror answers. per question (older days)
   var answers=isToday?(S.mirrorAnswers||{}):((snap&&snap.answers)?snap.answers:{});
   var answered=MIRROR_QS.filter(function(q){return answers[q.id]&&answers[q.id].trim();});
   var mirrorEl2=document.getElementById('ddMirror');
@@ -2233,7 +2364,12 @@ function showDayDetail(key){
   } else {
     var oldMirror=isToday?(S.mirrorNote||''):((snap&&snap.mirror)?snap.mirror:'');
     if(oldMirror){mirrorEl2.style.display='block';mirrorEl2.textContent=oldMirror;}
-    else{mirrorEl2.style.display='block';mirrorEl2.innerHTML='<span style="color:rgba(244,240,232,0.18);font-size:0.68rem;">no reflection recorded</span>';}
+    else{mirrorEl2.style.display='block';mirrorEl2.innerHTML='<span style="color:rgba(244,240,232,0.18);font-size:0.68rem;">nothing learned recorded</span>';}
+  }
+  if(learnedHtml){
+    var prev=(mirrorEl2.textContent.indexOf('nothing learned recorded')===-1)?mirrorEl2.innerHTML:'';
+    mirrorEl2.style.display='block';
+    mirrorEl2.innerHTML=learnedHtml+(prev?'<div style="height:12px"></div>'+prev:'');
   }
   panel.classList.add('open');
   // also toggle win/miss on click
