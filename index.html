@@ -1486,9 +1486,6 @@ function loadRules(){
       {id:'r3', text:'Mattress stays off the bed frame until today\'s to dos are done', km:10},
     ];
     localStorage.setItem('ladder_rules',JSON.stringify(r));
-  }else if(!r.some(function(x){return x.id==='r3';})){
-    r.push({id:'r3', text:'Mattress stays off the bed frame until today\'s to dos are done', km:10});
-    localStorage.setItem('ladder_rules',JSON.stringify(r));
   }
   return r;
 }
