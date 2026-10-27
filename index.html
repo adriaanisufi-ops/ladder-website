@@ -1580,7 +1580,7 @@ function buildRules(){
     div.className='rule-row'+(state===true?' held':state===false?' broke':'');
     div.setAttribute('data-rid',rule.id);
     var statusTxt=state===true?'held ✓':state===false?'broke +'+rule.km+'km':'.';
-    div.innerHTML='<div class="rule-indicator"></div><span class="rule-name">'+esc(rule.text)+'</span><span class="rule-status">'+statusTxt+'</span><span class="rule-edit" data-edit="'+rule.id+'" style="color:rgba(244,240,232,0.15);font-size:0.6rem;padding:16px 6px 16px 18px;cursor:pointer;">edit</span>';
+    div.innerHTML='<div class="rule-indicator"></div><span class="rule-name">'+esc(rule.text)+'</span><span class="rule-status">'+statusTxt+'</span><span class="rule-edit" data-edit="'+rule.id+'" style="color:rgba(212,240,0,0.85);border:1px solid rgba(212,240,0,0.4);font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;padding:11px 12px;margin-left:8px;cursor:pointer;flex-shrink:0;">edit</span>';
     c.appendChild(div);
   });
   var brokeRules=RULES.filter(function(r){return S.rules[r.id]===false;});
