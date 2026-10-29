@@ -523,6 +523,29 @@ body.has-pill #catchFab{bottom:calc(156px + var(--sab));}
 .wk-q{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:.03em;margin:16px 0 6px;color:#fff}
 .wk-note{font-family:'IBM Plex Sans',sans-serif;font-size:.92rem;color:#d0d0d0}
 .wk-in{width:100%}
+/* v38 */
+#bigClockWrap{margin:2px 0 18px}
+#bigClock{font-family:'Bebas Neue',sans-serif;font-size:5.6rem;line-height:.95;letter-spacing:.01em;color:var(--lime);font-variant-numeric:tabular-nums;white-space:nowrap}
+#bigClock.late{color:#ff2d2d}
+#bigClockK{font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:#9a9a9a;margin-bottom:2px}
+#bigDone{margin-top:14px;font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:.95rem;color:var(--lime);background:rgba(212,240,0,.08);border:1px solid rgba(212,240,0,.4);border-radius:14px;padding:12px 22px}
+#bigClockK{display:flex;gap:6px;flex-wrap:wrap}
+#bigBar{height:6px;border-radius:3px;background:rgba(255,255,255,.08);margin-top:12px;overflow:hidden}
+#bigBar i{display:block;height:100%;width:0;background:var(--lime);border-radius:3px;transition:width 1s linear}
+#bigClock.late+#bigBar i{background:#ff2d2d}
+body.on-morning #taskPill{display:none!important}
+.ovl{position:fixed;inset:0;z-index:1210;background:#0a0a0a;display:none;flex-direction:column;justify-content:center;padding:28px 24px calc(28px + env(safe-area-inset-bottom));overflow:auto}
+.ovl.on{display:flex}
+.ovl h2{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:3.6rem;line-height:.95;margin:0 0 12px;color:#fff}
+.ovl h2 span{color:var(--lime)}
+.ovl p{font-family:'IBM Plex Sans',sans-serif;font-size:1.02rem;line-height:1.5;color:#cfcfcf;margin:0 0 22px}
+.ovl input.li{width:100%;margin-bottom:12px;font-size:1rem}
+.ovl .ov-chips{display:flex;gap:8px;margin-bottom:22px}
+.ovl .ov-chips button{flex:1;font-family:'IBM Plex Sans',sans-serif;font-size:.9rem;font-weight:600;padding:12px 6px;border-radius:14px;border:1px solid rgba(255,255,255,.16);background:transparent;color:#ddd}
+.ovl .ov-chips button.on{background:var(--lime);border-color:var(--lime);color:#000}
+.ovl .ov-go{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:.06em;background:var(--lime);color:#000;border:0;border-radius:18px;padding:16px;width:100%}
+.ovl .ov-skip{margin-top:14px;background:none;border:0;color:#8a8a8a;font-family:'IBM Plex Sans',sans-serif;font-size:.9rem;text-decoration:underline;align-self:center}
+.ovl .ov-msg{font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:#ff6b6b;min-height:18px;margin:-10px 0 10px}
 </style>
 </head>
 <body>
@@ -4300,6 +4323,94 @@ function closeLookBack(){var l=document.getElementById('lookBack');if(l)l.classL
   var g=goTo;
   goTo=function(id){g(id);if(id==='s-ladder')weekRender();setTimeout(function(){hintShow(id);bnCheck();},60);};
   setTimeout(weekRender,800);
+})();
+// ===== v38: big clock, first minute, missed day =====
+(function(){
+  // big clock on the Morning screen
+  var run=document.getElementById('planRun');
+  if(run&&!document.getElementById('bigClock')){
+    var w=document.createElement('div');w.id='bigClockWrap';
+    w.innerHTML='<div id="bigClockK">Finish by <span id="bigBy"></span> <span id="bigTask"></span></div><div id="bigClock">00:00</div><div id="bigBar"><i></i></div><button id="bigDone" onclick="donePlan()">Done</button>';
+    var inn=document.querySelector('#s-morning .inner');inn.insertBefore(w,inn.children[1]||null);
+  }
+  function bigTick(){
+    try{
+      var t=S.todayTask,w=document.getElementById('bigClockWrap');if(!w)return;
+      var on=!!(t&&t.startedAt&&!t.doneAt);
+      document.body.classList.toggle('on-morning',curScreen==='s-morning');
+      w.style.display=on?'block':'none';if(!on)return;
+      var dl=planDeadline(t.by,t.startedAt),left=dl-Date.now(),late=left<0,sec=Math.abs(Math.round(left/1000));
+      var c=document.getElementById('bigClock');c.textContent=(late?'+':'')+fmtHMS(sec);c.classList.toggle('late',late);
+      document.getElementById('bigBy').textContent=t.by;document.getElementById('bigTask').textContent='· '+t.text;
+      var total=Math.max(1,dl-t.startedAt),f=Math.min(1,Math.max(0,(Date.now()-t.startedAt)/total));
+      document.querySelector('#bigBar i').style.width=(f*100)+'%';
+    }catch(e){}
+  }
+  setInterval(bigTick,1000);setTimeout(bigTick,300);
+  var _g=goTo;goTo=function(id){_g(id);bigTick();};
+
+  // overlays
+  function mk(id,html){var d=document.createElement('div');d.id=id;d.className='ovl';d.innerHTML=html;document.body.appendChild(d);return d;}
+  var fr=mk('firstRun','<h2>YOUR FIRST<br><span>TASK.</span></h2><p>One thing. Not a list. Finish it before the clock runs out.</p><input class="li" id="frTask" type="text" placeholder="What will you finish?"><div class="ov-chips" id="frChips"><button data-m="30">30 min</button><button data-m="60" class="on">1 hour</button><button data-m="120">2 hours</button></div><div class="ov-msg" id="frMsg"></div><button class="ov-go" onclick="frGo()">START THE CLOCK</button><button class="ov-skip" onclick="frSkip()">Later</button>');
+  var frMin=60;
+  fr.querySelectorAll('#frChips button').forEach(function(b){b.onclick=function(){frMin=+b.getAttribute('data-m');fr.querySelectorAll('#frChips button').forEach(function(x){x.classList.remove('on');});b.classList.add('on');hap('light');};});
+  function flag(k){try{localStorage.setItem(k,'1');}catch(e){}}
+  function has(k){try{return !!localStorage.getItem(k);}catch(e){return true;}}
+  window.frOpen=function(){fr.classList.add('on');setTimeout(function(){document.getElementById('frTask').focus();},300);};
+  window.frSkip=function(){flag('ladder_first_done');fr.classList.remove('on');goTo('s-morning');};
+  window.frGo=function(){
+    var v=document.getElementById('frTask').value.trim();
+    if(!v){document.getElementById('frMsg').textContent='Write the task first.';return;}
+    document.getElementById('todayTask').value=v;byIn(frMin);startPlan();
+    if(S.todayTask&&S.todayTask.startedAt){flag('ladder_first_done');flag('ladder_hint_s-morning');fr.classList.remove('on');goTo('s-morning');hap('heavy');}
+  };
+  // existing users skip it
+  if(has('ladder_tour_v2'))flag('ladder_first_done');
+  function afterTour(){setTimeout(function(){if(!has('ladder_first_done')&&!(S.todayTask&&S.todayTask.startedAt))frOpen();},350);}
+  var ce=window.coachEnd,ct=window.closeTour;
+  if(typeof ce==='function')window.coachEnd=function(){ce.apply(this,arguments);afterTour();};
+  if(typeof ct==='function')window.closeTour=function(){ct.apply(this,arguments);afterTour();};
+
+  // missed day
+  var md=mk('missedDay','<h2>YESTERDAY<br><span>DIDN\'T COUNT.</span></h2><p id="mdText"></p><button class="ov-go" onclick="mdGo()">START TODAY</button>');
+  window.mdGo=function(){try{localStorage.setItem('ladder_missed_shown',TODAY);}catch(e){}md.classList.remove('on');goTo('s-morning');hap('heavy');};
+  function dstr(n){var d=new Date();d.setDate(d.getDate()-n);return d.toDateString();}
+  function isWin(k){return (S.history||[]).some(function(h){return h.date===k&&h.win;});}
+  function missedCheck(){
+    try{
+      if(md.classList.contains('on')||fr.classList.contains('on'))return;
+      if(document.getElementById('s-boot').classList.contains('active'))return;
+      if(!(S.history&&S.history.length))return;
+      if(localStorage.getItem('ladder_missed_shown')===TODAY)return;
+      if(isWin(dstr(1)))return;
+      // history must reach back before yesterday, else it is a new user
+      var first=Math.min.apply(null,S.history.map(function(h){return new Date(h.date).getTime();}));
+      if(first>=new Date(dstr(1)).getTime())return;
+      var n=0;while(isWin(dstr(2+n)))n++;
+      document.getElementById('mdText').textContent=(n>0?'Your streak was '+n+' day'+(n===1?'':'s')+'. It stopped there. ':'Yesterday is gone. ')+'What counts now is today. One task, one deadline.';
+      md.classList.add('on');hap('heavy');
+    }catch(e){}
+  }
+  window.missedCheck=missedCheck;
+  setTimeout(missedCheck,2200);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(missedCheck,400);});
+})();
+// ===== home screen widget sync =====
+(function(){
+  var last='';
+  function widgetSync(){
+    if(!liveNative())return;
+    try{
+      var t=S.todayTask,run=!!(t&&t.startedAt&&!t.doneAt);
+      var o={streak:calcStreak(),task:run?t.text:'',startedAt:run?t.startedAt:0,deadline:run?planDeadline(t.by,t.startedAt):0};
+      var k=JSON.stringify(o);if(k===last)return;last=k;
+      liveCall('sync',o).catch(function(){last='';});
+    }catch(e){}
+  }
+  window.widgetSync=widgetSync;
+  ['startPlan','donePlan','editPlan','closeDay','markToday'].forEach(function(n){var f=window[n];if(typeof f!=='function')return;window[n]=function(){var r=f.apply(this,arguments);setTimeout(widgetSync,200);return r;};});
+  setInterval(widgetSync,30000);setTimeout(widgetSync,3000);
+  document.addEventListener('visibilitychange',function(){if(document.hidden)widgetSync();});
 })();
 </script>
 </body>
