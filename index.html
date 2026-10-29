@@ -2,12 +2,127 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>LADDER</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+:root{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);}
+@font-face{font-family:'IBM Plex Mono';font-style:normal;font-weight:300;font-display:swap;src:url('fonts/ibm-plex-mono-latin-300-normal.woff2') format('woff2');}
+@font-face{font-family:'IBM Plex Mono';font-style:normal;font-weight:400;font-display:swap;src:url('fonts/ibm-plex-mono-latin-400-normal.woff2') format('woff2');}
+@font-face{font-family:'IBM Plex Mono';font-style:normal;font-weight:500;font-display:swap;src:url('fonts/ibm-plex-mono-latin-500-normal.woff2') format('woff2');}
+@font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:300;font-display:swap;src:url('fonts/ibm-plex-sans-latin-300-normal.woff2') format('woff2');}
+@font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:400;font-display:swap;src:url('fonts/ibm-plex-sans-latin-400-normal.woff2') format('woff2');}
+@font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:500;font-display:swap;src:url('fonts/ibm-plex-sans-latin-500-normal.woff2') format('woff2');}
+@font-face{font-family:'Bebas Neue';font-style:normal;font-weight:400;font-display:swap;src:url('fonts/bebas-neue-latin-400-normal.woff2') format('woff2');}
+
+/* affirmation card v2 + detachment chip + tour */
+.aff-prog{display:flex;align-items:center;justify-content:space-between;margin:-4px 0 14px;}
+.aff-dots{display:flex;gap:6px;}
+.aff-dot{width:7px;height:7px;border-radius:50%;background:rgba(244,240,232,.16);display:block;}
+.aff-dot.on{background:var(--lime);}
+.aff-cnt{font-family:'IBM Plex Mono',monospace;font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(244,240,232,.42);}
+.aff-text.said{color:var(--lime);}
+.aff-say{display:block;width:100%;min-height:54px;margin-top:18px;border:none;border-radius:16px;background:var(--lime);color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:transform .12s,background .2s;}
+.aff-say:active{transform:scale(.98);}
+.aff-say.said{background:rgba(212,240,0,.12);color:var(--lime);box-shadow:inset 0 0 0 1px rgba(212,240,0,.35);}
+.aff-hint{font-family:'IBM Plex Mono',monospace;font-size:.56rem;letter-spacing:.06em;color:rgba(244,240,232,.38);margin-top:10px;text-align:center;}
+.aff-tools{display:flex;justify-content:space-between;gap:4px;margin-top:6px;}
+.aff-tools button{background:none;border:none;color:rgba(244,240,232,.55);font-family:'IBM Plex Mono',monospace;font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;padding:12px 4px;min-height:44px;cursor:pointer;}
+.chip-det{display:inline-flex;width:fit-content!important;max-width:100%;align-items:center;gap:10px;background:rgba(212,240,0,.07);border:1px solid rgba(212,240,0,.35);border-radius:999px;padding:8px 14px;margin:0 0 22px;align-self:flex-start;cursor:pointer;color:var(--lime);}
+.chip-det span{font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;}
+.chip-det i{font-style:normal;font-family:'IBM Plex Mono',monospace;font-size:.5rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(244,240,232,.45);}
+#tour{display:none;position:fixed;inset:0;z-index:2000;background:#080808;padding:calc(var(--sat) + 24px) 28px calc(var(--sab) + 28px);flex-direction:column;}
+#tour.open{display:flex;}
+#tour .t-skip{align-self:flex-end;background:none;border:none;color:rgba(244,240,232,.45);font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;padding:10px 0;min-height:44px;cursor:pointer;}
+#tour .t-body{flex:1;display:flex;flex-direction:column;justify-content:center;max-width:440px;margin:0 auto;width:100%;}
+#tour .t-ico{width:64px;height:64px;border-radius:20px;background:rgba(212,240,0,.1);box-shadow:inset 0 0 0 1px rgba(212,240,0,.3);display:flex;align-items:center;justify-content:center;color:var(--lime);margin-bottom:26px;}
+#tour .t-ico svg{width:30px;height:30px;}
+#tour .t-k{font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--lime);margin-bottom:12px;}
+#tour .t-h{font-family:'Bebas Neue',sans-serif;font-size:2.7rem;line-height:1;color:var(--white);margin-bottom:16px;}
+#tour .t-h em{color:var(--lime);font-style:normal;}
+#tour .t-p{font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:1.05rem;line-height:1.5;color:rgba(244,240,232,.78);}
+#tour .t-p b{font-weight:500;color:var(--white);}
+#tour .t-foot{display:flex;align-items:center;justify-content:space-between;max-width:440px;margin:0 auto;width:100%;}
+#tour .t-dots{display:flex;gap:6px;}
+#tour .t-dots i{width:7px;height:7px;border-radius:50%;background:rgba(244,240,232,.18);display:block;}
+#tour .t-dots i.on{background:var(--lime);width:20px;border-radius:4px;}
+#tour .t-next{background:var(--lime);border:none;color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;padding:0 26px;min-height:52px;border-radius:16px;cursor:pointer;}
+
+/* coach tour, help button, swipe */
+#nav.hidden ~ #catchFab{display:none!important;}
+#coach{display:none;position:fixed;inset:0;z-index:2100;}
+#coach.open{display:block;}
+#coachHole{position:absolute;border-radius:18px;box-shadow:0 0 0 100vmax rgba(8,8,8,.88);border:1px solid rgba(212,240,0,.7);transition:all .32s cubic-bezier(.16,1,.3,1);pointer-events:none;}
+#coachHole.none{border-color:transparent;}
+#coachCard{position:absolute;left:16px;right:16px;max-width:440px;margin:0 auto;background:#121410;border-radius:20px;box-shadow:inset 0 0 0 1px rgba(212,240,0,.3),0 20px 60px rgba(0,0,0,.6);padding:20px 20px 16px;}
+#coachCard.center{top:50%;transform:translateY(-50%);}
+#coachCard .c-k{font-family:'IBM Plex Mono',monospace;font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:var(--lime);margin-bottom:8px;}
+#coachCard .c-h{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;line-height:1.02;color:var(--white);margin-bottom:10px;}
+#coachCard .c-h em{color:var(--lime);font-style:normal;}
+#coachCard .c-p{font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:.98rem;line-height:1.5;color:rgba(244,240,232,.8);}
+#coachCard .c-p b{font-weight:500;color:var(--white);}
+#coachCard .c-row{display:flex;align-items:center;gap:8px;margin-top:16px;}
+#coachCard .c-n{font-family:'IBM Plex Mono',monospace;font-size:.54rem;letter-spacing:.12em;color:rgba(244,240,232,.4);margin-right:auto;}
+#coachCard button{border:none;border-radius:14px;min-height:46px;padding:0 18px;font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;}
+#coachCard .c-skip{background:none;color:rgba(244,240,232,.5);padding:0 6px;}
+#coachCard .c-back{background:rgba(244,240,232,.07);color:rgba(244,240,232,.75);}
+#coachCard .c-next{background:var(--lime);color:var(--black);font-weight:500;}
+#helpBtn{display:none;position:fixed;top:calc(var(--sat) + 8px);right:14px;z-index:900;width:34px;height:34px;border-radius:50%;border:1px solid rgba(244,240,232,.18);background:rgba(18,20,16,.85);color:rgba(244,240,232,.65);font-family:'IBM Plex Mono',monospace;font-size:.8rem;cursor:pointer;align-items:center;justify-content:center;padding:0;}
+@keyframes slideFromR{from{opacity:0;transform:translateX(34px)}to{opacity:1;transform:none}}
+@keyframes slideFromL{from{opacity:0;transform:translateX(-34px)}to{opacity:1;transform:none}}
+.screen.slide-r{animation:slideFromR .32s cubic-bezier(.16,1,.3,1);}
+.screen.slide-l{animation:slideFromL .32s cubic-bezier(.16,1,.3,1);}
+
+/* mirror flow v2 */
+.m-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.m-chip{background:rgba(212,240,0,.07);border:1px solid rgba(212,240,0,.35);color:var(--lime);border-radius:999px;padding:8px 14px;font-family:'IBM Plex Mono',monospace;font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;min-height:34px;}
+.m-dots{display:flex;gap:6px;margin-bottom:26px;}
+.m-dots i{height:4px;flex:1;border-radius:2px;background:rgba(244,240,232,.12);display:block;transition:background .3s;}
+.m-dots i.on{background:var(--lime);}
+.m-dots i.cur{background:rgba(212,240,0,.55);}
+.mstep{display:none;}
+#mirrorQuestions .mq-block{display:none;}
+.m-nav{display:flex;gap:10px;margin-top:26px;}
+.m-nav .bp{flex:1;}
+.m-close{display:block;width:100%;min-height:58px;margin-top:26px;border:none;border-radius:18px;background:var(--lime);color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:500;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;}
+.sum-row{display:flex;align-items:baseline;gap:16px;padding:14px 0;border-bottom:1px solid rgba(244,240,232,.07);}
+.sum-n{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;line-height:1;color:var(--lime);min-width:86px;}
+.sum-l{font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:.98rem;color:rgba(244,240,232,.8);line-height:1.35;}
+.sum-note{font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:1rem;color:rgba(244,240,232,.6);line-height:1.5;}
+#mDone{display:none;position:fixed;left:0;right:0;top:0;bottom:calc(86px + var(--sab));z-index:950;background:var(--black);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 32px;}
+#mDone.open{display:flex;}
+.md-num{font-family:'Bebas Neue',sans-serif;font-size:8rem;line-height:.9;color:var(--lime);}
+.md-sub{font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(244,240,232,.45);margin-bottom:28px;}
+.md-line{font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-style:italic;font-size:1.05rem;line-height:1.5;color:rgba(244,240,232,.7);max-width:320px;margin-bottom:30px;min-height:1px;}
+.md-go{font-family:'Bebas Neue',sans-serif;font-size:3rem;line-height:1;color:var(--white);}
+.md-go em{color:var(--lime);font-style:normal;}
+.md-links{display:flex;gap:18px;margin-top:34px;}
+.md-links button{background:none;border:none;color:rgba(244,240,232,.45);font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;padding:12px 6px;min-height:44px;cursor:pointer;}
+#lessonModal{display:none;position:fixed;inset:0;z-index:1001;background:rgba(8,8,8,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);align-items:center;justify-content:center;padding:24px;}
+#lessonModal.open{display:flex;}
+.lm-box{width:100%;max-width:420px;background:#121410;border-radius:20px;box-shadow:inset 0 0 0 1px rgba(212,240,0,.25);padding:22px;}
+.lm-box textarea{width:100%;margin-bottom:14px;resize:none;}
+.lm-row{display:flex;gap:10px;}
+.lm-row .bp{flex:1;}
+#lookBack{display:none;position:fixed;inset:0;z-index:990;background:var(--black);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(var(--sat) + 22px) 20px calc(var(--sab) + 40px);}
+#lookBack.open{display:block;}
+.lb-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+
+/* mirror question chips */
+.mq-chips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 14px;}
+.mq-chip{background:rgba(244,240,232,.05);border:1px solid rgba(244,240,232,.14);color:rgba(244,240,232,.8);border-radius:999px;padding:12px 16px;min-height:44px;font-family:'IBM Plex Sans',sans-serif;font-size:.92rem;font-weight:400;cursor:pointer;transition:all .15s;}
+.mq-chip.on{background:var(--lime);border-color:var(--lime);color:var(--black);font-weight:500;}
+.mq-actions{display:flex;justify-content:space-between;align-items:center;margin-top:10px;}
+.mq-more,.mq-skip{background:none;border:none;color:rgba(244,240,232,.5);font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;padding:12px 4px;min-height:44px;cursor:pointer;}
+.mq-block .mq-ta{height:84px;}
+
+.mq-more{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:56px;margin-top:6px;border-radius:16px;background:rgba(212,240,0,.06);border:1px dashed rgba(212,240,0,.4);color:var(--lime);font-family:'IBM Plex Sans',sans-serif;font-size:1rem;font-weight:400;letter-spacing:.02em;text-transform:none;padding:0 18px;cursor:pointer;transition:background .15s;}
+.mq-more span{font-size:1.4rem;line-height:1;font-weight:300;}
+.mq-more:active{background:rgba(212,240,0,.14);}
+
+</style>
+<script src="vendor/d3.min.js"></script>
 <script type="module">
-  import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+  import * as THREE from "./vendor/three.module.js";
   window.THREE = THREE;
 </script>
 <style>
@@ -16,10 +131,10 @@
 html,body{width:100%;height:100%;background:var(--black);color:var(--white);font-family:'IBM Plex Sans',system-ui,sans-serif;overflow:hidden;}
 #noise{position:fixed;inset:0;pointer-events:none;z-index:900;opacity:0.03;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");}
 #pFlash{position:fixed;inset:0;background:rgba(255,45,45,0.1);pointer-events:none;z-index:800;opacity:0;transition:opacity 0.5s;}
-.screen{position:fixed;inset:0;bottom:56px;display:flex;flex-direction:column;align-items:center;opacity:0;pointer-events:none;transition:opacity 0.4s ease;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+.screen{position:fixed;inset:0;bottom:calc(56px + var(--sab));display:flex;flex-direction:column;align-items:center;opacity:0;pointer-events:none;transition:opacity 0.4s ease;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
 .screen.active{opacity:1;pointer-events:all;}
 #s-boot{bottom:0;justify-content:center;align-items:center;padding:40px 32px;}
-.inner{width:100%;max-width:680px;padding:44px 28px 40px;display:flex;flex-direction:column;}
+.inner{width:100%;max-width:680px;padding:calc(44px + var(--sat)) 28px 40px;display:flex;flex-direction:column;}
 .boot-word{font-family:'Bebas Neue',sans-serif;font-size:clamp(72px,20vw,160px);line-height:0.85;letter-spacing:0.04em;overflow:hidden;}
 .boot-word span{display:inline-block;transform:translateY(110%);animation:slideUp 0.7s cubic-bezier(0.16,1,0.3,1) both;}
 .boot-word:nth-child(1) span{animation-delay:0.1s;}
@@ -202,14 +317,14 @@ button:focus{outline:none;}
 .mq-ta:focus{border-bottom-color:var(--lime);}
 .sunbox{background:rgba(212,240,0,0.06);border:1px solid rgba(212,240,0,0.2);padding:14px 16px;margin-bottom:24px;}
 .suntxt{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:rgba(212,240,0,0.7);line-height:1.7;}
-#nav{position:fixed;bottom:0;left:0;right:0;height:56px;display:flex;border-top:1px solid var(--dim);background:rgba(8,8,8,0.97);backdrop-filter:blur(12px);z-index:600;}
+#nav{position:fixed;bottom:0;left:0;right:0;height:calc(56px + var(--sab));padding-bottom:var(--sab);display:flex;border-top:1px solid var(--dim);background:rgba(8,8,8,0.97);backdrop-filter:blur(12px);z-index:600;}
 .nb{flex:1;background:none;border:none;color:rgba(244,240,232,0.3);font-family:'IBM Plex Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;cursor:pointer;transition:color 0.2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;}
 .nb .ni{font-size:0.95rem;line-height:1;font-family:'IBM Plex Mono',monospace;-webkit-font-feature-settings:'liga' 0;filter:grayscale(1);opacity:0.75;transition:all 0.2s;}
 .nb.on .ni{filter:none;opacity:1;}
 .nb:hover{color:rgba(244,240,232,0.5);}
 .nb.on{color:var(--lime);border-top:2px solid var(--lime);margin-top:-2px;}
 #nav.hidden{display:none;}
-#catchFab{position:fixed;right:8px;bottom:64px;z-index:601;background:var(--lime);border:none;color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:0.44rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;padding:5px 8px;opacity:0.85;cursor:pointer;box-shadow:0 0 0 1px rgba(8,8,8,0.9),0 4px 18px rgba(212,240,0,0.25);}
+#catchFab{position:fixed;right:8px;bottom:calc(64px + var(--sab));z-index:601;background:var(--lime);border:none;color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:0.44rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;padding:5px 8px;opacity:0.85;cursor:pointer;box-shadow:0 0 0 1px rgba(8,8,8,0.9),0 4px 18px rgba(212,240,0,0.25);}
 #nav.hidden + #catchFab{display:none;}
 @keyframes slideUp{from{transform:translateY(110%);}to{transform:translateY(0);}}
 @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
@@ -217,6 +332,197 @@ button:focus{outline:none;}
 ::-webkit-scrollbar{width:2px;}
 ::-webkit-scrollbar-thumb{background:var(--dim);}
 @media(max-width:480px){.inner{padding:36px 20px 32px;}}
+</style>
+<script>
+(function(){
+  try{
+    var p=document.createElement('div');
+    p.style.cssText='position:fixed;top:0;left:0;width:0;height:0;visibility:hidden;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);';
+    document.documentElement.appendChild(p);
+    var cs=getComputedStyle(p), t=parseFloat(cs.paddingTop)||0, b=parseFloat(cs.paddingBottom)||0;
+    document.documentElement.removeChild(p);
+    var native=(location.protocol==='capacitor:')||(location.hostname==='localhost'&&location.protocol==='https:');
+    if(native && t===0){
+      document.documentElement.style.setProperty('--sat','59px');
+      document.documentElement.style.setProperty('--sab','34px');
+    }
+  }catch(e){}
+})();
+</script>
+<style id="polish">
+:root{--card:#101010;--card2:#151515;--line:rgba(244,240,232,0.08);--r:16px;}
+.screen{transition:opacity .35s ease;}
+.screen.active .inner>*{animation:riseIn .55s cubic-bezier(.16,1,.3,1) backwards;}
+.screen.active .inner>*:nth-child(2){animation-delay:.04s}.screen.active .inner>*:nth-child(3){animation-delay:.08s}
+.screen.active .inner>*:nth-child(4){animation-delay:.12s}.screen.active .inner>*:nth-child(5){animation-delay:.16s}
+.screen.active .inner>*:nth-child(n+6){animation-delay:.2s}
+@keyframes riseIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.inner{padding-left:22px;padding-right:22px;}
+.tbar{letter-spacing:.14em;font-size:.62rem;color:rgba(244,240,232,.4);margin-bottom:20px;}
+.lbl{letter-spacing:.14em;font-size:.64rem;color:rgba(244,240,232,.5);line-height:1.6;}
+.big-q{line-height:.95;}
+.sdiv{background:var(--line);margin:32px 0;}
+.ybar{background:var(--card);border:none;border-radius:var(--r);padding:18px 20px;line-height:1.7;font-family:'IBM Plex Sans',sans-serif;font-size:.9rem;color:rgba(244,240,232,.6);}
+.li{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px 16px;font-family:'IBM Plex Sans',sans-serif;font-size:1rem;font-weight:400;transition:border-color .25s,background .25s;}
+.li:focus{border-color:rgba(212,240,0,.7);background:var(--card2);}
+.li::placeholder{color:rgba(244,240,232,.25);}
+.mq-ta{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;height:92px;font-family:'IBM Plex Sans',sans-serif;font-size:.95rem;line-height:1.6;font-weight:400;}
+.mq-ta:focus{border-color:rgba(212,240,0,.7);}
+.mq-ta::placeholder{color:rgba(244,240,232,.25);}
+.mq-label{letter-spacing:.14em;}
+.mq-question{font-size:1.05rem;font-weight:400;}
+button{border-radius:14px;transition:transform .12s ease,background .2s,opacity .2s;}
+button:active{transform:scale(.97);}
+button:not(.nb):not(.mnav):not(.tip-icon){letter-spacing:.1em!important;}
+.bp{border-radius:14px;padding:16px 24px;min-height:52px;}
+.bg{border-radius:14px;border-color:var(--line);color:rgba(244,240,232,.55);padding:14px 20px;min-height:52px;}
+.sb{background:var(--card);border:none;border-radius:var(--r);padding:18px 14px;}
+.sl{letter-spacing:.06em;}
+.lgrid>*{border-radius:12px!important;}
+.rule-row{background:var(--card);border:none;border-radius:14px;margin-bottom:8px;padding:12px 12px 12px 16px;}
+.rule-edit{border-radius:10px;}
+.rs{border-radius:14px;margin-bottom:6px;background:var(--card);border-bottom:none;}
+.tip-icon{border-radius:50%;width:22px;height:22px;font-style:normal;text-transform:none;}
+.tip-box{border-radius:12px;border:none;background:var(--card2);border-left:3px solid var(--lime);line-height:1.7;font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;color:rgba(244,240,232,.65);letter-spacing:0;text-transform:none;}
+div[style*="border:1px solid"],div[style*="border: 1px solid"]{border-radius:var(--r);}
+#ruleModal,#catchModal,#goalModal,#checkinModal,#freeTimerModal,#aiGoalModal{backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);}
+#nav{left:12px;right:12px;bottom:calc(8px + var(--sab));height:62px;padding-bottom:0;border:1px solid var(--line);border-radius:22px;background:rgba(18,18,18,.82);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:0 10px 30px rgba(0,0,0,.5);overflow:hidden;}
+.screen{bottom:calc(78px + var(--sab));}
+.nb{letter-spacing:.08em;font-size:.56rem;gap:4px;border-radius:0;position:relative;}
+.nb.on{border-top:none;margin-top:0;color:var(--lime);}
+.nb.on::after{content:'';position:absolute;top:6px;width:18px;height:3px;border-radius:3px;background:var(--lime);}
+.nb .ni{font-size:1.05rem;}
+#catchFab{border-radius:999px;bottom:calc(84px + var(--sab));}
+.aff{position:relative;background:linear-gradient(160deg,#16190a 0%,#101010 70%);border-radius:20px;padding:22px 22px 16px;margin:6px 0 30px;box-shadow:inset 0 0 0 1px rgba(212,240,0,.18);}
+.aff-lbl{font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--lime);margin-bottom:14px;}
+.aff-text{font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:1.45rem;line-height:1.3;color:var(--white);min-height:3.6rem;transition:opacity .25s;}
+.aff-text.swap{opacity:0;}
+.aff-row{display:flex;gap:8px;margin-top:18px;}
+.aff-btn{flex:1;background:rgba(244,240,232,.06);border:none;color:rgba(244,240,232,.7);font-family:'IBM Plex Mono',monospace;font-size:.6rem;text-transform:uppercase;padding:13px 10px;cursor:pointer;min-height:44px;}
+.aff-btn.main{background:var(--lime);color:var(--black);font-weight:500;}
+.aff-add{display:none;margin-top:12px;gap:8px;}
+#ruleModal,#facetDetail,#freeTimerModal,#aiGoalModal,#goalModal,#checkinModal,#catchModal{padding-top:calc(var(--sat) + 28px)!important;padding-bottom:calc(var(--sab) + 40px)!important;}
+#toast{top:calc(var(--sat) + 8px)!important;}
+#wiringReveal,#webReveal{padding-top:var(--sat);padding-bottom:var(--sab);}
+.inner{padding-top:calc(var(--sat) + 24px);}
+.tsel{-webkit-appearance:none;appearance:none;padding:15px 8px;text-align:center;min-width:0;flex:1;background-image:none;}
+.bychips{display:flex;gap:8px;margin:2px 0 10px;}
+.bychips button{flex:1;background:rgba(244,240,232,.06);border:none;color:rgba(244,240,232,.7);font-family:'IBM Plex Mono',monospace;font-size:.58rem;text-transform:uppercase;padding:12px 6px;min-height:44px;}
+
+#taskPill{display:none;position:fixed;left:12px;right:12px;bottom:calc(84px + var(--sab));z-index:590;background:rgba(22,24,12,.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:18px;box-shadow:inset 0 0 0 1px rgba(212,240,0,.35),0 10px 28px rgba(0,0,0,.5);padding:12px 16px 14px;cursor:pointer;}
+body.has-pill #taskPill{display:block;}
+body.has-pill .screen{bottom:calc(150px + var(--sab));}
+body.has-pill #catchFab{bottom:calc(156px + var(--sab));}
+.tp-row{display:flex;align-items:center;gap:12px;}
+.tp-l{flex:1;min-width:0;}
+.tp-k{font-family:'IBM Plex Mono',monospace;font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(212,240,0,.8);margin-bottom:3px;}
+.tp-t{font-family:'IBM Plex Sans',sans-serif;font-size:.95rem;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tp-time{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:.03em;color:var(--lime);line-height:1;font-variant-numeric:tabular-nums;}
+.tp-bar{height:3px;border-radius:3px;background:rgba(244,240,232,.1);margin-top:10px;overflow:hidden;}
+.tp-fill{height:100%;width:0;background:var(--lime);border-radius:3px;transition:width 1s linear;}
+#taskPill.late{box-shadow:inset 0 0 0 1px rgba(255,45,45,.6),0 10px 28px rgba(0,0,0,.5);background:rgba(30,12,12,.92);}
+#taskPill.late .tp-time,#taskPill.late .tp-k{color:var(--red);}
+#taskPill.late .tp-fill{background:var(--red);}
+.strip{display:flex;gap:8px;margin:-14px 0 26px;}
+.chip{flex:1;display:flex;align-items:center;gap:8px;background:var(--card);border-radius:12px;padding:11px 14px;font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(244,240,232,.5);cursor:pointer;}
+.chip i{width:8px;height:8px;border-radius:50%;border:1.5px solid rgba(244,240,232,.3);flex-shrink:0;}
+.chip.ok{color:var(--white);}
+.chip.ok i{background:var(--lime);border-color:var(--lime);}
+
+#nav{height:66px;padding:8px;gap:4px;align-items:center;border-radius:26px;background:rgba(20,20,20,.78);box-shadow:0 12px 34px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);}
+.nb{flex:1 1 0;height:100%;flex-direction:row;gap:0;border-radius:20px;color:rgba(244,240,232,.42);transition:flex .35s cubic-bezier(.16,1,.3,1),background .25s,color .25s;}
+.nb .ni{filter:none;opacity:1;display:flex;align-items:center;justify-content:center;font-size:0;}
+.nb .nl{max-width:0;opacity:0;overflow:hidden;white-space:nowrap;font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;transition:max-width .35s cubic-bezier(.16,1,.3,1),opacity .25s,margin .35s;}
+.nb.on{flex:2.3 1 0;background:var(--lime);color:var(--black);}
+.nb.on::after{display:none;}
+.nb.on .nl{max-width:90px;opacity:1;margin-left:8px;}
+.nb:hover{color:rgba(244,240,232,.42);}
+.nb.on:hover{color:var(--black);}
+.screen{bottom:calc(86px + var(--sab));}
+#catchFab{bottom:calc(92px + var(--sab));}
+
+.csec{background:var(--card);border:none;border-radius:20px;box-shadow:inset 0 0 0 1px var(--line);padding:24px 20px;}
+.rule-name{font-family:'IBM Plex Sans',sans-serif;font-size:.95rem;font-weight:400;line-height:1.4;}
+.cq{letter-spacing:.1em;}
+/* ladder polish v2 */
+#topMask{position:fixed;top:0;left:0;right:0;height:calc(var(--sat) + 4px);background:linear-gradient(180deg,#080808 72%,rgba(8,8,8,0));z-index:850;pointer-events:none;}
+#helpBtn{width:30px;height:30px;font-size:.72rem;opacity:.6;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+.pen-card{background:var(--card);border-radius:20px;box-shadow:inset 0 0 0 1px var(--line);padding:6px 20px 18px;margin-bottom:6px;}
+.pen-row{display:flex;align-items:baseline;justify-content:space-between;gap:14px;padding:16px 0;border-bottom:1px solid rgba(244,240,232,.07);}
+.pen-t{font-family:'IBM Plex Sans',sans-serif;font-size:1rem;font-weight:300;line-height:1.35;color:rgba(244,240,232,.82);}
+.pen-v{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;line-height:1;color:var(--red);white-space:nowrap;}
+.pen-v.w{color:var(--white);font-size:1.25rem;}
+.pen-foot{font-family:'IBM Plex Sans',sans-serif;font-size:.95rem;font-style:italic;font-weight:300;color:rgba(244,240,232,.5);margin-top:16px;}
+.reward-block{border-radius:20px;padding:22px 20px;}
+.reward-streak{font-size:2.2rem;}
+.reward-title{font-family:'IBM Plex Sans',sans-serif;font-size:1.1rem;font-weight:500;color:var(--white);margin:6px 0 4px;}
+.reward-block.locked .reward-title{color:rgba(244,240,232,.4);}
+.reward-desc{font-family:'IBM Plex Sans',sans-serif;font-size:.95rem;font-weight:300;line-height:1.5;color:rgba(244,240,232,.6);}
+.reward-block.locked .reward-desc{color:rgba(244,240,232,.3);}
+.reward-lock{font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.06em;color:rgba(244,240,232,.35);}
+.timeblock .tnum{font-size:3.4rem;}
+.timeblock .tgoal{font-family:'IBM Plex Sans',sans-serif;font-size:.95rem;font-weight:400;letter-spacing:.04em;text-transform:none;color:rgba(244,240,232,.78);margin-top:10px;}
+.timeblock .tsub{font-size:.62rem;color:rgba(244,240,232,.42);}
+.timeblock .trow,.timeblock div[style*="justify-content"]{font-family:'IBM Plex Sans',sans-serif!important;font-size:.95rem!important;color:rgba(244,240,232,.7)!important;}
+.timeblock span[style*="lime"],.timeblock .thl{color:var(--lime);}
+.rednote{font-family:'IBM Plex Sans',sans-serif;}
+
+/* debt card, reveal layout */
+.debt-card{background:var(--card);border-radius:20px;box-shadow:inset 0 0 0 1px rgba(255,45,45,.28);padding:20px;margin:14px 0 6px;}
+.debt-top{display:flex;align-items:baseline;justify-content:space-between;}
+.debt-k{font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--red);}
+.debt-n{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;line-height:1;color:var(--red);}
+.debt-dl{font-family:'IBM Plex Sans',sans-serif;font-size:.95rem;font-weight:300;line-height:1.4;color:rgba(244,240,232,.65);margin:8px 0 16px;}
+.debt-dl span{display:none;}
+.debt-btns{display:flex;gap:8px;}
+.debt-pay{flex:1;min-height:50px;border-radius:14px;border:1px solid rgba(244,240,232,.16);background:rgba(244,240,232,.04);color:var(--white);font-family:'IBM Plex Sans',sans-serif;font-size:.92rem;font-weight:400;cursor:pointer;}
+.debt-pay:active{background:rgba(212,240,0,.14);border-color:rgba(212,240,0,.5);}
+.debt-add{display:flex;align-items:center;gap:6px;margin-top:10px;}
+.debt-add button{background:none;border:none;color:rgba(255,45,45,.8);font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;padding:12px 8px 12px 0;min-height:44px;cursor:pointer;}
+.debt-add span{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(244,240,232,.28);}
+#webReveal{z-index:1005!important;padding:calc(var(--sat) + 10px) 0 calc(var(--sab) + 20px);}
+#webRevealMsg{font-family:'IBM Plex Sans',sans-serif!important;font-size:1.05rem!important;font-weight:300;color:rgba(244,240,232,.85)!important;line-height:1.45;margin-top:18px!important;}
+#webRevealDone{display:none;width:calc(100% - 56px);max-width:360px;min-height:56px;margin-top:22px;border-radius:16px!important;background:var(--lime)!important;border:none!important;color:var(--black)!important;font-size:.7rem!important;font-weight:500;letter-spacing:.16em!important;}
+#lookBack{z-index:1003!important;}
+#facetDetail{z-index:1006!important;}
+#lessonModal{z-index:1007!important;}
+
+/* type system v3: Bebas for values and titles, Plex Sans for reading, mono only for tiny labels */
+.goal-name,.gcard-name{font-family:'Bebas Neue',sans-serif!important;font-size:1.9rem!important;letter-spacing:.01em!important;line-height:1!important;text-transform:none!important;}
+.rule-status{font-family:'Bebas Neue',sans-serif!important;font-size:1.05rem!important;letter-spacing:.04em!important;}
+.sn{font-family:'Bebas Neue',sans-serif;}
+.mq-label{font-family:'Bebas Neue',sans-serif!important;font-size:1.05rem!important;letter-spacing:.08em!important;}
+.sum-n,.pen-v,.debt-n,.md-num{font-family:'Bebas Neue',sans-serif;}
+.gt-donebadge{font-family:'IBM Plex Sans',sans-serif!important;font-size:.95rem!important;letter-spacing:0!important;text-transform:none!important;}
+.gtimer-label{font-family:'IBM Plex Sans',sans-serif!important;font-size:1rem!important;letter-spacing:0!important;text-transform:none!important;font-weight:400!important;color:var(--white)!important;}
+.gtimer-target{font-family:'Bebas Neue',sans-serif!important;font-size:1.05rem!important;letter-spacing:.06em!important;color:rgba(244,240,232,.5)!important;}
+.tip-box{font-family:'IBM Plex Sans',sans-serif!important;font-size:.92rem!important;line-height:1.5!important;letter-spacing:0!important;}
+/* v36 */
+#backupNudge{position:fixed;left:14px;right:14px;top:max(12px,env(safe-area-inset-top));z-index:1100;background:#141414;border:1px solid rgba(212,240,0,.4);border-radius:20px;padding:14px 16px;box-shadow:0 12px 40px rgba(0,0,0,.6);display:none}
+#backupNudge.on{display:block}
+#backupNudge .bn-t{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.03em;color:var(--lime)}
+#backupNudge .bn-s{font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:#cfcfcf;margin:2px 0 10px}
+#backupNudge .bn-r{display:flex;gap:8px}
+#backupNudge button{font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;font-weight:600;border-radius:12px;padding:10px 14px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#ddd}
+#backupNudge .bn-go{background:var(--lime);color:#000;border-color:var(--lime);flex:1}
+.fhint{background:rgba(212,240,0,.06);border:1px solid rgba(212,240,0,.28);border-radius:20px;padding:14px 16px;margin:0 0 18px}
+.fhint .fh-t{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.03em;color:var(--lime)}
+.fhint .fh-b{font-family:'IBM Plex Sans',sans-serif;font-size:.92rem;color:#d6d6d6;line-height:1.45;margin:2px 0 10px}
+.fhint button{font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;font-weight:600;background:var(--lime);color:#000;border:0;border-radius:12px;padding:9px 16px}
+.wk-card{background:var(--card);border-radius:20px;box-shadow:inset 0 0 0 1px var(--line);padding:18px 18px 16px}
+.wk-days{display:flex;justify-content:space-between;margin-bottom:16px}
+.wk-d{display:flex;flex-direction:column;align-items:center;gap:6px}
+.wk-d b{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:1rem;color:#888}
+.wk-d i{width:30px;height:30px;border-radius:50%;border:1.5px solid rgba(255,255,255,.14);display:block}
+.wk-d.w i{background:var(--lime);border-color:var(--lime)}
+.wk-d.l i{background:#ff2d2d;border-color:#ff2d2d}
+.wk-d.now b{color:#fff}
+.wk-d.now i{box-shadow:0 0 0 3px rgba(255,255,255,.12)}
+.wk-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-family:'IBM Plex Sans',sans-serif;font-size:.7rem;color:#999}
+.wk-stats span{display:block;font-family:'Bebas Neue',sans-serif;font-size:2rem;line-height:1;color:var(--lime)}
+.wk-q{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:.03em;margin:16px 0 6px;color:#fff}
+.wk-note{font-family:'IBM Plex Sans',sans-serif;font-size:.92rem;color:#d0d0d0}
+.wk-in{width:100%}
 </style>
 </head>
 <body>
@@ -241,6 +547,7 @@ button:focus{outline:none;}
     <div class="lbl" style="margin-bottom:10px">Today I am</div>
     <div class="idstmt" id="idStmt">Someone who does<br>what he <span class="acc">says.</span></div>
 
+    <div class="aff" data-set="am"></div>
     <div class="lbl" style="margin-bottom:8px">What will you want today that you won't give in to?
       <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tw2')">i</span><div class="tip-box" id="tw2" style="text-transform:none;">One thing you'll probably want today that won't take you where you're going. Decide now, before the want shows up.</div></span>
     </div>
@@ -257,9 +564,10 @@ button:focus{outline:none;}
     <div id="planForm">
       <input class="li" id="todayTask" type="text" placeholder="the first thing to finish" style="margin-bottom:10px">
       <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <input class="li" id="todayBy" type="time" style="flex:1;margin-bottom:0;">
+        <input id="todayBy" type="hidden"><div style="flex:1;display:flex;align-items:center;gap:6px;"><select class="li tsel" id="tbH" onchange="byFromSel()"><option value="">--</option><option value="00">00</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option></select><span style="color:var(--muted)">:</span><select class="li tsel" id="tbM" onchange="byFromSel()"><option value="">--</option><option value="00">00</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option><option value="32">32</option><option value="33">33</option><option value="34">34</option><option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option><option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option><option value="51">51</option><option value="52">52</option><option value="53">53</option><option value="54">54</option><option value="55">55</option><option value="56">56</option><option value="57">57</option><option value="58">58</option><option value="59">59</option></select></div>
         <button onclick="startPlan()" style="flex:1;background:var(--lime);border:none;color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:14px;cursor:pointer;">Start</button>
       </div>
+      <div class="bychips"><button type="button" onclick="byIn(30)">in 30 min</button><button type="button" onclick="byIn(60)">in 1 hour</button><button type="button" onclick="byIn(120)">in 2 hours</button></div>
       <div id="planMsg" style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--muted);min-height:14px;"></div>
     </div>
     <div id="planRun" style="display:none;border-left:2px solid var(--lime);padding:4px 0 4px 14px;">
@@ -330,22 +638,9 @@ button:focus{outline:none;}
     <div class="srow">
       <div class="sb"><div class="sn" id="stStreak">0</div><div class="sl">Day<br>streak</div></div>
       <div class="sb"><div class="sn" id="stWins">0</div><div class="sl">Total<br>wins</div></div>
-      <div class="sb" id="kmBlock"><div class="sn bad" id="stKm">0km</div><div class="sl">KM<br>debt</div></div>
+      <div class="sb" id="kmBlock" onclick="var d=document.getElementById('debtPanel');if(d&&d.style.display!=='none')d.scrollIntoView({behavior:'smooth',block:'center'});" style="cursor:pointer"><div class="sn bad" id="stKm">0km</div><div class="sl">KM<br>debt</div></div>
     </div>
     <div id="timeLine" class="timeblock"></div>
-
-    <div id="debtPanel" style="display:none;border-left:2px solid rgba(255,45,45,0.4);padding:2px 0 2px 18px;margin-bottom:28px;">
-      <div class="redlbl" style="margin-bottom:6px;">Run it off: no music</div>
-      <div id="debtDeadline" style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.08em;color:rgba(244,240,232,0.3);margin-bottom:16px;"></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <button class="bg" onclick="payKm(1)">&#10003; 1km</button>
-        <button class="bg" onclick="payKm(5)">&#10003; 5km</button>
-        <button class="bg" onclick="payKm(10)">&#10003; 10km</button>
-        <span style="color:rgba(244,240,232,0.12);padding:0 4px;">|</span>
-        <button class="bdng" onclick="addKm(5)">+ 5km</button>
-        <button class="bdng" onclick="addKm(10)">+ 10km</button>
-      </div>
-    </div>
 
     <div class="monthnav">
       <button class="mnav" onclick="shiftWeeks(-1)">&#8592;</button>
@@ -404,16 +699,53 @@ button:focus{outline:none;}
     </div>
 
     <div class="sdiv"></div>
-    <div class="lbl" style="margin-bottom:12px">Penalties: no music zone</div>
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:rgba(244,240,232,0.35);line-height:2.2;margin-bottom:16px">
-      Skip morning routine &rarr; <span style="color:var(--red)">+5km</span><br>
-      Broken rule &rarr; <span style="color:var(--red)">its own consequence</span><br>
-      All debt must be run before <span style="color:var(--white)">Sunday ends</span><br>
-      No music. That's the point.
+    <div class="lbl" style="margin-bottom:14px">Penalties</div>
+    <div class="pen-card">
+      <div class="pen-row"><div class="pen-t">Skip the morning routine</div><div class="pen-v">+5 km</div></div>
+      <div class="pen-row"><div class="pen-t">Break a rule</div><div class="pen-v">its own km</div></div>
+      <div class="pen-row"><div class="pen-t">All debt is run before Sunday ends</div><div class="pen-v w">Sunday</div></div>
+      <div class="pen-foot">No music while you run. That is the point.</div>
+    </div>
+    <div id="debtPanel" class="debt-card" style="display:none;">
+      <div class="debt-top"><div class="debt-k">Run it off</div><div class="debt-n" id="debtNum">0 km</div></div>
+      <div id="debtDeadline" class="debt-dl"></div>
+      <div class="debt-btns">
+        <button class="debt-pay" onclick="payKm(1)">Ran 1 km</button>
+        <button class="debt-pay" onclick="payKm(5)">Ran 5 km</button>
+        <button class="debt-pay" onclick="payKm(10)">Ran 10 km</button>
+      </div>
+      <div class="debt-add"><button onclick="addKm(5)">+ 5 km</button><button onclick="addKm(10)">+ 10 km</button><span>add a penalty</span></div>
     </div>
     <div class="sdiv"></div>
     <div class="lbl" style="margin-bottom:16px">Rewards: earned not given</div>
     <div id="rewardsList"></div>
+
+    <div class="sdiv"></div>
+    <div class="lbl" style="margin-bottom:12px">Look back</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--muted);line-height:1.7;margin-bottom:12px;">Every lesson you kept, connected into a web. Patterns and the weekly count live here.</div>
+    <div class="brow"><button class="bg" onclick="openLookBack()">Open look back</button></div>
+
+    <div class="sdiv"></div>
+    <div class="lbl" style="margin-bottom:12px">Your data</div>
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--muted);line-height:1.7;margin-bottom:12px;">Everything lives on this phone. Back it up so you never lose your streak.</div>
+  <div id="backupAge" style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--lime);margin-bottom:12px;"></div>
+  <a href="https://ladder-website-xi.vercel.app/privacy.html" target="_blank" rel="noopener" style="display:inline-block;font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:#999;margin-bottom:12px;text-decoration:underline">Privacy</a>
+  <div class="brow">
+    <button class="bg" onclick="exportData()">Back up</button><button class="bg" onclick="openTour()">Replay tour</button>
+    <button class="bg" onclick="toggleImport()">Restore</button>
+  </div>
+  <div id="importBox" style="display:none;margin-top:12px;">
+    <textarea id="importText" class="li" rows="4" placeholder="Paste your backup here" style="width:100%;margin-bottom:10px;"></textarea>
+    <button class="bp" onclick="importData()">Restore now</button>
+  </div>
+  <div id="remindBox" style="display:none;margin-top:24px;">
+    <div class="lbl" style="margin-bottom:10px">Daily reminder</div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <input class="li" id="remindTime" type="time" value="21:00" style="width:auto;">
+      <button class="bg" onclick="setReminder()">Set</button>
+      <button class="bg" onclick="clearReminder()">Off</button>
+    </div>
+  </div>
 
     <div style="margin-top:40px;padding-top:20px;border-top:1px solid var(--dim2);">
       <button onclick="goToBoot()" style="background:none;border:none;font-family:'IBM Plex Mono',monospace,system-ui;font-size:0.55rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(244,240,232,0.15);cursor:pointer;padding:14px 4px;transition:color 0.2s;" onmouseover="this.style.color='rgba(244,240,232,0.4)'" onmouseout="this.style.color='rgba(244,240,232,0.15)'">&#8592; back to start</button>
@@ -436,16 +768,55 @@ button:focus{outline:none;}
       <div id="fcResponse" style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--muted);margin-top:8px;min-height:14px;"></div>
     </div>
 
-    <div class="lbl" style="margin-bottom:12px">Evening mirror</div>
-    <div class="big-q" style="margin-bottom:28px">Answer these.<br><em>Honestly.</em></div>
+    <div id="mFlow">
+      <div class="m-top"><div class="lbl" style="margin:0">Evening mirror</div><div class="m-chips"><button class="m-chip" onclick="openLesson()">+ lesson</button></div></div>
+      <div class="m-dots" id="mDots"></div>
 
-    <div id="mirrorQuestions"></div>
+      <div id="mirrorQuestions"></div>
 
-    <div class="sdiv"></div>
-    <div class="lbl" style="margin-bottom:8px">One line</div>
-    <div class="big-q" style="margin-bottom:16px;font-size:1.3rem;">If today taught you<br><em>one thing,</em> what was it.</div>
+      <div class="mstep" id="mStepSum">
+        <div class="big-q" style="margin-bottom:22px">What you<br><em>did</em> today.</div>
+        <div id="mSummary"></div>
+      </div>
 
-    <div id="webWrap" style="border:1px solid var(--dim);height:280px;position:relative;overflow:hidden;margin-bottom:8px;background:#050505;">
+      <div class="mstep" id="mStepOne">
+        <div class="lbl" style="margin-bottom:8px">One line</div>
+        <div class="big-q" style="margin-bottom:18px;font-size:1.5rem;">If today taught you<br><em>one thing,</em> what was it.</div>
+        <input class="li" id="oneLineInput" placeholder="One line. Not an essay." style="margin-bottom:10px;">
+    <button onclick="submitWebEntry()" id="webSubmitBtn" style="width:100%;background:var(--lime);border:none;color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:16px;cursor:pointer;margin-bottom:12px;">Add to the web &rarr;</button>
+    
+      </div>
+
+      <div class="mstep" id="mStepNight">
+        <div class="big-q" style="margin-bottom:22px">Last <em>step.</em></div>
+    <div class="aff" data-set="pm"></div>
+        <div class="lbl" style="margin-bottom:14px">Then: visualize, and put the phone down</div>
+        <div class="rsteps" id="nSteps"></div>
+        <button class="m-close" onclick="closeDay()">Close the day</button>
+      </div>
+
+      <div class="m-nav"><button class="bg" id="mBack" onclick="mFlowGo(-1)">Back</button><button class="bp" id="mNext" onclick="mFlowGo(1)">Next &rarr;</button></div>
+    </div>
+
+    <div id="mDone">
+      <div class="lbl" style="margin-bottom:10px">Day closed</div>
+      <div class="md-num" id="mdNum">0</div>
+      <div class="md-sub">day streak</div>
+      <div class="md-line" id="mdLine"></div>
+      <div class="md-go">Done.<br><em>Go chill.</em></div>
+      <div class="md-links"><button onclick="mReopen()">Edit tonight</button><button onclick="goTo('s-ladder')">Ladder &rarr;</button></div>
+    </div>
+
+    <div id="lessonModal"><div class="lm-box">
+      <div class="lbl" style="margin-bottom:10px">Keep a lesson</div>
+      <textarea id="lessonInput" class="li" rows="3" placeholder="What did you learn? One line."></textarea>
+      <div class="lm-row"><button class="bp" onclick="saveLesson()">Keep it</button><button class="bg" onclick="closeLesson()">Cancel</button></div>
+    </div></div>
+
+    <div id="lookBack">
+      <div class="lb-top"><div class="lbl" style="margin:0">Look back</div><button class="m-chip" onclick="closeLookBack()">Close</button></div>
+      <div class="big-q" style="margin-bottom:18px;font-size:1.5rem;">Your lessons,<br><em>connected.</em></div>
+      <div id="webWrap" style="border:1px solid var(--dim);height:280px;position:relative;overflow:hidden;margin-bottom:8px;background:#050505;">
       <div id="webCanvas" style="width:100%;height:100%;cursor:pointer;"></div>
       <div id="webEmpty" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:rgba(244,240,232,0.2);text-align:center;padding:0 30px;">Nothing connected yet. Write your first line below.</div>
       <div id="webNavOverlay" style="display:none;position:absolute;left:12px;right:12px;bottom:12px;background:rgba(8,8,8,0.9);border-left:2px solid rgba(212,240,0,0.4);padding:10px 12px;">
@@ -458,8 +829,6 @@ button:focus{outline:none;}
       <button id="webBackBtn" onclick="webBackToOverview()" style="display:none;background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;padding:6px 10px;cursor:pointer;">&larr; overview</button>
     </div>
 
-    <input class="li" id="oneLineInput" placeholder="One line. Not an essay." style="margin-bottom:10px;">
-    <button onclick="submitWebEntry()" id="webSubmitBtn" style="width:100%;background:var(--lime);border:none;color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:16px;cursor:pointer;margin-bottom:12px;">Add to the web &rarr;</button>
     <button onclick="findPatterns()" id="patternBtn" style="width:100%;background:rgba(212,240,0,0.06);border:1px solid rgba(212,240,0,0.25);color:var(--lime);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;padding:14px;cursor:pointer;margin-bottom:24px;">&#9670; Find patterns in your reflections</button>
 
     <div id="oneLineArchive" style="margin-bottom:8px;max-height:200px;overflow-y:auto;"></div>
@@ -468,6 +837,11 @@ button:focus{outline:none;}
       <span class="lbl">This week &darr;</span>
     </div>
     <div id="counterBody" style="display:none;margin-bottom:8px;"></div>
+
+    <div id="patternResult" style="display:none;border:1px solid rgba(212,240,0,0.2);background:rgba(212,240,0,0.03);padding:18px;margin-bottom:24px;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:rgba(244,240,232,0.75);line-height:1.8;"></div>
+
+    
+    </div>
 
     <div id="facetDetail" style="display:none;position:fixed;inset:0;background:rgba(8,8,8,0.97);z-index:999;overflow-y:auto;padding:40px 28px;">
       <div style="max-width:480px;margin:0 auto;">
@@ -480,21 +854,13 @@ button:focus{outline:none;}
       </div>
     </div>
 
-    <div id="patternResult" style="display:none;border:1px solid rgba(212,240,0,0.2);background:rgba(212,240,0,0.03);padding:18px;margin-bottom:24px;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:rgba(244,240,232,0.75);line-height:1.8;"></div>
-
     <div id="webReveal" style="display:none;position:fixed;inset:0;background:var(--black);z-index:998;flex-direction:column;align-items:center;justify-content:center;">
-      <div id="webRevealCanvas" style="width:100%;height:65vh;"></div>
+      <div id="webRevealCanvas" style="width:100%;height:58vh;"></div>
       <div id="webRevealMsg" style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:rgba(212,240,0,0.6);text-align:center;padding:0 30px;min-height:20px;margin-top:12px;"></div>
       <button id="webRevealDone" onclick="closeWebReveal()" style="display:none;background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;padding:12px 24px;cursor:pointer;margin-top:20px;">continue</button>
     </div>
 
-    <div class="sdiv"></div>
-    <div class="lbl" style="margin-bottom:12px">Night ritual: no phone after this</div>
-    <div class="rsteps" id="nSteps"></div>
-    <div class="brow">
-      <button class="bp" onclick="closeDay()">Close the day &rarr;</button>
-      <button class="bg" onclick="goTo('s-goals')">&larr; Back</button>
-    </div>
+    
   </div>
 </div>
 
@@ -504,7 +870,7 @@ button:focus{outline:none;}
     <div class="lbl" style="margin-bottom:12px">Goals</div>
     <div class="big-q" style="margin-bottom:28px">Where you're <em>going.</em></div>
 
-    <button onclick="openCatch('detachment')" style="background:rgba(212,240,0,0.08);border:1px solid var(--lime);color:var(--lime);font-family:'IBM Plex Mono',monospace;font-size:0.66rem;letter-spacing:0.18em;text-transform:uppercase;padding:18px 24px;cursor:pointer;margin-bottom:24px;width:100%;">The Art of Detachment: I'm chasing the outcome</button>
+    <button class="chip-det" onclick="openCatch('detachment')"><span>Stressing about the result?</span></button>
 
     <div id="sunBox" class="sunbox" style="display:none;margin-bottom:24px">
       <div class="suntxt">It's Sunday. Do your check-ins and set up the week.</div>
@@ -641,18 +1007,26 @@ button:focus{outline:none;}
   </div>
 </div>
 
+<div id="taskPill" onclick="goTo('s-morning')"><div class="tp-row"><div class="tp-l"><div class="tp-k">Finish by <span id="tpBy"></span></div><div class="tp-t" id="tpText"></div></div><div class="tp-time" id="tpTime">00:00</div></div><div class="tp-bar"><div class="tp-fill" id="tpFill"></div></div><div id="tpLive" onclick="event.stopPropagation();liveStart()" style="font:10px/1.3 ui-monospace,monospace;color:#c8f03c;opacity:.8;margin-top:6px;word-break:break-all">live: init</div></div>
 <nav id="nav" class="hidden">
-  <button class="nb on" data-s="s-morning" onclick="goTo('s-morning')"><span class="ni">&#9728;&#65038;</span>morning</button>
-  <button class="nb" data-s="s-wiring" onclick="goTo('s-wiring')"><span class="ni">&#9889;</span>wiring</button>
-  <button class="nb" data-s="s-goals" onclick="goTo('s-goals')"><span class="ni">&#9678;</span>goals</button>
-  <button class="nb" data-s="s-mirror" onclick="goTo('s-mirror')"><span class="ni">&#9790;&#65038;</span>mirror</button>
-  <button class="nb" data-s="s-ladder" onclick="goTo('s-ladder')"><span class="ni">&#9650;</span>ladder</button>
+  <button class="nb on" data-s="s-morning" onclick="goTo('s-morning')" aria-label="morning"><span class="ni"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span><span class="nl">morning</span></button>
+  <button class="nb" data-s="s-wiring" onclick="goTo('s-wiring')" aria-label="wiring"><span class="ni"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></span><span class="nl">wiring</span></button>
+  <button class="nb" data-s="s-goals" onclick="goTo('s-goals')" aria-label="goals"><span class="ni"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></span><span class="nl">goals</span></button>
+  <button class="nb" data-s="s-mirror" onclick="goTo('s-mirror')" aria-label="mirror"><span class="ni"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span><span class="nl">mirror</span></button>
+  <button class="nb" data-s="s-ladder" onclick="goTo('s-ladder')" aria-label="ladder"><span class="ni"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M17 3v18M7 7h10M7 12h10M7 17h10"/></svg></span><span class="nl">ladder</span></button>
 </nav>
+
+<div id="tour"><button class="t-skip" onclick="closeTour()">Skip</button><div class="t-body" id="tBody"></div><div class="t-foot"><div class="t-dots" id="tDots"></div><button class="t-next" id="tNext" onclick="tourNext()">Next</button></div></div>
+
+<div id="topMask"></div>
+<button id="helpBtn" onclick="startCoach(curScreen)" aria-label="help">?</button>
+<div id="coach"><div id="coachHole" class="none"></div><div id="coachCard"></div></div>
 <div id="toast" style="display:none;position:fixed;left:14px;right:14px;top:14px;z-index:1100;background:#0c0c0c;border:1px solid var(--lime);padding:14px 16px;font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--white);line-height:1.5;"></div>
 <button id="catchFab" onclick="openCatch('resistance')">I feel it</button>
 <div id="catchModal" style="display:none;position:fixed;inset:0;background:rgba(8,8,8,0.98);z-index:1000;overflow-y:auto;padding:40px 28px;">
   <div style="max-width:480px;margin:0 auto;">
-    <div class="lbl" id="catchPillar" style="margin-bottom:20px"></div>
+    <div class="lbl" id="catchPillar" style="margin-bottom:12px"></div>
+    <div id="catchWhy" style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:.95rem;line-height:1.55;color:rgba(244,240,232,.72);background:rgba(244,240,232,.04);border-radius:14px;padding:14px 16px;margin-bottom:20px;"></div>
     <div id="catchSub" style="margin-bottom:16px;"></div>
     <div id="catchStepQ" class="big-q" style="margin-bottom:20px;font-size:1.5rem;"></div>
     <div id="catchChoice" style="display:none;flex-direction:column;gap:10px;margin-bottom:16px;"></div>
@@ -670,6 +1044,7 @@ button:focus{outline:none;}
 </div>
 
 <script>
+var API_BASE=(location.protocol.indexOf('http')===0&&location.hostname.indexOf('localhost')===-1)?'':'https://ladder-website-xi.vercel.app';
 var KEY='ladder_v5', TODAY=new Date().toDateString();
 var DAYS=['SUN','MON','TUE','WED','THU','FRI','SAT'];
 var MONTHS=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
@@ -682,7 +1057,7 @@ var MS=[
   {id:'m3',text:'Read',meta:'10 min'},
   {id:'m4',text:'Write 1 gratitude'}
 ];
-var NS=[{id:'n0',text:'Brush teeth'},{id:'n1',text:'Affirmations, visualize'}];
+var NS=[{id:'n1',text:'Affirmations, visualize'}];
 var IDS=[
   ['Someone who does','what he <span class="acc">says.</span>'],
   ['Someone who grows','in <span class="acc">silence.</span>'],
@@ -1083,7 +1458,7 @@ async function submitWebEntry(){
   var connections=[];
   var classification={type:'unclear',subtype:null,pillar:'none'};
   try{
-    var response=await fetch('/api/find-connections',{
+    var response=await fetch(API_BASE+'/api/find-connections',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({newText:text,existing:existing})
@@ -1190,7 +1565,7 @@ async function findPatterns(){
   btn.disabled=true; btn.style.opacity='0.4'; btn.textContent='Reading through your entries...';
   resultEl.style.display='none';
   try{
-    var response=await fetch('/api/analyze-patterns',{
+    var response=await fetch(API_BASE+'/api/analyze-patterns',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({entries:log.map(function(e){return {date:e.date,text:e.text};})})
@@ -1220,13 +1595,14 @@ function stopWebAnim(){
 }
 
 function buildWebScene(container,log,links,revealCount){
+  WEB_TOTAL=Math.max(8,log.length);
   container.innerHTML='';
   if(typeof THREE==='undefined') return null;
   var W=container.clientWidth||360, H=container.clientHeight||280;
 
   var scene=new THREE.Scene();
   var camera=new THREE.PerspectiveCamera(45,W/H,1,2000);
-  camera.position.set(0,0,240);
+  camera.position.set(0,0,350);
   var renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
   renderer.setSize(W,H); renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
   renderer.domElement.style.display='block';
@@ -1244,7 +1620,7 @@ function buildWebScene(container,log,links,revealCount){
     var pos=webNodePosition(i,WEB_TOTAL);
     var mat=new THREE.SpriteMaterial({map:tex,color:0xf4f0e8,transparent:true,depthWrite:false,opacity:0.65});
     var sprite=new THREE.Sprite(mat);
-    sprite.scale.set(14,14,1);
+    sprite.scale.set(18,18,1);
     sprite.position.set(pos.x,pos.y,pos.z);
     sprite.userData.entryIndex=i;
     group.add(sprite);
@@ -1373,7 +1749,7 @@ function webBackToOverview(){
     sprite.material.opacity=0.65; sprite.material.color.setHex(0xf4f0e8);
   });
   webHandles.lines.forEach(function(line){ line.material.opacity=0.2; });
-  animateCamera(webHandles.camera,new THREE.Vector3(0,0,240),new THREE.Vector3(0,0,0),700);
+  animateCamera(webHandles.camera,new THREE.Vector3(0,0,350),new THREE.Vector3(0,0,0),700);
 }
 
 function showWebReveal(newIndex,connections){
@@ -1413,7 +1789,7 @@ function showWebReveal(newIndex,connections){
     var t=(Date.now()-t0)/1000;
     handles.group.rotation.y+=0.0012;
     var growP=Math.min(1,t/1.0);
-    sprite.scale.set(14*growP,14*growP,1);
+    sprite.scale.set(18*growP,18*growP,1);
     mat.opacity=0.9*growP;
     newLines.forEach(function(l){ l.material.opacity=0.5*Math.min(1,(t-0.3)/0.7>0?(t-0.3)/0.7:0); });
     handles.renderer.render(handles.scene,handles.camera);
@@ -1719,7 +2095,7 @@ function buildRewards(){
   // DAILY. earned today, reset tomorrow
   var dayLabel=document.createElement('div');
   dayLabel.style.cssText='font-family:"IBM Plex Mono",monospace;font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(244,240,232,0.3);margin-bottom:12px;';
-  dayLabel.textContent='Daily: earned, not given';
+  dayLabel.textContent='Today';
   c.appendChild(dayLabel);
 
   var earned=dailyRewardEarned();
@@ -1820,11 +2196,11 @@ function buildRewards(){
 }
 
 var MIRROR_QS=[
-  {id:'q1', label:'01: the promise', q:'Did you keep your promise to yourself today?', ph:'Not "kind of". Not "mostly". Yes or no, then explain.'},
-  {id:'q2', label:'02: the wall', q:'Where today did you break through the wall, or hold it up against what you wanted?', ph:'Name the moment. Was it perseverance or restraint.', pillar:'resistance'},
-  {id:'q3', label:'03: the work', q:'Did you stay with the work today, or chase the outcome?', ph:'The moment you wanted to check, compare, or already know. What did you do instead.', pillar:'detachment'},
-  {id:'q4', label:'04: the stillness', q:'Where did you sit with boredom today, instead of filling it?', ph:'Or where did you reach for something to escape it. Either way, be honest.', pillar:'boredom'},
-  {id:'q5', label:'05: tomorrow', q:'What is the one thing you will do tomorrow. No matter what.', ph:'Write it like a contract with yourself. Specific. No escape.'},
+  {id:'q1', label:'01: the promise', q:'How did you do on what you planned today?', ph:'Say more if you want.', chips:['All of it','Most of it','Some of it','Not much']},
+  {id:'q2', label:'02: the wall', q:'What, if anything, was hard today?', ph:'Say more if you want.', pillar:'resistance', chips:['Nothing','Getting started','Staying focused','Wanting something too much']},
+  {id:'q3', label:'03: the work', q:'How was your focus today?', ph:'Say more if you want.', pillar:'detachment', chips:['On the work','On the result','Scattered','A mix']},
+  {id:'q4', label:'04: the stillness', q:'What did you do in your quiet moments today?', ph:'Say more if you want.', pillar:'boredom', chips:['Sat with it','Reached for my phone','Had none']},
+  {id:'q5', label:'05: tomorrow', q:'What will you do first tomorrow?', ph:'One thing. Specific.', goalChips:true},
 ];
 
 // ── FLASHCARD: resurfacing decisions, renew or let go ──
@@ -1933,11 +2309,17 @@ var CATCH={
   resistance:{go:{push:'Do it. Now.',hold:'Hold it. Now.'}},
   detachment:{q:['What outcome are you looking at?','What can you do right now?'],go:'Go to the work. Now.',btns:[['push','stayed with the work']]}
 };
+
+var PILLAR_WHY={
+  resistance:'',
+  detachment:'<b style="color:var(--white);font-weight:500">What it means:</b> you cannot control the result (the sale, the reply, the number on the scale). You can only control the work. Stressing about the result steals the energy you need for the work. Name the result, let it go, go back to the work.',
+  boredom:'Stillness feels bad on purpose. The urge to scroll, snack or play music is the test. Sitting through it is the point.'
+};
 var catchState={pillar:null,step:0,a:[],tInt:null};
 function catchBtnStyle(){return "flex:1;background:rgba(212,240,0,0.1);border:1px solid rgba(212,240,0,0.4);color:var(--lime);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;padding:16px;cursor:pointer;line-height:1.5;";}
 function openCatch(pillar){
   catchState={pillar:pillar,step:0,a:[],tInt:null};
-  document.getElementById('catchPillar').textContent=PILLAR_LABEL[pillar];
+  document.getElementById('catchPillar').textContent=PILLAR_LABEL[pillar];(function(){var w=document.getElementById('catchWhy');w.innerHTML=PILLAR_WHY[pillar]||'';w.style.display=PILLAR_WHY[pillar]?'block':'none';})();
   document.getElementById('catchGo').style.display='none';
   document.getElementById('catchModal').style.display='block';
   showCatchStep();
@@ -2193,37 +2575,50 @@ function logMirrorAnswer(qId,pillar,kind){
   if(statusEl) statusEl.textContent='Logged as '+label+'.';
 }
 
+function mqCommit(qid){
+  if(!S.mirrorAnswers) S.mirrorAnswers={};
+  var chip=(S.mirrorChips&&S.mirrorChips[qid])||'',text=(S.mirrorText&&S.mirrorText[qid])||'';
+  S.mirrorAnswers[qid]=chip+(chip&&text?'. ':'')+text;
+  S.mirrorNote=MIRROR_QS.map(function(qq){return qq.q+'\n'+(S.mirrorAnswers[qq.id]||'.');}).join('\n\n');
+  save();
+}
+function mqChip(qid,val,btn){
+  if(!S.mirrorChips) S.mirrorChips={};
+  var on=S.mirrorChips[qid]===val;
+  if(on) delete S.mirrorChips[qid]; else S.mirrorChips[qid]=val;
+  [].slice.call(btn.parentNode.children).forEach(function(c){c.classList.remove('on');});
+  if(!on) btn.classList.add('on');
+  mqCommit(qid);
+  try{hap('light');}catch(e){}
+}
+function mqMore(qid,btn){
+  var ta=btn.closest('.mq-block').querySelector('textarea');
+  ta.style.display='block';btn.style.display='none';ta.focus();
+}
 function buildMirrorQuestions(){
   var c=document.getElementById('mirrorQuestions'); c.innerHTML='';
   if(!S.mirrorAnswers) S.mirrorAnswers={};
+  if(!S.mirrorChips) S.mirrorChips={};
+  if(!S.mirrorText) S.mirrorText={};
   MIRROR_QS.forEach(function(q){
     var block=document.createElement('div');
     block.className='mq-block';
-    var logRow='';
-    if(q.pillar){
-      var btns='<button data-kind="push" onclick="logMirrorAnswer(\''+q.id+'\',\''+q.pillar+'\',\'push\')" style="flex:1;background:rgba(212,240,0,0.08);border:1px solid rgba(212,240,0,0.4);color:var(--lime);font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;letter-spacing:0.03em;padding:10px 4px;cursor:pointer;border-radius:6px;">'+PILLAR_ACTION[q.pillar].push+'</button>'
-        +'<button data-kind="hold" onclick="logMirrorAnswer(\''+q.id+'\',\''+q.pillar+'\',\'hold\')" style="flex:1;background:rgba(212,240,0,0.08);border:1px solid rgba(212,240,0,0.4);color:var(--lime);font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;letter-spacing:0.03em;padding:10px 4px;cursor:pointer;border-radius:6px;">'+PILLAR_ACTION[q.pillar].hold+'</button>';
-      logRow='<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;color:rgba(244,240,232,0.35);margin:12px 0 8px;">which was it</div>'
-        +'<div style="display:flex;gap:8px;">'+btns+'</div>'
-        +'<div class="mq-logstatus" data-qid="'+q.id+'" style="font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;color:var(--muted);margin-top:6px;min-height:14px;"></div>';
+    var chips=q.chips||[];
+    if(q.goalChips){
+      chips=[];
+      try{loadGoals().forEach(function(g){(g.actions||[]).forEach(function(a){if(chips.length<3)chips.push(a.text.length>38?a.text.slice(0,36)+'...':a.text);});});}catch(e){}
     }
-    block.innerHTML='<div class="mq-label">'+q.label+'</div><div class="mq-question">'+q.q+'</div><textarea class="mq-ta" data-qid="'+q.id+'" placeholder="'+q.ph+'"></textarea>'+logRow;
+    var chipHtml=chips.length?'<div class="mq-chips">'+chips.map(function(t){return '<button type="button" class="mq-chip'+(S.mirrorChips[q.id]===t?' on':'')+'" data-v="'+t.replace(/"/g,'&quot;')+'">'+esc(t)+'</button>';}).join('')+'</div>':'';
+    var hasText=!!(S.mirrorText[q.id]);
+    block.innerHTML='<div class="mq-label">'+q.label+'</div><div class="mq-question">'+q.q+'</div>'+chipHtml
+      +'<textarea class="mq-ta" data-qid="'+q.id+'" placeholder="'+q.ph.replace(/"/g,'&quot;')+'" style="display:'+((hasText||!chips.length)?'block':'none')+'"></textarea>'
+      +(chips.length&&!hasText?'<button type="button" class="mq-more"><span>+</span> Say more</button>':'');
     var ta=block.querySelector('textarea');
-    ta.value=S.mirrorAnswers[q.id]||'';
-    ta.addEventListener('input',function(){
-      if(!S.mirrorAnswers) S.mirrorAnswers={};
-      S.mirrorAnswers[q.id]=ta.value;
-      // also build combined mirrorNote for snapshot
-      S.mirrorNote=MIRROR_QS.map(function(qq){
-        return qq.q+'\n'+(S.mirrorAnswers[qq.id]||'.');
-      }).join('\n\n');
-      save();
-    });
+    ta.value=S.mirrorText[q.id]||'';
+    ta.addEventListener('input',function(){S.mirrorText[q.id]=ta.value;mqCommit(q.id);});
+    [].slice.call(block.querySelectorAll('.mq-chip')).forEach(function(b){b.addEventListener('click',function(){mqChip(q.id,b.getAttribute('data-v'),b);});});
+    var more=block.querySelector('.mq-more');if(more)more.addEventListener('click',function(){mqMore(q.id,more);});
     c.appendChild(block);
-    if(q.pillar){
-      var statusEl=block.querySelector('.mq-logstatus[data-qid="'+q.id+'"]');
-      if(statusEl && S.mirrorLogged && S.mirrorLogged[q.id+'_'+TODAY]) statusEl.textContent='Logged already today. Tap again to update.';
-    }
   });
 }
 
@@ -2401,6 +2796,7 @@ function updateStats(){
   // debt panel: only show when there's debt
   var dp=document.getElementById('debtPanel');
   if(dp) dp.style.display=(S.kmDebt||0)>0?'block':'none';
+  var dn=document.getElementById('debtNum');if(dn)dn.textContent=(S.kmDebt||0)+' km';
   var kb=document.getElementById('kmBlock');
   if(kb) kb.style.borderColor=(S.kmDebt||0)>0?'rgba(255,45,45,0.35)':'var(--dim)';
 
@@ -2440,11 +2836,11 @@ function updateStats(){
       var heroHours=Math.max(0,Math.floor((hero.target-now)/3600000));
       tl.innerHTML='<div class="tnum">'+hero.days+'</div>'
         +'<div class="tgoal">days to &ldquo;'+esc(hero.name)+'&rdquo;</div>'
-        +'<div id="heroHours" style="font-family:\'IBM Plex Mono\',monospace;font-size:0.62rem;letter-spacing:0.04em;color:rgba(212,240,0,0.5);margin-top:5px;">'+fmtThousands(heroHours)+' hours left</div>'
-        +'<div class="tsub" style="margin-top:6px;">day '+dayOfYear+' of '+now.getFullYear()+' &middot; '+(yearDays-dayOfYear)+' left in the year</div>'
+        +'<div id="heroHours" style="font-family:\'IBM Plex Sans\',sans-serif;font-size:.95rem;font-weight:400;color:rgba(212,240,0,0.85);margin-top:6px;">'+fmtThousands(heroHours)+' hours left</div>'
+        +'<div class="tsub" style="margin-top:8px;">day '+dayOfYear+' of '+now.getFullYear()+' &middot; '+(yearDays-dayOfYear)+' left in the year</div>'
         +(rest.length?'<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--dim2);">'
           +rest.map(function(r){
-            return '<div style="display:flex;justify-content:space-between;font-family:\'IBM Plex Mono\',monospace;font-size:0.58rem;letter-spacing:0.05em;color:rgba(244,240,232,0.22);padding:3px 0;"><span>'+esc(r.name)+'</span><span>'+r.days+'d</span></div>';
+            return '<div style="display:flex;justify-content:space-between;font-family:\'IBM Plex Sans\',sans-serif;font-size:.98rem;font-weight:300;color:rgba(244,240,232,0.68);padding:7px 0;"><span>'+esc(r.name)+'</span><span>'+r.days+'d</span></div>';
           }).join('')
         +'</div>':'');
     } else {
@@ -2555,15 +2951,14 @@ function addRelentless(){
 
 // MORNING PLAN: one question, then a task with a deadline, then start
 function fmtClock(ms){var d=new Date(ms);return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
-function planDeadline(by){var p=by.split(':');var d=new Date();d.setHours(+p[0],+p[1],0,0);return d.getTime();}
+function planDeadline(by,from){var p=by.split(':');var f=from||Date.now();var d=new Date(f);d.setHours(+p[0],+p[1],0,0);if(d.getTime()<f-60000)d.setDate(d.getDate()+1);return d.getTime();}
 function renderPlan(){
   var t=S.todayTask;
   var form=document.getElementById('planForm'), run=document.getElementById('planRun');
   if(!form||!run) return;
   if(!t||!t.startedAt){
     form.style.display='block'; run.style.display='none';
-    document.getElementById('todayTask').value=t?t.text:'';
-    document.getElementById('todayBy').value=t?t.by:'';
+    if(t){document.getElementById('todayTask').value=t.text;document.getElementById('todayBy').value=t.by;}
     return;
   }
   form.style.display='none'; run.style.display='block';
@@ -2574,7 +2969,7 @@ function renderPlan(){
     tm.style.color='var(--lime)'; btn.style.display='none';
   } else {
     btn.style.display='block';
-    var left=planDeadline(t.by)-Date.now();
+    var left=planDeadline(t.by,t.startedAt)-Date.now();
     if(left>=0){var m=Math.ceil(left/60000);tm.textContent='Due '+t.by+'. '+Math.floor(m/60)+'h '+('0'+(m%60)).slice(-2)+'m left.';tm.style.color='var(--lime)';}
     else{tm.textContent='Due '+t.by+'. Past the deadline.';tm.style.color='var(--red)';}
   }
@@ -2892,7 +3287,7 @@ async function generateGoal(fromQuestions){
   document.querySelectorAll('#aiQuestions button, #aiGenBtn').forEach(function(b){b.disabled=true;b.style.opacity='0.4';});
 
   try{
-    var response=await fetch("/api/generate-goal",{
+    var response=await fetch(API_BASE+"/api/generate-goal",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({input:input, qa:qa})
@@ -3045,13 +3440,13 @@ function buildGoalsList(){
     var totalMilestones=(g.milestones||[]).length;
 
     var div=document.createElement('div');
-    div.style.cssText='border:1px solid var(--dim);padding:20px;margin-bottom:12px;';
+    div.style.cssText='background:var(--card);border-radius:22px;box-shadow:inset 0 0 0 1px var(--line);padding:22px 20px;margin-bottom:14px;';
     div.innerHTML=
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">'
         +'<div>'
-          +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;color:var(--lime);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px;">'+esc(g.name)+'</div>'
-          +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.82rem;color:var(--white);line-height:1.5;">'+esc(g.outcome)+'</div>'
-          +(g.deadline?'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.65rem;color:var(--muted);margin-top:4px;">deadline: '+esc(g.deadline)+'</div>':'')
+          +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:2rem;line-height:1;color:var(--lime);letter-spacing:.01em;margin-bottom:8px;">'+esc(g.name)+'</div>'
+          +'<div style="font-family:\'IBM Plex Sans\',sans-serif;font-size:1.05rem;font-weight:400;color:var(--white);line-height:1.4;">'+esc(g.outcome)+'</div>'
+          +(g.deadline?'<div style="font-family:\'IBM Plex Sans\',sans-serif;font-size:.9rem;color:rgba(244,240,232,.5);margin-top:6px;">by '+esc(g.deadline)+'</div>':'')
         +'</div>'
         +'<div style="display:flex;align-items:center;gap:2px;">'
           +'<button onclick="toggleFeaturedGoal(\''+g.id+'\')" title="Show as primary on Ladder" style="background:none;border:none;color:'+(g.featured?'var(--lime)':'rgba(244,240,232,0.2)')+';font-size:0.95rem;cursor:pointer;padding:14px 8px;line-height:1;" onmouseover="this.style.color=\''+(g.featured?'var(--lime)':'rgba(244,240,232,0.5)')+'\'" onmouseout="this.style.color=\''+(g.featured?'var(--lime)':'rgba(244,240,232,0.2)')+'\'">'+(g.featured?'\u2605':'\u2606')+'</button>'
@@ -3307,6 +3702,605 @@ document.addEventListener('keydown',function(e){
 
 tick();
 setInterval(tick,1000);
+
+// ---- backup, restore, reminder ----
+function ladderKeys(){var k=[];for(var i=0;i<localStorage.length;i++){var n=localStorage.key(i);if(n&&n.indexOf('ladder')===0)k.push(n);}return k;}
+function exportData(){
+  var o={app:'ladder',v:1,at:new Date().toISOString(),data:{}};
+  ladderKeys().forEach(function(k){o.data[k]=localStorage.getItem(k);});
+  var txt=JSON.stringify(o);
+  localStorage.setItem('ladder_lastbackup',String(Date.now()));scheduleExpiry();showBackupAge();
+  if(navigator.share){
+    navigator.share({title:'LADDER backup',text:txt}).catch(function(){});
+  }else if(navigator.clipboard){
+    navigator.clipboard.writeText(txt).then(function(){alert('Backup copied. Paste it somewhere safe.');}).catch(function(){});
+  }
+}
+function toggleImport(){var b=document.getElementById('importBox');b.style.display=b.style.display==='none'?'block':'none';}
+function importData(){
+  var t=document.getElementById('importText').value.trim();
+  try{
+    var o=JSON.parse(t);
+    if(o.app!=='ladder'||!o.data)throw 0;
+    Object.keys(o.data).forEach(function(k){if(k.indexOf('ladder')===0)localStorage.setItem(k,o.data[k]);});
+    location.reload();
+  }catch(e){alert('That is not a LADDER backup.');}
+}
+function lnPlugin(){return window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.LocalNotifications;}
+(function(){if(lnPlugin()){var b=document.getElementById('remindBox');if(b)b.style.display='block';}})();
+async function setReminder(){
+  var ln=lnPlugin();if(!ln)return;
+  var t=(document.getElementById('remindTime').value||'21:00').split(':');
+  try{
+    var p=await ln.requestPermissions();
+    if(p.display!=='granted'){alert('Allow notifications in Settings to use this.');return;}
+    await ln.cancel({notifications:[{id:1}]});
+    await ln.schedule({notifications:[{id:1,title:'LADDER',body:'Close the day. One honest line.',schedule:{on:{hour:parseInt(t[0],10),minute:parseInt(t[1],10)},allowWhileIdle:true}}]});
+    localStorage.setItem('ladder_remind',t.join(':'));scheduleExpiry();
+  }catch(e){}
+}
+async function scheduleExpiry(){
+  var ln=lnPlugin();if(!ln)return;
+  try{
+    var p=await ln.checkPermissions();
+    if(p.display!=='granted'){p=await ln.requestPermissions();if(p.display!=='granted')return;}
+    await ln.cancel({notifications:[{id:2}]});
+    await ln.schedule({notifications:[{id:2,title:'LADDER',body:'Install expires tomorrow. Back up, then run it again from Xcode.',schedule:{at:new Date(Date.now()+6*24*3600*1000),allowWhileIdle:true}}]});
+  }catch(e){}
+}
+function showBackupAge(){
+  var el=document.getElementById('backupAge');if(!el)return;
+  var t=parseInt(localStorage.getItem('ladder_lastbackup')||'0',10);
+  if(!t){el.textContent='No backup yet.';return;}
+  var d=Math.floor((Date.now()-t)/86400000);
+  el.textContent='Last backup: '+(d===0?'today':d+' day'+(d===1?'':'s')+' ago')+(d>=5?'. Back up now.':'.');
+}
+document.addEventListener('DOMContentLoaded',showBackupAge);showBackupAge();
+async function clearReminder(){var ln=lnPlugin();if(!ln)return;try{await ln.cancel({notifications:[{id:1}]});localStorage.removeItem('ladder_remind');}catch(e){}}
+
+// ---- affirmations ----
+var AFF_AM=["I am someone who does what he says.","Wanting gets a vote. Never the decision.","I don't control the outcome. I control my effort.","Not intensity. Repetition.","Do what you don't want to when it takes you there.","I keep my word to myself."];
+var AFF_PM=["I did the work. The outcome is not mine to decide.","I don't need a perfect day. I need an honest one.","I am not what I felt today. I am what I did.","Wanting gets a vote. Never the decision.","Tomorrow I start again. Same work. Same standard.","I kept my word to myself, or I will say where I did not."];
+var AFF_GOAL=3;
+var affIdx={am:null,pm:null};
+function affLogGet(){try{return JSON.parse(localStorage.getItem('ladder_aff_log')||'{}');}catch(e){return {};}}
+function affToday(){var l=affLogGet();return l[TODAY]||[];}
+function affSet(set){return (S.bookAffirmations||[]).concat(set==='pm'?AFF_PM:AFF_AM);}
+function affPick(set){
+  var l=affSet(set);
+  if(affIdx[set]!=null&&affIdx[set]<l.length)return;
+  var said=affToday(),d=Math.floor(Date.now()/86400000),st=((d%l.length)+l.length)%l.length;
+  for(var k=0;k<l.length;k++){var i=(st+k)%l.length;if(said.indexOf(l[i])<0){affIdx[set]=i;return;}}
+  affIdx[set]=st;
+}
+function affRender(){
+  document.querySelectorAll('.aff[data-set]').forEach(function(box){
+    var set=box.getAttribute('data-set'),l=affSet(set);affPick(set);
+    var t=l[affIdx[set]],said=affToday(),isSaid=said.indexOf(t)>=0,n=Math.min(said.length,AFF_GOAL),dots='';
+    for(var i=0;i<AFF_GOAL;i++)dots+='<i class="aff-dot'+(i<n?' on':'')+'"></i>';
+    var custom=(S.bookAffirmations||[]).indexOf(t)>=0;
+    var lbl=set==='pm'?'Read it before you answer':'Say it out loud';
+    var hint=isSaid?'Said. That counts.':(set==='pm'?'Read it slowly. Then tap the button.':'Out loud, not in your head. Then tap the button.');
+    var openAdd=box.querySelector('.aff-add')&&box.querySelector('.aff-add').style.display==='flex';
+    box.innerHTML='<div class="aff-lbl">'+lbl+'</div>'
+      +'<div class="aff-prog"><div class="aff-dots">'+dots+'</div><span class="aff-cnt">'+(n>=AFF_GOAL?'done for today':n+' of '+AFF_GOAL+' said today')+'</span></div>'
+      +'<div class="aff-text'+(isSaid?' said':'')+'">'+esc(t)+'</div>'
+      +'<button class="aff-say'+(isSaid?' said':'')+'" onclick="affSaid(\''+set+'\')">'+(isSaid?'✓ Said':'I said it')+'</button>'
+      +'<div class="aff-hint">'+hint+'</div>'
+      +'<div class="aff-tools"><button onclick="affNext(\''+set+'\')">Another line ›</button>'+(custom?'<button onclick="affRemove(\''+set+'\')">Remove this one</button>':'')+'<button onclick="affToggleAdd(this)">+ Write your own</button></div>'
+      +'<div class="aff-add" style="'+(openAdd?'display:flex':'')+'"><input class="li aff-in" placeholder="A line in your own words"><button class="aff-btn main" style="flex:0 0 90px" onclick="affSave(this,\''+set+'\')">Save</button></div>';
+  });
+}
+function renderAffirm(){affRender();}
+function affSaid(set){
+  try{
+    var l=affSet(set);affPick(set);var t=l[affIdx[set]];
+    var log=affLogGet();if(!log[TODAY])log[TODAY]=[];
+    if(log[TODAY].indexOf(t)<0){log[TODAY].push(t);try{localStorage.setItem('ladder_aff_log',JSON.stringify(log));}catch(e){}try{S.affirmedAt=Date.now();save();}catch(e){}}
+    affRender();
+    if(log[TODAY].length<AFF_GOAL)setTimeout(function(){affNext(set);},1100);
+  }catch(e){}
+}
+function affNext(set){
+  var l=affSet(set),said=affToday(),cur=affIdx[set]==null?0:affIdx[set],nx=(cur+1)%l.length;
+  for(var k=1;k<=l.length;k++){var i=(cur+k)%l.length;if(said.indexOf(l[i])<0){nx=i;break;}}
+  document.querySelectorAll('.aff[data-set="'+set+'"] .aff-text').forEach(function(e){e.classList.add('swap');});
+  setTimeout(function(){affIdx[set]=nx;affRender();},200);
+}
+function affRemove(set){
+  try{var l=affSet(set),t=l[affIdx[set]],a=S.bookAffirmations||[],i=a.indexOf(t);if(i>-1){a.splice(i,1);S.bookAffirmations=a;save();}affIdx.am=null;affIdx.pm=null;affRender();}catch(e){}
+}
+function affToggleAdd(b){var box=b.closest('.aff').querySelector('.aff-add');box.style.display=box.style.display==='flex'?'none':'flex';if(box.style.display==='flex')box.querySelector('input').focus();}
+function affSave(b,set){
+  var box=b.closest('.aff-add'),i=box.querySelector('input'),t=i.value.trim();if(!t)return;
+  if(!S.bookAffirmations)S.bookAffirmations=[];
+  S.bookAffirmations.push(t);save();
+  affIdx.am=null;affIdx.pm=null;affIdx[set]=S.bookAffirmations.length-1;
+  affRender();
+}
+(function(){var g=goTo;goTo=function(id){g(id);affRender();};affRender();})();
+
+// ---- haptics ----
+function hap(kind){try{var h=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Haptics;if(!h)return;if(kind==='success')h.notification({type:'SUCCESS'});else if(kind==='heavy')h.impact({style:'HEAVY'});else h.impact({style:'LIGHT'});}catch(e){}}
+document.addEventListener('click',function(e){if(e.target.closest('button,.rule-row,.rs,.chip,.nb'))hap('light');},true);
+(function(){
+  var wrap=function(name,kind){var f=window[name];if(typeof f!=='function')return;window[name]=function(){hap(kind);return f.apply(this,arguments);};};
+  wrap('finishCatch','success');wrap('donePlan','success');wrap('affSaid','success');wrap('startPlan','heavy');wrap('closeDay','success');
+})();
+
+// ---- today strip ----
+function renderStrip(){
+  var el=document.getElementById('todayStrip');if(!el)return;
+  var mDone=!!(S.todayWord&&S.todayWord.trim());
+  var ma=S.mirrorAnswers||{};var rDone=Object.keys(ma).some(function(k){return ma[k]&&(ma[k].text||ma[k]).toString().trim();})||!!(S.mirrorNote&&S.mirrorNote.trim());
+  el.innerHTML='<div class="chip'+(mDone?' ok':'')+'" onclick="goTo(\'s-morning\')"><i></i>Morning</div><div class="chip'+(rDone?' ok':'')+'" onclick="goTo(\'s-mirror\')"><i></i>Mirror</div>';
+}
+
+// ---- persistent task timer ----
+function tpTick(){
+  var t=S.todayTask,pill=document.getElementById('taskPill');if(!pill)return;
+  var on=!!(t&&t.startedAt&&!t.doneAt&&curScreen!=='s-boot');
+  document.body.classList.toggle('has-pill',on);
+  if(!on)return;
+  var dl=planDeadline(t.by,t.startedAt),left=dl-Date.now();
+  document.getElementById('tpBy').textContent=t.by;
+  document.getElementById('tpText').textContent=t.text;
+  var late=left<0;pill.classList.toggle('late',late);
+  var sec=Math.abs(Math.round(left/1000));
+  document.getElementById('tpTime').textContent=(late?'+':'')+fmtHMS(sec);
+  var total=Math.max(1,dl-t.startedAt);var frac=Math.min(1,Math.max(0,(Date.now()-t.startedAt)/total));
+  document.getElementById('tpFill').style.width=(frac*100)+'%';
+}
+setInterval(tpTick,1000);
+
+function liveNative(){try{return window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform();}catch(e){return false;}}
+function liveDiag(m){try{var d=document.getElementById('tpLive');if(d)d.textContent='live: '+m;}catch(e){}}
+function liveCall(m,o){var C=window.Capacitor;if(C&&C.Plugins&&C.Plugins.LadderLive)return C.Plugins.LadderLive[m](o||{});if(C&&typeof C.nativePromise==='function')return C.nativePromise('LadderLive',m,o||{});return Promise.reject(new Error('no bridge'));}
+function liveRaw(title,startMs,deadlineMs){if(!liveNative())return;try{var done=false;setTimeout(function(){if(!done)liveDiag('start: no answer after 5s');},5000);liveCall('start',{title:title,start:startMs,deadline:deadlineMs}).then(function(r){done=true;liveDiag(r&&r.ok?('Live ON n='+r.count):'Live: '+(r&&r.reason||JSON.stringify(r)));}).catch(function(e){done=true;liveDiag('start error: '+(e&&e.message||JSON.stringify(e)));});}catch(e){liveDiag('Live crash: '+e);}}
+function liveStart(){try{var t=S.todayTask;if(!t||!t.startedAt){liveDiag('no running task');return;}liveRaw(t.text,t.startedAt,planDeadline(t.by,t.startedAt));}catch(e){liveDiag('Live crash: '+e);}}
+function liveEnd(){if(!liveNative())return;try{liveCall('end').catch(function(){});}catch(e){}}
+async function planNotify(on){
+  var ln=lnPlugin();if(!ln)return;
+  try{
+    await ln.cancel({notifications:[{id:3},{id:4}]});
+    if(!on||!S.todayTask)return;
+    var p=await ln.checkPermissions();if(p.display!=='granted'){p=await ln.requestPermissions();if(p.display!=='granted')return;}
+    var dl=planDeadline(S.todayTask.by,S.todayTask.startedAt),n=[];
+    if(dl-Date.now()>10*60000)n.push({id:4,title:'10 minutes left',body:S.todayTask.text,schedule:{at:new Date(dl-10*60000),allowWhileIdle:true}});
+    if(dl>Date.now())n.push({id:3,title:'Time.',body:S.todayTask.text+'. Done or not?',schedule:{at:new Date(dl),allowWhileIdle:true}});
+    if(n.length)await ln.schedule({notifications:n});
+  }catch(e){}
+}
+(function(){
+  var sp=window.startPlan,dp=window.donePlan,ep=window.editPlan;
+  window.startPlan=function(){sp.apply(this,arguments);if(S.todayTask&&S.todayTask.startedAt){planNotify(true);liveStart();}tpTick();};
+  window.donePlan=function(){dp.apply(this,arguments);planNotify(false);liveEnd();tpTick();};
+  window.editPlan=function(){ep.apply(this,arguments);planNotify(false);liveEnd();tpTick();};
+})();
+
+// ---- open on what is due ----
+(function(){
+  var g=goTo;goTo=function(id){g(id);renderStrip();tpTick();};
+  var ea=enterApp;
+  enterApp=function(){ea.apply(this,arguments);if(new Date().getHours()>=20&&curScreen==='s-morning'){goTo('s-mirror');}tpTick();};
+})();
+
+// ---- deadline picker (selects work on every phone) ----
+function byFromSel(){var h=document.getElementById('tbH').value,m=document.getElementById('tbM').value;document.getElementById('todayBy').value=(h!==''&&m!=='')?h+':'+m:'';}
+function bySyncSel(){var v=document.getElementById('todayBy').value||'';var p=v.split(':');var H=document.getElementById('tbH'),M=document.getElementById('tbM');if(!H||!M)return;H.value=p[0]||'';M.value=p[1]||'';}
+function byIn(min){var d=new Date(Date.now()+min*60000);var h=('0'+d.getHours()).slice(-2),m=('0'+d.getMinutes()).slice(-2);document.getElementById('todayBy').value=h+':'+m;bySyncSel();}
+(function(){var rp=window.renderPlan;window.renderPlan=function(){rp.apply(this,arguments);bySyncSel();};})();
+
+// re-create the live activity when the app opens with a running task
+setTimeout(function(){try{var t=S.todayTask;liveDiag('boot check task='+(t&&t.startedAt?'running':'none'));if(t&&t.startedAt&&!t.doneAt)liveStart();}catch(e){liveDiag('boot err '+e);}},2500);
+
+// ── Live Activity for goal timers ──
+(function(){
+  var _tgt=toggleGoalTimer, _rgt=resetGoalTimer;
+  toggleGoalTimer=function(id){
+    _tgt(id);
+    try{
+      var t=loadGoalTimer(id), f=findAction(id);
+      if(t.running&&f&&f.action.minutes){
+        var el=timerElapsedSec(t), rem=f.action.minutes*60-el;
+        if(rem>0) liveRaw(f.action.text, Date.now()-el*1000, Date.now()+rem*1000); else liveEnd();
+      } else liveEnd();
+    }catch(e){}
+  };
+  resetGoalTimer=function(id,btn){ _rgt(id,btn); try{ if(!loadGoalTimer(id).running) liveEnd(); }catch(e){} };
+  setTimeout(function(){
+    try{
+      var t=S.todayTask; if(t&&t.startedAt&&!t.doneAt) return;
+      loadGoals().forEach(function(g){(g.actions||[]).forEach(function(a){
+        if(a.type!=='timer'||!a.minutes) return;
+        var gt=loadGoalTimer(a.id); if(!gt.running) return;
+        var el=timerElapsedSec(gt), rem=a.minutes*60-el;
+        if(rem>0) liveRaw(a.text, Date.now()-el*1000, Date.now()+rem*1000);
+      });});
+    }catch(e){}
+  },3200);
+})();
+
+// ── One time goal update (adjusted to today's dates) ──
+(function(){
+  var FLAG='ladder_seed_goals_v2';
+  function seed(){
+    try{
+      if(localStorage.getItem(FLAG)) return;
+      var seeds=[
+       {match:function(g){var x=((g.name||'')+' '+(g.outcome||'')).toLowerCase();return /10\.?000|freedom|saldo|balance/.test(x);},
+        name:'Freedom of action',outcome:'€10.000 balance by 16 feb 2027',deadline:'16 feb 2027',
+        actions:[{text:'Outreach to strangers: calling, emailing, LinkedIn, TikTok',type:'timer',minutes:60},{text:'Book and site: get Relentless and LADDER sold',type:'timer',minutes:180}],
+        adjust:'If a milestone date passes without a result, change the approach on the next Sunday. Never move the deadline.',
+        milestones:[['First copy of Relentless sold','15 nov 2026'],['First paying LADDER user','1 dec 2026'],['First paid freelance project','15 dec 2026'],['€5.000 in the bank','15 jan 2027']],
+        checkin:['Saldo','Sales','Users']},
+       {match:function(g){var x=((g.name||'')+' '+(g.outcome||'')).toLowerCase();return /\bkg\b|body|weight|gewicht/.test(x);},
+        name:'Build the body',outcome:'85 kg by 31 dec 2026',deadline:'31 dec 2026',
+        actions:[{text:'Weigh in and log it',type:'check',minutes:0},{text:'Boxing or cardio',type:'timer',minutes:45},{text:'High protein, under 2000 kcal, no snacks after 20:00',type:'check',minutes:0}],
+        adjust:'If the weight does not move for two weeks while the actions are done, cut calories 200 and add one extra session.',
+        milestones:[['88 kg','20 nov 2026'],['86 kg','10 dec 2026']],
+        checkin:['Energy','Explosiveness','Sessions']},
+       {match:function(g){var x=((g.name||'')+' '+(g.outcome||'')).toLowerCase();return /afstudeer|internship|thesis|stage/.test(x);},
+        name:'Graduation internship',outcome:'Stage or afstudeeropdracht confirmed by 15 nov 2026. If not, stage in February, thesis afterwards.',deadline:'15 nov 2026',
+        actions:[{text:'5 organizations called or emailed',type:'check',minutes:0}],
+        adjust:'If the actions are on track for two weeks but the outcome does not move, change the action: call instead of mail, or try another sector.',
+        milestones:[['3 kennismakingsgesprekken planned','10 nov 2026'],['Stage or thesis confirmed','15 nov 2026']],
+        checkin:['Responses','Meetings planned']}
+      ];
+      var goals=loadGoals(), changed=[];
+      seeds.forEach(function(sd,i){
+        var g=goals.filter(sd.match)[0];
+        var ms=sd.milestones.map(function(m){return {text:m[0],date:m[1],done:false};});
+        if(g){
+          var old=g.milestones||[];
+          ms.forEach(function(m){old.forEach(function(o){if(o.done&&(o.text||'').toLowerCase()===m.text.toLowerCase())m.done=true;});});
+          g.outcome=sd.outcome; g.deadline=sd.deadline; g.milestones=ms;
+          if(!g.actions||!g.actions.length) g.actions=sd.actions.map(function(a,j){return {id:'a_'+Date.now()+'_'+i+j,text:a.text,type:a.type,minutes:a.minutes};});
+          if(!g.adjust) g.adjust=sd.adjust;
+          if(!g.checkinFields||!g.checkinFields.length) g.checkinFields=sd.checkin;
+        } else {
+          goals.push({id:'g_'+Date.now()+'_'+i,name:sd.name,outcome:sd.outcome,deadline:sd.deadline,
+            actions:sd.actions.map(function(a,j){return {id:'a_'+Date.now()+'_'+i+j,text:a.text,type:a.type,minutes:a.minutes};}),
+            adjust:sd.adjust,milestones:ms,checkinFields:sd.checkin});
+        }
+      });
+      saveGoals(goals);
+      localStorage.setItem(FLAG,'1');
+      try{buildGoalsList();}catch(e){}
+      try{liveDiag('goals updated');}catch(e){}
+    }catch(e){}
+  }
+  setTimeout(seed,1200);
+})();
+
+// ---- tutorial ----
+var TOUR=[
+ {ic:'s-ladder',k:'Welcome',h:'Do what you <em>said</em> you would do.',p:'LADDER is one daily loop: <b>morning, work, evening</b>. It takes a minute to learn. Tap Next.'},
+ {ic:'s-morning',k:'1. Morning',h:'Start the <em>day</em> here.',p:'Say your line out loud and <b>tap I said it</b>. Write what you will not give in to. Set <b>one task with a deadline</b> and press start: the countdown follows you on your lock screen.'},
+ {ic:'s-goals',k:'2. Goals',h:'Where you are <em>going.</em>',p:'Each goal has an outcome with a date and <b>daily actions</b>. Actions with a time have a <b>timer</b>. Start it and it counts down outside the app too. Check in every Sunday.'},
+ {ic:'s-wiring',k:'3. Wiring',h:'Sit with <em>nothing.</em>',p:'Pick 3, 5 or 10 minutes and do nothing. No phone, no music. Your <b>unbreakable rules</b> and km debt live here as well. Break a rule, add km. Pay it back.'},
+ {ic:'fab',k:'Anytime',h:'The <em>I feel it</em> button.',p:'When you want to quit, scroll or chase the result, tap <b>I FEEL IT</b> at the bottom right. It walks you through the urge in under a minute. On the Goals screen, the <b>Art of detachment</b> chip does the same for outcome stress.'},
+ {ic:'s-mirror',k:'4. Mirror',h:'Close the <em>day.</em>',p:'Every evening: read a line, answer the questions <b>honestly</b>, write one thing today taught you. Close the day to keep your streak.'},
+ {ic:'s-ladder',k:'5. Ladder',h:'Your <em>score.</em>',p:'Streak, wins and km debt. The app lives on your phone only, so <b>back up</b> once a week with the Back up button. You can replay this tour from here.'}
+];
+var tourI=0;
+function tourIcon(k){
+  if(k==='fab')return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg>';
+  var n=document.querySelector('.nb[data-s="'+k+'"] .ni svg');return n?n.outerHTML:'';
+}
+function tourRender(){
+  var t=TOUR[tourI];
+  document.getElementById('tBody').innerHTML='<div class="t-ico">'+tourIcon(t.ic)+'</div><div class="t-k">'+t.k+'</div><div class="t-h">'+t.h+'</div><div class="t-p">'+t.p+'</div>';
+  document.getElementById('tDots').innerHTML=TOUR.map(function(_,i){return '<i class="'+(i===tourI?'on':'')+'"></i>';}).join('');
+  document.getElementById('tNext').textContent=tourI===TOUR.length-1?"Let's go":'Next';
+}
+function openTour(){tourI=0;tourRender();document.getElementById('tour').classList.add('open');}
+function closeTour(){document.getElementById('tour').classList.remove('open');try{localStorage.setItem('ladder_tour_v2','1');}catch(e){}try{hap('light');}catch(e){}}
+function tourNext(){if(tourI>=TOUR.length-1){closeTour();return;}tourI++;tourRender();try{hap('light');}catch(e){}}
+(function(){var ea=enterApp;enterApp=function(){ea.apply(this,arguments);try{if(!localStorage.getItem('ladder_tour_v2'))setTimeout(openTour,600);}catch(e){}};})();
+
+// ---- live coach tour ----
+function coachFindRules(){var l=[].slice.call(document.querySelectorAll('#s-wiring .lbl')).filter(function(e){return /unbreakable/i.test(e.textContent);});return l[0]||null;}
+var COACH=[
+ {screen:'s-morning',k:'Welcome',h:'Do what you <em>said</em> you would do.',p:'LADDER is one daily loop: <b>morning, work, evening</b>. I will show you around on the real screens. Use the bar at the bottom to move between them.'},
+ {screen:'s-morning',sel:'.aff[data-set="am"]',k:'Morning',h:'Say it <em>out loud.</em>',p:'Read the line out loud, then tap <b>I said it</b>. Three a day. Tap <b>Another line</b> or write your own.'},
+ {screen:'s-morning',sel:'#refuseToday',k:'Morning',h:'What will you <em>not</em> give in to?',p:'Write it before the day tests you. Naming it makes it easier to hold.'},
+ {screen:'s-morning',sel:'#planForm',k:'Morning',h:'One task. One <em>deadline.</em>',p:'Pick the first task and when it must be done, then press start. The countdown follows you on your <b>lock screen</b> and in the Dynamic Island.'},
+ {screen:'s-goals',sel:'#goalsList',k:'Goals',h:'Where you are <em>going.</em>',p:'Each goal has an outcome with a date and daily actions. Actions with a time have a <b>timer</b>. Start one and it also counts down outside the app. Check in every Sunday.'},
+ {screen:'s-goals',sel:'.chip-det',k:'Goals',h:'The art of <em>detachment.</em>',p:'You cannot control the result: the sale, the reply, the number on the scale. You can only control the work. When you catch yourself stressing about the result, tap this. It sends you back to the work.'},
+ {screen:'s-goals',sel:'#catchFab',k:'Anytime',h:'The <em>I feel it</em> button.',p:'When you want to quit, scroll or give in, tap it. This button walks you through the moment in under a minute.'},
+ {screen:'s-wiring',sel:'#wiringStartBtn',k:'Wiring',h:'Sit with <em>nothing.</em>',p:'Pick 3, 5 or 10 minutes. No phone, no music. This trains you to stay when you want to escape.'},
+ {screen:'s-wiring',sel:coachFindRules,k:'Wiring',h:'Unbreakable <em>rules.</em>',p:'Your own rules. Tap a rule to mark it held or broken. Break one and its km get added to your debt. Pay it back with the km buttons.'},
+ {screen:'s-mirror',sel:'#mFlow',k:'Mirror',h:'Close the <em>day.</em>',p:'One card at a time: read a line, answer honestly, see what you did, write what today taught you, then close the day. Tap <b>+ lesson</b> anytime to keep something you learned.'},
+ {screen:'s-ladder',sel:'.srow',k:'Ladder',h:'Your <em>score.</em>',p:'Day streak, total wins and km debt. This is the truth about how you are doing.'},
+ {screen:'s-ladder',sel:'button[onclick="exportData()"]',k:'Ladder',h:'<em>Back up</em> weekly.',p:'Your data lives on this phone only. Tap Back up once a week and keep the file safe. The <b>?</b> button on any screen replays this help.'}
+];
+var coachSteps=[],coachI=0,coachFlag=false;
+function coachEl(st){try{var s=st.sel;if(!s)return null;var e=typeof s==='function'?s():document.querySelector(s);if(!e)return null;var r=e.getBoundingClientRect();return (r.width>0&&r.height>0)?e:null;}catch(e){return null;}}
+function startCoach(screen){
+  coachSteps=screen?COACH.filter(function(c){return c.screen===screen&&c.sel;}):COACH.slice();
+  if(!coachSteps.length)coachSteps=COACH.slice();
+  coachI=0;coachFlag=!screen;document.getElementById('coach').classList.add('open');coachShow();
+}
+function coachShow(){
+  var st=coachSteps[coachI];if(!st){coachEnd();return;}
+  if(st.screen&&curScreen!==st.screen){try{goTo(st.screen);}catch(e){}}
+  var card=document.getElementById('coachCard'),hole=document.getElementById('coachHole');
+  card.style.visibility='hidden';
+  setTimeout(function(){
+    var el=coachEl(st);
+    if(el){
+      var scr=el.closest('.screen');
+      if(scr&&el.id!=='catchFab'){var er=el.getBoundingClientRect();var target=scr.scrollTop+er.top-120;scr.scrollTo({top:Math.max(0,target),behavior:'auto'});}
+    }
+    setTimeout(function(){coachPlace(st,coachEl(st));},120);
+  },520);
+}
+function coachPlace(st,el){
+  var card=document.getElementById('coachCard'),hole=document.getElementById('coachHole');
+  var last=coachI===coachSteps.length-1,vh=window.innerHeight,vw=window.innerWidth;
+  card.innerHTML='<div class="c-k">'+st.k+'</div><div class="c-h">'+st.h+'</div><div class="c-p">'+st.p+'</div>'
+   +'<div class="c-row"><span class="c-n">'+(coachI+1)+' / '+coachSteps.length+'</span>'+(last?'':'<button class="c-skip" onclick="coachEnd()">Skip</button>')+(coachI>0?'<button class="c-back" onclick="coachGo(-1)">Back</button>':'')+'<button class="c-next" onclick="coachGo(1)">'+(last?'Done':'Next')+'</button></div>';
+  card.className='';card.style.top='';card.style.bottom='';
+  if(!el){hole.className='none';hole.style.cssText='left:50%;top:50%;width:0;height:0;';card.className='center';card.style.visibility='visible';return;}
+  var r=el.getBoundingClientRect(),pad=8,h=Math.min(r.height,230);
+  hole.className='';
+  hole.style.left=(r.left-pad)+'px';hole.style.top=(r.top-pad)+'px';hole.style.width=(r.width+pad*2)+'px';hole.style.height=(h+pad*2)+'px';
+  var mid=r.top+h/2;
+  if(mid<vh*0.5){card.style.top=Math.min(vh-230,r.top+h+pad+14)+'px';}
+  else{card.style.bottom=Math.min(vh-120,vh-r.top+pad+14)+'px';}
+  card.style.visibility='visible';
+}
+function coachGo(d){coachI+=d;if(coachI<0)coachI=0;if(coachI>=coachSteps.length){coachEnd();return;}try{hap('light');}catch(e){}coachShow();}
+function coachEnd(){document.getElementById('coach').classList.remove('open');try{localStorage.setItem('ladder_tour_v2','1');}catch(e){}try{goTo('s-morning');}catch(e){}try{hap('success');}catch(e){}}
+openTour=function(){startCoach(null);};
+(function(){var ea=enterApp;enterApp=function(){ea.apply(this,arguments);try{document.getElementById('helpBtn').style.display='flex';}catch(e){}};})();
+(function(){var g=goTo;goTo=function(id){g(id);try{var nav=document.getElementById('nav');document.getElementById('helpBtn').style.display=(nav&&!nav.classList.contains('hidden'))?'flex':'none';}catch(e){}};})();
+
+
+// ---- mirror flow v2 ----
+var mSteps=[],mI=0,mReopened=false;
+function mBuildSteps(){
+  mSteps=[];
+  [].slice.call(document.querySelectorAll('#mirrorQuestions .mq-block')).forEach(function(b){mSteps.push(b);});
+  mSteps.push(document.getElementById('mStepSum'),document.getElementById('mStepOne'),document.getElementById('mStepNight'));
+}
+function mFlowInit(){
+  if(S.todayClosed&&!mReopened){mShowDone();return;}
+  document.getElementById('mDone').classList.remove('open');
+  mBuildSteps();mI=0;mRender();
+}
+function mRender(){
+  mSteps.forEach(function(e,i){e.style.display=i===mI?'block':'none';});
+  var d='';for(var i=0;i<mSteps.length;i++)d+='<i class="'+(i<mI?'on':(i===mI?'cur':''))+'"></i>';
+  document.getElementById('mDots').innerHTML=d;
+  var last=mI===mSteps.length-1;
+  document.getElementById('mBack').style.display=mI>0?'':'none';
+  document.getElementById('mNext').style.display=last?'none':'';
+  if(mSteps[mI]&&mSteps[mI].id==='mStepSum')mBuildSummary();
+  if(mSteps[mI]&&mSteps[mI].id==='mStepNight')try{affRender();}catch(e){}
+  var sc=document.getElementById('s-mirror');if(sc)sc.scrollTop=0;
+}
+function mFlowGo(d){
+  var n=mI+d;if(n<0||n>=mSteps.length)return;
+  mI=n;mRender();try{hap('light');}catch(e){}
+}
+function mFmtDur(sec){var h=Math.floor(sec/3600),m=Math.round((sec%3600)/60);return h>0?(h+'h '+(m<10?'0':'')+m+'m'):(m+'m');}
+function mBuildSummary(){
+  var rows=[];
+  try{
+    var a=affToday().length;if(a>0)rows.push([a,a===1?'line said out loud':'lines said out loud']);
+    var sec=0,done=0,total=0;
+    loadGoals().forEach(function(g){(g.actions||[]).forEach(function(ac){total++;if(isActionDone(ac))done++;if(ac.type==='timer'&&ac.minutes){sec+=timerElapsedSec(loadGoalTimer(ac.id));}});});
+    if(sec>=60)rows.push([mFmtDur(sec),'of focused work on your timers']);
+    if(done>0)rows.push([done+'/'+total,'goal actions done']);
+    var t=S.todayTask;if(t&&t.doneAt)rows.push(['✓','finished: '+esc(t.text)]);
+    var md=Object.keys(S.morning||{}).filter(function(k){return S.morning[k];}).length;
+    if(md>0)rows.push([md+'/'+MS.length,'morning steps done']);
+    var R=loadRules(),held=R.filter(function(r){return S.rules&&S.rules[r.id]===true;}).length,broke=R.filter(function(r){return S.rules&&S.rules[r.id]===false;}).length;
+    if(held>0)rows.push([held,held===1?'rule held':'rules held']);
+    if(broke>0)rows.push([broke,broke===1?'rule broken. Pay it back and move on.':'rules broken. Pay them back and move on.']);
+  }catch(e){}
+  var el=document.getElementById('mSummary');
+  el.innerHTML=rows.length?rows.map(function(r){return '<div class="sum-row"><div class="sum-n">'+r[0]+'</div><div class="sum-l">'+r[1]+'</div></div>';}).join(''):'<div class="sum-note">A quiet day. That is fine. Tomorrow you start again, same standard.</div>';
+}
+function mShowDone(){
+  try{
+    document.getElementById('mdNum').textContent=document.getElementById('stStreak')?calcStreak():'';
+    var log=loadWebLog().filter(function(e){return !e.deleted&&e.date===TODAY;});
+    document.getElementById('mdLine').textContent=log.length?('“'+log[log.length-1].text+'”'):'';
+  }catch(e){}
+  document.getElementById('mDone').classList.add('open');
+}
+function mReopen(){mReopened=true;document.getElementById('mDone').classList.remove('open');mFlowInit();}
+closeDay=function(){markToday(true);mReopened=false;try{hap('success');}catch(e){}mShowDone();};
+(function(){var g=goTo;goTo=function(id){g(id);if(id==='s-mirror'){mFlowInit();}else{try{document.getElementById('mDone').classList.remove('open');closeLookBack();}catch(e){}}};})();
+
+function openLesson(){document.getElementById('lessonInput').value='';document.getElementById('lessonModal').classList.add('open');setTimeout(function(){document.getElementById('lessonInput').focus();},60);}
+function closeLesson(){document.getElementById('lessonModal').classList.remove('open');}
+async function saveLesson(){
+  var v=document.getElementById('lessonInput').value.trim();if(!v){document.getElementById('lessonInput').focus();return;}
+  closeLesson();
+  var oi=document.getElementById('oneLineInput');oi.value=v;
+  try{await submitWebEntry();}catch(e){}
+}
+function openLookBack(){
+  if(curScreen!=='s-mirror')goTo('s-mirror');
+  var done=document.getElementById('mDone');if(done)done.classList.remove('open');
+  document.getElementById('lookBack').classList.add('open');try{document.getElementById('helpBtn').style.display='none';}catch(e){}
+  setTimeout(function(){try{renderWebStatic();}catch(e){}},80);
+}
+function closeLookBack(){var l=document.getElementById('lookBack');if(l)l.classList.remove('open');try{var nv=document.getElementById('nav');if(nv&&!nv.classList.contains('hidden'))document.getElementById('helpBtn').style.display='flex';}catch(e){}if(curScreen==='s-mirror'&&S.todayClosed&&!mReopened)mShowDone();}
+
+// ---- lift overlays to body so they sit above the nav ----
+(function(){['webReveal','facetDetail','lookBack','lessonModal'].forEach(function(id){var e=document.getElementById(id);if(e&&e.parentNode!==document.body)document.body.appendChild(e);});})();
+
+// ---- type pass: reading text in Plex Sans, mono kept for tiny uppercase labels ----
+(function(){
+  var busy=false,timer=null;
+  function pass(){
+    if(busy)return;busy=true;
+    try{
+      var els=document.querySelectorAll('body *');
+      for(var i=0;i<els.length;i++){
+        var e=els[i];
+        if(e.dataset&&e.dataset.tf==='1')continue;
+        var tag=e.tagName;if(tag==='SCRIPT'||tag==='STYLE'||tag==='SVG'||tag==='PATH'||tag==='CANVAS')continue;
+        if(!e.childNodes.length)continue;
+        var hasText=false;for(var k=0;k<e.childNodes.length;k++){if(e.childNodes[k].nodeType===3&&e.childNodes[k].nodeValue.trim()){hasText=true;break;}}
+        if(!hasText&&tag!=='INPUT'&&tag!=='TEXTAREA')continue;
+        var cs=getComputedStyle(e);
+        if(cs.fontFamily.indexOf('Plex Mono')<0){e.dataset.tf='1';continue;}
+        var fs=parseFloat(cs.fontSize);
+        var txt='';for(var q=0;q<e.childNodes.length;q++){if(e.childNodes[q].nodeType===3)txt+=e.childNodes[q].nodeValue;}
+        txt=txt.trim();
+        var mixed=(txt!==txt.toUpperCase());
+        if(tag==='INPUT'||tag==='TEXTAREA')mixed=true;
+        if(cs.textTransform!=='uppercase'&&mixed&&fs>=9){
+          e.style.setProperty('font-family',"'IBM Plex Sans',sans-serif",'important');
+          if(fs<14.5)e.style.setProperty('font-size','0.92rem','important');
+          e.style.setProperty('letter-spacing','0','important');
+        }
+        e.dataset.tf='1';
+      }
+    }catch(err){}
+    busy=false;
+  }
+  function sched(){clearTimeout(timer);timer=setTimeout(pass,250);}
+  document.addEventListener('DOMContentLoaded',sched);
+  setTimeout(pass,600);
+  try{new MutationObserver(sched).observe(document.body,{childList:true,subtree:true});}catch(e){}
+})();
+// ===== v36: timer alerts, backup nudge, weekly review, affirmation streak, first use hints =====
+(function(){
+  function hid(s){var h=0;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%700;return 100+h;}
+  // 1. goal timer notification + in-app haptic
+  async function gtNotify(id){
+    var ln=lnPlugin();if(!ln)return;
+    try{
+      var nid=hid(id);
+      await ln.cancel({notifications:[{id:nid}]});
+      var t=loadGoalTimer(id),f=findAction(id);
+      if(!t.running||!f||!f.action.minutes)return;
+      var rem=f.action.minutes*60-timerElapsedSec(t);
+      if(rem<=0)return;
+      var p=await ln.checkPermissions();if(p.display!=='granted'){p=await ln.requestPermissions();if(p.display!=='granted')return;}
+      await ln.schedule({notifications:[{id:nid,title:'Time.',body:f.action.text+'. Done. Check it off.',schedule:{at:new Date(Date.now()+rem*1000),allowWhileIdle:true}}]});
+    }catch(e){}
+  }
+  var _t=toggleGoalTimer,_r=resetGoalTimer;
+  toggleGoalTimer=function(id){_t(id);gtNotify(id);};
+  resetGoalTimer=function(id,btn){_r(id,btn);gtNotify(id);};
+  setTimeout(function(){try{loadGoals().forEach(function(g){(g.actions||[]).forEach(function(a){if(a.type==='timer')gtNotify(a.id);});});}catch(e){}},3600);
+  var fired={};
+  setInterval(function(){
+    try{
+      var k=TODAY;
+      loadGoals().forEach(function(g){(g.actions||[]).forEach(function(a){
+        if(a.type!=='timer'||!a.minutes)return;
+        var t=loadGoalTimer(a.id);if(!t.running)return;
+        var key=k+a.id;if(fired[key])return;
+        if(timerElapsedSec(t)>=a.minutes*60){fired[key]=1;hap('success');setTimeout(function(){hap('heavy');},350);setTimeout(function(){hap('success');},700);}
+      });});
+      var tk=S.todayTask;
+      if(tk&&tk.startedAt&&!tk.doneAt){
+        var key2=k+'task'+tk.startedAt;
+        if(!fired[key2]&&Date.now()>=planDeadline(tk.by,tk.startedAt)){fired[key2]=1;hap('heavy');setTimeout(function(){hap('success');},350);setTimeout(function(){hap('heavy');},700);}
+      }
+    }catch(e){}
+  },1000);
+
+  // 2. backup nudge
+  var bb=document.createElement('div');bb.id='backupNudge';
+  bb.innerHTML='<div class="bn-t">Back up your data</div><div class="bn-s" id="bnS"></div><div class="bn-r"><button class="bn-go" onclick="bnGo()">Back up now</button><button class="bn-no" onclick="bnLater()">Later</button></div>';
+  document.body.appendChild(bb);
+  window.bnGo=function(){try{exportData();}catch(e){}bb.classList.remove('on');};
+  window.bnLater=function(){try{localStorage.setItem('ladder_bn_later',TODAY);}catch(e){}bb.classList.remove('on');};
+  function bnCheck(){
+    try{
+      if(curScreen==='s-boot'||document.getElementById('s-boot').classList.contains('active'))return bb.classList.remove('on');
+      if(!localStorage.getItem('ladder_first_seen'))localStorage.setItem('ladder_first_seen',String(Date.now()));
+      if(localStorage.getItem('ladder_bn_later')===TODAY)return bb.classList.remove('on');
+      var lb=parseInt(localStorage.getItem('ladder_lastbackup')||'0',10),fs=parseInt(localStorage.getItem('ladder_first_seen'),10);
+      var age=lb?(Date.now()-lb)/86400000:null,since=(Date.now()-fs)/86400000;
+      var show=false,msg='';
+      if(age!==null&&age>=5){show=true;msg='Last backup '+Math.floor(age)+' days ago. The install expires after 7 days.';}
+      else if(age===null&&since>=3){show=true;msg='No backup yet. The install expires after 7 days. Save one now.';}
+      document.getElementById('bnS').textContent=msg;
+      bb.classList.toggle('on',show);
+    }catch(e){}
+  }
+  window.bnCheck=bnCheck;
+  setInterval(bnCheck,5000);setTimeout(bnCheck,1500);
+  // schedule the expiry reminder from first backup/boot even when no backup was ever made
+  setTimeout(function(){try{if(!localStorage.getItem('ladder_lastbackup'))return;var lb=parseInt(localStorage.getItem('ladder_lastbackup'),10);if(Date.now()-lb<6*86400000)return;scheduleExpiry();}catch(e){}},4000);
+
+  // 4. affirmation streak
+  function affStreak(){
+    var l=affLogGet(),d=new Date(),n=0;
+    if((l[d.toDateString()]||[]).length<AFF_GOAL)d.setDate(d.getDate()-1);
+    while((l[d.toDateString()]||[]).length>=AFF_GOAL){n++;d.setDate(d.getDate()-1);}
+    return n;
+  }
+  window.affStreak=affStreak;
+  var _ar=affRender;
+  affRender=function(){
+    _ar();
+    try{var n=affStreak();if(n>0)document.querySelectorAll('.aff-cnt').forEach(function(e){if(e.textContent.indexOf('streak')<0)e.textContent+=' · '+n+' day streak';});}catch(e){}
+  };
+
+  // 3. weekly review on the Ladder screen
+  function monday(){var d=new Date();d.setHours(0,0,0,0);var w=(d.getDay()+6)%7;d.setDate(d.getDate()-w);return d;}
+  window.weekNoteSave=function(v){try{localStorage.setItem('ladder_week_'+monday().toDateString(),v);}catch(e){}};
+  function weekRender(){
+    var host=document.querySelector('#s-ladder .pen-card');if(!host)return;
+    var lbl=host.previousElementSibling,div=lbl&&lbl.previousElementSibling;
+    var card=document.getElementById('weekCard');
+    if(!card){card=document.createElement('div');card.id='weekCard';div.parentNode.insertBefore(card,div);}
+    var m=monday(),hist=S.history||[],log=affLogGet(),days=['M','T','W','T','F','S','S'],dots='',wins=0,closed=0,aff=0,todayIdx=(new Date().getDay()+6)%7;
+    for(var i=0;i<7;i++){
+      var d=new Date(m);d.setDate(m.getDate()+i);var k=d.toDateString();
+      var h=hist.find(function(x){return x.date===k;});
+      var cls=h?(h.win?'w':'l'):(i>todayIdx?'f':'n');
+      if(h){closed++;if(h.win)wins++;}
+      aff+=(log[k]||[]).length;
+      dots+='<div class="wk-d '+cls+(i===todayIdx?' now':'')+'"><b>'+days[i]+'</b><i></i></div>';
+    }
+    var sunday=todayIdx===6;
+    var note=''; try{note=localStorage.getItem('ladder_week_'+m.toDateString())||'';}catch(e){}
+    card.innerHTML='<div class="lbl" style="margin-bottom:14px">'+(sunday?'Sunday review':'This week')+'</div>'
+      +'<div class="wk-card">'
+      +'<div class="wk-days">'+dots+'</div>'
+      +'<div class="wk-stats"><div><span>'+wins+'</span>wins</div><div><span>'+closed+'</span>days closed</div><div><span>'+aff+'</span>affirmations</div><div><span>'+(S.kmDebt||0)+'</span>km debt</div></div>'
+      +(sunday?'<div class="wk-q">One thing to change next week</div><input class="li wk-in" placeholder="Write it in one line" value="'+esc(note)+'" oninput="weekNoteSave(this.value)">':(note?'<div class="wk-q">Last note</div><div class="wk-note">'+esc(note)+'</div>':''))
+      +'</div><div class="sdiv"></div>';
+  }
+  window.weekRender=weekRender;
+  // 5. first use hints
+  var HINTS={
+    's-morning':['Your morning','Pick one task, set a deadline, start the clock. Finish it before the time runs out.'],
+    's-wiring':['Wiring','Choose 3, 5 or 10 minutes. Sit with nothing. No phone. Each session builds the picture.'],
+    's-goals':['Goals','Every goal has actions. Start the timer, do the work, check it off.'],
+    's-mirror':['Mirror','Close the day. Tap what fits, add words only if you want to. Then you are done.'],
+    's-ladder':['Ladder','Your streak, your wins and your debt. Skip a rule and the kilometers add up.']
+  };
+  function hintShow(id){
+    try{
+      document.querySelectorAll('.fhint').forEach(function(e){e.remove();});
+      var h=HINTS[id];if(!h)return;
+      if(!localStorage.getItem('ladder_tour_v2'))return;
+      if(localStorage.getItem('ladder_hint_'+id))return;
+      var inner=document.querySelector('#'+id+' .inner');if(!inner)return;
+      var el=document.createElement('div');el.className='fhint';
+      el.innerHTML='<div class="fh-t">'+h[0]+'</div><div class="fh-b">'+h[1]+'</div><button onclick="hintDone(\''+id+'\')">Got it</button>';
+      inner.insertBefore(el,inner.children[1]||null);
+    }catch(e){}
+  }
+  window.hintDone=function(id){try{localStorage.setItem('ladder_hint_'+id,'1');}catch(e){}document.querySelectorAll('.fhint').forEach(function(e){e.remove();});hap('light');};
+  var g=goTo;
+  goTo=function(id){g(id);if(id==='s-ladder')weekRender();setTimeout(function(){hintShow(id);bnCheck();},60);};
+  setTimeout(weekRender,800);
+})();
 </script>
 </body>
 </html>
