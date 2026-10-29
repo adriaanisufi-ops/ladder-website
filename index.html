@@ -546,6 +546,13 @@ body.on-morning #taskPill{display:none!important}
 .ovl .ov-go{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:.06em;background:var(--lime);color:#000;border:0;border-radius:18px;padding:16px;width:100%}
 .ovl .ov-skip{margin-top:14px;background:none;border:0;color:#8a8a8a;font-family:'IBM Plex Sans',sans-serif;font-size:.9rem;text-decoration:underline;align-self:center}
 .ovl .ov-msg{font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:#ff6b6b;min-height:18px;margin:-10px 0 10px}
+/* v39 */
+#tpLive{display:none!important}
+body.on-morning #catchFab{bottom:calc(92px + var(--sab))}
+#wiringReveal{z-index:1005!important;padding:calc(var(--sat) + 10px) 0 calc(var(--sab) + 20px)}
+#wiringRevealCanvas{height:58vh!important}
+#wiringRevealMsg{font-family:'IBM Plex Sans',sans-serif!important;font-size:1.05rem!important;font-weight:300;color:rgba(244,240,232,.85)!important;line-height:1.45;margin-top:18px!important}
+#wiringRevealDone{width:calc(100% - 56px);max-width:360px;min-height:56px;margin-top:22px;border-radius:16px!important;background:var(--lime)!important;border:none!important;color:var(--black)!important;font-family:'Bebas Neue',sans-serif!important;font-size:1.6rem!important;letter-spacing:.06em!important}
 </style>
 </head>
 <body>
@@ -1313,7 +1320,7 @@ function buildWiringScene(container,revealCount){
 
   var scene=new THREE.Scene();
   var camera=new THREE.PerspectiveCamera(45,W/H,1,2000);
-  camera.position.z=280;
+  camera.position.z=370;
   var renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
   renderer.setSize(W,H); renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
   renderer.domElement.style.display='block';
@@ -4412,6 +4419,8 @@ function closeLookBack(){var l=document.getElementById('lookBack');if(l)l.classL
   setInterval(widgetSync,30000);setTimeout(widgetSync,3000);
   document.addEventListener('visibilitychange',function(){if(document.hidden)widgetSync();});
 })();
+
+(function(){var e=document.getElementById('wiringReveal');if(e&&e.parentNode!==document.body)document.body.appendChild(e);})();
 </script>
 </body>
 </html>
