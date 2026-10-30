@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/wachtlijst", "destination": "/wachtlijst.html" },
+    { "source": "/waitlist", "destination": "/wachtlijst.html" }
+  ]
+}

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>LADDER Waitlist</title>
+<meta name="description" content="LADDER is a daily discipline app. Join the waitlist and hear first when it is ready.">
+<meta name="theme-color" content="#0a0a0a">
+<meta property="og:title" content="LADDER Waitlist">
+<meta property="og:description" content="Do what you said you would do. Join the waitlist.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+/* Layout: one hard column. A five rung ladder (the real daily loop) fills with lime as the page loads, then the form. */
+:root{
+  --lime:#d4f000;
+  --bg:#0a0a0a;
+  --card:#141414;
+  --ink:#e8e8e8;
+  --dim:#9a9a9a;
+  --rule:#2a2a2a;
+  --display:'Bebas Neue','Arial Narrow',Impact,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:var(--sans);font-weight:300;font-size:1.05rem;line-height:1.6;
+  padding-block:calc(28px + env(safe-area-inset-top,0px)) calc(56px + env(safe-area-inset-bottom,0px));
+  padding-left:max(20px,env(safe-area-inset-left,0px));
+  padding-right:max(20px,env(safe-area-inset-right,0px));
+}
+main{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:44px}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
+.word{font-family:var(--display);font-size:1.7rem;letter-spacing:.06em;line-height:1}
+.word span{color:var(--lime)}
+.tag{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
+h1{
+  font-family:var(--display);font-weight:400;
+  font-size:clamp(3.6rem,17vw,7.6rem);line-height:.9;letter-spacing:.005em;
+  margin:0;text-transform:uppercase;text-wrap:balance;
+}
+h1 em{font-style:normal;color:var(--lime)}
+.lede{margin:0;max-width:44ch;color:var(--ink)}
+.lede b{font-weight:400;color:var(--lime)}
+
+.ladder{
+  list-style:none;margin:0;padding:0;
+  border-left:2px solid var(--ink);border-right:2px solid var(--ink);
+  display:flex;flex-direction:column-reverse;
+}
+.rung{
+  position:relative;display:grid;grid-template-columns:minmax(0,1fr);
+  padding:14px 18px;border-top:2px solid var(--ink);overflow:hidden;
+}
+.rung:first-child{border-bottom:2px solid var(--ink)}
+.rung::before{
+  content:"";position:absolute;inset:0;background:var(--lime);
+  transform-origin:left center;transform:scaleX(0);
+  animation:fill .5s cubic-bezier(.2,.7,.2,1) forwards;
+  animation-delay:calc(var(--i) * .22s + .2s);
+}
+.rung > *{position:relative}
+.rung .k{font-family:var(--mono);font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);transition:color .2s}
+.rung .h{font-family:var(--display);font-size:1.9rem;line-height:1;letter-spacing:.03em;color:var(--ink);text-transform:uppercase}
+.rung .p{font-size:.95rem;color:var(--ink);margin-top:2px;max-width:46ch}
+@keyframes fill{to{transform:scaleX(1)}}
+/* text flips to dark once its rung is lime */
+.rung .k,.rung .h,.rung .p{animation:flip .01s linear forwards;animation-delay:calc(var(--i) * .22s + .45s)}
+@keyframes flip{to{color:#0a0a0a}}
+
+form{display:flex;flex-direction:column;gap:12px}
+label{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+input[type=email]{
+  flex:1 1 250px;min-width:0;min-height:56px;
+  font:400 1rem var(--mono);color:var(--ink);background:var(--card);
+  border:2px solid var(--ink);border-radius:0;padding:0 16px;
+}
+input[type=email]::placeholder{color:var(--dim)}
+button{
+  min-height:56px;padding:0 28px;border:2px solid var(--lime);border-radius:0;
+  background:var(--lime);color:#0a0a0a;cursor:pointer;
+  font-family:var(--display);font-size:1.6rem;letter-spacing:.06em;text-transform:uppercase;
+}
+button:hover:not(:disabled){background:var(--ink);border-color:var(--ink)}
+button:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:3px solid var(--lime);outline-offset:3px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.status{min-height:1.6em;margin:0;font-family:var(--mono);font-size:.8rem}
+.status.ok{color:var(--lime)}
+.status.err{color:var(--ink)}
+.fine{margin:0;font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;color:var(--dim)}
+.fine a{color:var(--ink)}
+@media (prefers-reduced-motion:reduce){
+  .rung::before{animation:none;transform:scaleX(1)}
+  .rung .k,.rung .h,.rung .p{animation:none;color:#0a0a0a}
+}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div class="word">LAD<span>DER</span></div>
+    <div class="tag">Daily discipline app</div>
+  </div>
+
+  <h1>Do what you <em>said</em> you would do.</h1>
+
+  <p class="lede">One daily loop on your phone: <b>morning, work, evening</b>. No account. Your data stays on your device. The app is not out yet. Leave your email and you hear first.</p>
+
+  <ol class="ladder" aria-label="The daily loop">
+    <li class="rung" style="--i:0"><span class="k">Rung 1</span><span class="h">Morning</span><span class="p">Say your line. Write what you will not give in to. Start one task with a deadline.</span></li>
+    <li class="rung" style="--i:1"><span class="k">Rung 2</span><span class="h">Goals</span><span class="p">An outcome with a date and daily actions. Timers that keep counting down outside the app.</span></li>
+    <li class="rung" style="--i:2"><span class="k">Rung 3</span><span class="h">Wiring</span><span class="p">Sit with nothing for 3, 5 or 10 minutes. Break a rule and you owe kilometers.</span></li>
+    <li class="rung" style="--i:3"><span class="k">Rung 4</span><span class="h">Mirror</span><span class="p">Close the day honestly. One line about what today taught you.</span></li>
+    <li class="rung" style="--i:4"><span class="k">Rung 5</span><span class="h">Ladder</span><span class="p">Your streak, your wins and your km debt. The score does not lie.</span></li>
+  </ol>
+
+  <form id="join" novalidate>
+    <label for="email">Your email</label>
+    <div class="row">
+      <input id="email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@email.com" required>
+      <button id="go" type="submit">Join the waitlist</button>
+    </div>
+    <div class="hp" aria-hidden="true"><label for="website">Leave this empty</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+    <p class="fine">One email when the app is ready. Nothing else. See the <a href="/privacy.html">privacy page</a>.</p>
+  </form>
+</main>
+
+<script>
+(function(){
+  var form=document.getElementById('join');
+  var email=document.getElementById('email');
+  var hp=document.getElementById('website');
+  var go=document.getElementById('go');
+  var status=document.getElementById('status');
+
+  function say(msg,kind){status.textContent=msg;status.className='status'+(kind?' '+kind:'');}
+
+  form.addEventListener('submit',function(ev){
+    ev.preventDefault();
+    var value=email.value.trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)){
+      say('That email does not look right. Check it and try again.','err');
+      email.focus();
+      return;
+    }
+    go.disabled=true;
+    say('Saving...','');
+    fetch('/api/waitlist',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email:value,website:hp.value})
+    }).then(function(r){
+      return r.json().catch(function(){return {};}).then(function(j){return {ok:r.ok,body:j};});
+    }).then(function(res){
+      if(res.ok){
+        say('You are on the list. Do what you said you would do.','ok');
+        email.value='';
+      }else if(res.body&&res.body.error==='invalid_email'){
+        say('That email does not look right. Check it and try again.','err');
+      }else{
+        say('Could not save your email. Try again in a minute.','err');
+      }
+    }).catch(function(){
+      say('No connection. Try again.','err');
+    }).then(function(){go.disabled=false;});
+  });
+})();
+</script>
+</body>
+</html>
