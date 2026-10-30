@@ -4814,6 +4814,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     +'<div class="ov-msg" id="pwMsg"></div>'
     +'<button class="ov-go" id="pwBuy" onclick="pwBuy()">START 7 DAYS FREE</button>'
     +'<button class="ov-skip" onclick="pwRestore()">Restore purchases</button>'
+    +'<button class="ov-skip" id="pwClose" style="display:none" onclick="pwPreviewEnd()">Close preview</button>'
     +'<div class="pw-f"><a href="https://ladder-website-xi.vercel.app/privacy.html" target="_blank" rel="noopener">Privacy</a><a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener">Terms</a></div>';
   document.body.appendChild(pw);
   function msg(t){document.getElementById('pwMsg').textContent=t||'';}
@@ -4839,17 +4840,21 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     try{
       var started=!!localStorage.getItem('ladder_first_done');
       var show=enforce&&!entitled()&&started&&!document.getElementById('s-boot').classList.contains('active');
+      if(typeof previewing!=='undefined'&&previewing)return;
       pw.classList.toggle('on',show);
     }catch(e){}
   }
   window.paywallGate=gate;
+  var previewing=false;
+  window.pwPreview=function(){previewing=true;document.getElementById('pwClose').style.display='block';pw.classList.add('on');};
+  window.pwPreviewEnd=function(){previewing=false;document.getElementById('pwClose').style.display='none';pw.classList.remove('on');gate();};
 
   // subscription row on the Ladder screen
   function subRender(){
     var host=document.getElementById('backupAge');if(!host)return;
     var row=document.getElementById('subRow');
-    if(!enforce&&!rc()){if(row)row.remove();return;}
     if(!row){row=document.createElement('div');row.id='subRow';host.parentNode.insertBefore(row,host.nextSibling);}
+    if(!enforce&&!rc()){row.innerHTML='<span>Subscription: not active yet</span> <button onclick="pwPreview()">Preview paywall</button>';return;}
     row.innerHTML='<span>Subscription: '+(pro?(info||'Active'):(enforce?'Not active':'Off'))+'</span> <a href="itms-apps://apps.apple.com/account/subscriptions">Manage</a> <button onclick="pwRestore()">Restore</button>';
   }
   setInterval(gate,4000);
