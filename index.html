@@ -597,6 +597,19 @@ body.on-morning #catchFab{bottom:calc(92px + var(--sab))}
 .rt-hold span{position:relative;mix-blend-mode:difference;color:#d4f000}
 .ovl>*{flex-shrink:0}
 .rt-clock{font-family:'Bebas Neue',sans-serif;font-size:7rem;line-height:1;color:var(--lime);text-align:center;margin:6px 0 22px}
+/* v43 paywall */
+#paywall{z-index:1300;justify-content:center}
+#paywall .pw-k{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:.2em;color:var(--lime);margin-bottom:6px}
+#paywall .pw-l{list-style:none;padding:0;margin:0 0 20px}
+#paywall .pw-l li{font-family:'IBM Plex Sans',sans-serif;font-size:1.02rem;color:#e6e6e6;padding:9px 0 9px 26px;position:relative;border-bottom:1px solid rgba(255,255,255,.06)}
+#paywall .pw-l li:before{content:'';position:absolute;left:2px;top:15px;width:10px;height:10px;border-radius:50%;background:var(--lime)}
+#paywall .pw-p{font-family:'IBM Plex Sans',sans-serif;font-size:.92rem;color:#aaa;margin:0 0 18px;line-height:1.45}
+#paywall .pw-p b{color:#fff}
+#paywall .pw-f{display:flex;gap:22px;justify-content:center;margin-top:18px}
+#paywall .pw-f a{font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;color:#777}
+#subRow{font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:#999;margin-bottom:12px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+#subRow a{color:#999}
+#subRow button{background:none;border:0;color:#999;text-decoration:underline;font:inherit;padding:0}
 </style>
 </head>
 <body>
@@ -1534,7 +1547,7 @@ async function submitWebEntry(){
   try{
     var response=await fetch(API_BASE+'/api/find-connections',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:ladderHeaders(),
       body:JSON.stringify({newText:text,existing:existing})
     });
     if(response.ok){
@@ -1641,7 +1654,7 @@ async function findPatterns(){
   try{
     var response=await fetch(API_BASE+'/api/analyze-patterns',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:ladderHeaders(),
       body:JSON.stringify({entries:log.map(function(e){return {date:e.date,text:e.text};})})
     });
     if(!response.ok){
@@ -3363,7 +3376,7 @@ async function generateGoal(fromQuestions){
   try{
     var response=await fetch(API_BASE+"/api/generate-goal",{
       method:"POST",
-      headers:{"Content-Type":"application/json"},
+      headers:ladderHeaders(),
       body:JSON.stringify({input:input, qa:qa})
     });
     if(!response.ok){
@@ -4759,6 +4772,89 @@ function closeLookBack(){var l=document.getElementById('lookBack');if(l)l.classL
     try{var r=JSON.parse(localStorage.getItem(RK)||'{}');r[TODAY]=Date.now();localStorage.setItem(RK,JSON.stringify(r));}catch(e){}
     R.phase='done';hap('success');rtRender();
   };
+})();
+// ===== v43: subscription layer (paywall, entitlement, API identity) =====
+// Set to true when RevenueCat and the Apple Developer account are live.
+var PAYWALL_ENFORCE=false;
+var RC_API_KEY='';            // RevenueCat public iOS key, starts with appl_
+var RC_ENTITLEMENT='pro';
+function ladderUid(){var u=null;try{u=localStorage.getItem('ladder_uid');if(!u){u='lad_'+Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('ladder_uid',u);}}catch(e){u='lad_anon';}return u;}
+function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-user':ladderUid()};}
+(function(){
+  function native(){return typeof liveNative==='function'&&liveNative();}
+  function rc(){return window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.Purchases;}
+  var enforce=PAYWALL_ENFORCE||(!native()&&localStorage.getItem('ladder_enforce')==='1');
+  var pro=false,info='';
+  try{pro=localStorage.getItem('ladder_pro_cache')==='1';}catch(e){}
+  function entitled(){
+    if(!enforce)return true;
+    if(!native()&&localStorage.getItem('ladder_pro_dev')==='1')return true;
+    return pro;
+  }
+  window.ladderEntitled=entitled;
+  function setPro(v,detail){pro=!!v;info=detail||'';try{localStorage.setItem('ladder_pro_cache',pro?'1':'0');}catch(e){}subRender();gate();}
+  async function refresh(){
+    var P=rc();if(!P)return;
+    try{
+      var r=await P.getCustomerInfo();var ci=r.customerInfo||r;
+      var e=ci.entitlements&&ci.entitlements.active&&ci.entitlements.active[RC_ENTITLEMENT];
+      setPro(!!e,e?(e.periodType==='TRIAL'?'Free trial':'Active'):'');
+    }catch(err){}
+  }
+  async function init(){
+    var P=rc();if(!P||!RC_API_KEY){subRender();gate();return;}
+    try{await P.configure({apiKey:RC_API_KEY,appUserID:ladderUid()});await refresh();}catch(e){}
+  }
+
+  // paywall overlay
+  var pw=document.createElement('div');pw.id='paywall';pw.className='ovl';
+  pw.innerHTML='<div class="pw-k">LADDER</div><h2>BUILD THE<br><span>DISCIPLINE.</span></h2>'
+    +'<ul class="pw-l"><li>One task, one clock, every day</li><li>Mirror, goals and the affirmation ritual</li><li>Lock screen and home screen widget</li><li>Your data stays on your phone</li></ul>'
+    +'<div class="pw-p"><b>7 days free</b>, then 10 euro per month. Cancel any time in your Apple ID settings.</div>'
+    +'<div class="ov-msg" id="pwMsg"></div>'
+    +'<button class="ov-go" id="pwBuy" onclick="pwBuy()">START 7 DAYS FREE</button>'
+    +'<button class="ov-skip" onclick="pwRestore()">Restore purchases</button>'
+    +'<div class="pw-f"><a href="https://ladder-website-xi.vercel.app/privacy.html" target="_blank" rel="noopener">Privacy</a><a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener">Terms</a></div>';
+  document.body.appendChild(pw);
+  function msg(t){document.getElementById('pwMsg').textContent=t||'';}
+  window.pwBuy=async function(){
+    var P=rc();
+    if(!P||!RC_API_KEY){msg('Subscriptions are not open yet.');return;}
+    var b=document.getElementById('pwBuy');b.disabled=true;msg('');
+    try{
+      var o=await P.getOfferings();var cur=o.current||(o.offerings&&o.offerings.current);
+      var pkg=cur&&cur.availablePackages&&cur.availablePackages[0];
+      if(!pkg){msg('No subscription found. Try again later.');b.disabled=false;return;}
+      var r=await P.purchasePackage({aPackage:pkg});var ci=r.customerInfo||r;
+      var e=ci.entitlements&&ci.entitlements.active&&ci.entitlements.active[RC_ENTITLEMENT];
+      if(e){setPro(true,e.periodType==='TRIAL'?'Free trial':'Active');hap('success');}else msg('Purchase did not complete.');
+    }catch(err){if(!(err&&err.userCancelled))msg('Something went wrong. Try again.');}
+    b.disabled=false;
+  };
+  window.pwRestore=async function(){
+    var P=rc();if(!P){msg('Nothing to restore here.');return;}
+    try{var r=await P.restorePurchases();var ci=r.customerInfo||r;var e=ci.entitlements&&ci.entitlements.active&&ci.entitlements.active[RC_ENTITLEMENT];if(e){setPro(true,'Active');hap('success');}else msg('No active subscription found.');}catch(err){msg('Could not restore. Try again.');}
+  };
+  function gate(){
+    try{
+      var started=!!localStorage.getItem('ladder_first_done');
+      var show=enforce&&!entitled()&&started&&!document.getElementById('s-boot').classList.contains('active');
+      pw.classList.toggle('on',show);
+    }catch(e){}
+  }
+  window.paywallGate=gate;
+
+  // subscription row on the Ladder screen
+  function subRender(){
+    var host=document.getElementById('backupAge');if(!host)return;
+    var row=document.getElementById('subRow');
+    if(!enforce&&!rc()){if(row)row.remove();return;}
+    if(!row){row=document.createElement('div');row.id='subRow';host.parentNode.insertBefore(row,host.nextSibling);}
+    row.innerHTML='<span>Subscription: '+(pro?(info||'Active'):(enforce?'Not active':'Off'))+'</span> <a href="itms-apps://apps.apple.com/account/subscriptions">Manage</a> <button onclick="pwRestore()">Restore</button>';
+  }
+  setInterval(gate,4000);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden){refresh();gate();}});
+  setTimeout(function(){init();subRender();gate();},2600);
 })();
 </script>
 </body>
