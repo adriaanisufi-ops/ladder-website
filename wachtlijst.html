@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>LADDER Waitlist</title>
-<meta name="description" content="A daily discipline app, built from a confession. Join the waitlist and be first in when it opens.">
+<meta name="description" content="LADDER is a daily discipline app. Join the waitlist and hear first when it is ready.">
 <meta name="theme-color" content="#0a0a0a">
 <meta property="og:title" content="LADDER Waitlist">
-<meta property="og:description" content="Today, I do one thing. Kept. Join the waitlist.">
+<meta property="og:description" content="Do what you said you would do. Join the waitlist.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400&display=swap" rel="stylesheet">
 <style>
-/* Layout: a confession set as one column. A rail runs down the left edge and each line sits on a rung. The form is the last rung. */
+/* Layout: one hard column. A five rung ladder (the real daily loop) fills with lime as the page loads, then the form. */
 :root{
   --lime:#d4f000;
   --bg:#0a0a0a;
@@ -29,39 +29,51 @@
 html{background:var(--bg)}
 body{
   margin:0;background:var(--bg);color:var(--ink);
-  font-family:var(--sans);font-weight:300;font-size:1.2rem;line-height:1.55;
-  padding-block:calc(28px + env(safe-area-inset-top,0px)) calc(64px + env(safe-area-inset-bottom,0px));
+  font-family:var(--sans);font-weight:300;font-size:1.05rem;line-height:1.6;
+  padding-block:calc(28px + env(safe-area-inset-top,0px)) calc(56px + env(safe-area-inset-bottom,0px));
   padding-left:max(20px,env(safe-area-inset-left,0px));
   padding-right:max(20px,env(safe-area-inset-right,0px));
 }
-main{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:48px}
+main{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:44px}
 .top{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
 .word{font-family:var(--display);font-size:1.7rem;letter-spacing:.06em;line-height:1}
 .word span{color:var(--lime)}
 .tag{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
 h1{
   font-family:var(--display);font-weight:400;
-  font-size:clamp(3.6rem,17vw,7.4rem);line-height:.9;letter-spacing:.005em;
+  font-size:clamp(3.6rem,17vw,7.6rem);line-height:.9;letter-spacing:.005em;
   margin:0;text-transform:uppercase;text-wrap:balance;
 }
 h1 em{font-style:normal;color:var(--lime)}
+.lede{margin:0;max-width:44ch;color:var(--ink)}
+.lede b{font-weight:400;color:var(--lime)}
 
-.confession{
-  margin:0;padding:0 0 0 22px;list-style:none;
-  border-left:2px solid var(--ink);
-  display:flex;flex-direction:column;gap:30px;
+.ladder{
+  list-style:none;margin:0;padding:0;
+  border-left:2px solid var(--ink);border-right:2px solid var(--ink);
+  display:flex;flex-direction:column-reverse;
 }
-.confession li{position:relative;margin:0;max-width:34ch}
-.confession li::before{
-  content:"";position:absolute;left:-24px;top:.8em;width:16px;height:2px;background:var(--ink);
+.rung{
+  position:relative;display:grid;grid-template-columns:minmax(0,1fr);
+  padding:14px 18px;border-top:2px solid var(--ink);overflow:hidden;
 }
-.confession li:last-child::before{background:var(--lime);width:24px}
-.confession b{font-weight:400;color:var(--lime)}
-.then{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin:0}
-.built{margin:0;max-width:40ch;font-size:1.05rem}
-.built b{font-weight:400;color:var(--lime)}
+.rung:first-child{border-bottom:2px solid var(--ink)}
+.rung::before{
+  content:"";position:absolute;inset:0;background:var(--lime);
+  transform-origin:left center;transform:scaleX(0);
+  animation:fill .5s cubic-bezier(.2,.7,.2,1) forwards;
+  animation-delay:calc(var(--i) * .22s + .2s);
+}
+.rung > *{position:relative}
+.rung .k{font-family:var(--mono);font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);transition:color .2s}
+.rung .h{font-family:var(--display);font-size:1.9rem;line-height:1;letter-spacing:.03em;color:var(--ink);text-transform:uppercase}
+.rung .p{font-size:.95rem;color:var(--ink);margin-top:2px;max-width:46ch}
+@keyframes fill{to{transform:scaleX(1)}}
+/* text flips to dark once its rung is lime */
+.rung .k,.rung .h,.rung .p{animation:flip .01s linear forwards;animation-delay:calc(var(--i) * .22s + .45s)}
+@keyframes flip{to{color:#0a0a0a}}
 
-form{display:flex;flex-direction:column;gap:12px;font-size:1rem}
+form{display:flex;flex-direction:column;gap:12px}
 label{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
 .row{display:flex;gap:10px;flex-wrap:wrap}
 input[type=email]{
@@ -84,6 +96,13 @@ button:disabled{opacity:.5;cursor:default}
 .status.err{color:var(--ink)}
 .fine{margin:0;font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;color:var(--dim)}
 .fine a{color:var(--ink)}
+.orb{margin:0;display:flex;flex-direction:column;gap:10px;align-items:center}
+.orb canvas{width:100%;max-width:420px;aspect-ratio:1/1;display:block}
+.orb figcaption{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);text-align:center}
+@media (prefers-reduced-motion:reduce){
+  .rung::before{animation:none;transform:scaleX(1)}
+  .rung .k,.rung .h,.rung .p{animation:none;color:#0a0a0a}
+}
 </style>
 </head>
 <body>
@@ -93,21 +112,25 @@ button:disabled{opacity:.5;cursor:default}
     <div class="tag">Daily discipline app</div>
   </div>
 
-  <h1>I grew up thinking I was <em>unlucky.</em></h1>
+  <h1>Do what you <em>said</em> you would do.</h1>
 
-  <ol class="confession">
-    <li>That is a ridiculous take. The sheer luck I have with my life is incomprehensible.</li>
-    <li>I like to portray myself as hardworking. But when it is due, I hesitate. I procrastinate as much as I can.</li>
-    <li>I do not want to get ahead. I want to move forward.</li>
-    <li>Time feels fast. Not because it moves fast. Because my expectations outran my actions.</li>
-    <li>So today, I do one thing. <b>Kept.</b> That is the whole promise.</li>
+  <figure class="orb">
+    <canvas id="orb" aria-label="A sphere of 100 lime points that fills up one point at a time"></canvas>
+    <figcaption>100 points. One for every session you finish.</figcaption>
+  </figure>
+
+  <p class="lede">Every day you either do what you said, or you do not. LADDER keeps the score. <b>Morning, work, evening.</b> No account, no cloud, only your phone. Leave your email and you are first in when it opens.</p>
+
+  <ol class="ladder" aria-label="The daily loop">
+    <li class="rung" style="--i:0"><span class="k">Rung 1</span><span class="h">Morning</span><span class="p">Say your line. Write what you will not give in to. Start one task with a deadline.</span></li>
+    <li class="rung" style="--i:1"><span class="k">Rung 2</span><span class="h">Goals</span><span class="p">An outcome with a date and daily actions. Timers that keep counting down outside the app.</span></li>
+    <li class="rung" style="--i:2"><span class="k">Rung 3</span><span class="h">Wiring</span><span class="p">Sit with nothing for 3, 5 or 10 minutes. Break a rule and you owe kilometers.</span></li>
+    <li class="rung" style="--i:3"><span class="k">Rung 4</span><span class="h">Mirror</span><span class="p">Close the day honestly. One line about what today taught you.</span></li>
+    <li class="rung" style="--i:4"><span class="k">Rung 5</span><span class="h">Ladder</span><span class="p">Your streak, your wins and your km debt. The score does not lie.</span></li>
   </ol>
 
-  <p class="then">So I built the app</p>
-  <p class="built"><b>LADDER</b> is one daily loop on your phone: morning, work, evening. You say what you will do, you do it, and the score does not lie. No account. Your data stays on your device. It is not out yet.</p>
-
   <form id="join" novalidate>
-    <label for="email">Be first in. Your email</label>
+    <label for="email">Your email</label>
     <div class="row">
       <input id="email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@email.com" required>
       <button id="go" type="submit">Join the waitlist</button>
@@ -118,6 +141,59 @@ button:disabled{opacity:.5;cursor:default}
   </form>
 </main>
 
+<script>
+(function(){
+  var cv=document.getElementById('orb');
+  if(!cv||!cv.getContext)return;
+  var ctx=cv.getContext('2d');
+  var N=100,pts=[],i;
+  var ga=Math.PI*(3-Math.sqrt(5));
+  for(i=0;i<N;i++){
+    var y=1-(i/(N-1))*2,r=Math.sqrt(1-y*y),t=ga*i;
+    pts.push({x:Math.cos(t)*r,y:y,z:Math.sin(t)*r});
+  }
+  var W=0,H=0,dpr=1;
+  function size(){
+    dpr=Math.min(window.devicePixelRatio||1,2);
+    W=cv.clientWidth;H=cv.clientHeight;
+    cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  function draw(count,ang){
+    ctx.clearRect(0,0,W,H);
+    var R=Math.min(W,H)*.40,cx=W/2,cy=H/2,ca=Math.cos(ang),sa=Math.sin(ang),tilt=.35,ct=Math.cos(tilt),st=Math.sin(tilt);
+    var proj=[],k;
+    for(k=0;k<count;k++){
+      var p=pts[k];
+      var x1=p.x*ca+p.z*sa,z1=-p.x*sa+p.z*ca;
+      var y2=p.y*ct-z1*st,z2=p.y*st+z1*ct;
+      proj.push({x:cx+x1*R,y:cy+y2*R,z:z2});
+    }
+    proj.sort(function(a,b){return a.z-b.z;});
+    for(k=0;k<proj.length;k++){
+      var q=proj[k],d=(q.z+1)/2;
+      ctx.globalAlpha=.25+.75*d;
+      ctx.fillStyle='#d4f000';
+      ctx.beginPath();ctx.arc(q.x,q.y,2+3.2*d,0,Math.PI*2);ctx.fill();
+    }
+    ctx.globalAlpha=1;
+  }
+  var FINAL=2.2;
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function still(){size();draw(N,FINAL);}
+  window.addEventListener('resize',still);
+  size();
+  if(reduce){draw(N,FINAL);return;}
+  var DUR=3400,t0=null;
+  function frame(ts){
+    if(t0===null)t0=ts;
+    var u=Math.min((ts-t0)/DUR,1),e=1-Math.pow(1-u,3);
+    draw(Math.max(1,Math.round(e*N)),FINAL-(1-e)*2.4);
+    if(u<1)requestAnimationFrame(frame);else draw(N,FINAL);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
 <script>
 (function(){
   var form=document.getElementById('join');
@@ -146,7 +222,7 @@ button:disabled{opacity:.5;cursor:default}
       return r.json().catch(function(){return {};}).then(function(j){return {ok:r.ok,body:j};});
     }).then(function(res){
       if(res.ok){
-        say('You are on the list. Today, do one thing.','ok');
+        say('You are on the list. Do what you said you would do.','ok');
         email.value='';
       }else if(res.body&&res.body.error==='invalid_email'){
         say('That email does not look right. Check it and try again.','err');
