@@ -563,6 +563,40 @@ body.on-morning #catchFab{bottom:calc(92px + var(--sab))}
 #rwEdit .rw-x{background:none;border:0;color:#8a8a8a;font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;text-decoration:underline;padding:2px 0 10px}
 #rwEdit .rw-add{background:transparent;border:1px dashed rgba(212,240,0,.4);color:var(--lime);font-family:'IBM Plex Sans',sans-serif;font-size:.9rem;font-weight:600;border-radius:14px;padding:11px;width:100%;margin-top:4px}
 #rwEdit h2{margin-top:0}
+/* v42 affirmation system */
+.aff-ovl{justify-content:flex-start;padding-top:calc(24px + env(safe-area-inset-top))}
+#affRitual{justify-content:center}
+.aff-x{position:absolute;top:calc(14px + env(safe-area-inset-top));right:16px;background:none;border:1px solid rgba(255,255,255,.16);color:#bbb;font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;border-radius:12px;padding:8px 14px;z-index:2}
+.ah-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 20px;font-family:'IBM Plex Sans',sans-serif;font-size:.75rem;color:#999}
+.ah-stats span{display:block;font-family:'Bebas Neue',sans-serif;font-size:2.4rem;line-height:1;color:var(--lime)}
+.ah-sub{font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:#8a8a8a;text-align:center;margin:10px 0 18px}
+.ah-chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;margin-bottom:6px;-webkit-overflow-scrolling:touch}
+.ah-chips button{flex:0 0 auto;font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;font-weight:600;padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:transparent;color:#ddd}
+.ah-chips button.on{background:var(--lime);border-color:var(--lime);color:#000}
+.ah-line{background:var(--card);border-radius:18px;box-shadow:inset 0 0 0 1px var(--line);padding:16px 16px 8px;margin-bottom:10px}
+.ah-t{font-family:'IBM Plex Sans',sans-serif;font-size:1rem;line-height:1.45;color:#eee}
+.ah-m{font-family:'IBM Plex Sans',sans-serif;font-size:.75rem;color:#8a8a8a;margin-top:6px}
+.ah-b{display:flex;gap:14px;margin-top:6px}
+.ah-b button{background:none;border:0;color:#999;font-family:'IBM Plex Sans',sans-serif;font-size:.82rem;padding:8px 0}
+.ah-b .ah-star.on{color:var(--lime)}
+.ah-new{margin-top:22px}
+.ah-new .ah-h{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--lime);margin-bottom:8px}
+.ah-new textarea.li,.ah-new select.li{width:100%;margin-bottom:10px;font-family:'IBM Plex Sans',sans-serif;font-size:.95rem;resize:none}
+.ah-empty{font-family:'IBM Plex Sans',sans-serif;color:#777;padding:20px 0}
+.rt-dots{display:flex;gap:8px;justify-content:center;margin-bottom:26px}
+.rt-dots i{width:34px;height:5px;border-radius:3px;background:rgba(255,255,255,.12)}
+.rt-dots i.on{background:var(--lime)}.rt-dots i.cur{background:rgba(212,240,0,.45)}
+.rt-k{font-family:'IBM Plex Sans',sans-serif;font-size:.9rem;color:#9a9a9a;text-align:center;margin-bottom:18px}
+.rt-line{font-family:'Bebas Neue',sans-serif;text-align:center;color:#fff;line-height:1.02;margin:0 0 16px}
+.rt-line.lg{font-size:3.4rem}.rt-line.md{font-size:2.4rem}
+.rt-line.sm{font-family:'IBM Plex Sans',sans-serif;font-size:1.25rem;line-height:1.4;font-weight:500}
+.rt-th{font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;color:#8a8a8a;text-align:center;margin-bottom:30px}
+.rt-hold{position:relative;overflow:hidden;width:100%;min-height:68px;border-radius:20px;border:1px solid rgba(212,240,0,.5);background:rgba(212,240,0,.06);color:var(--lime);font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.06em;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.rt-hold i{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--lime)}
+.rt-hold{isolation:isolate}
+.rt-hold span{position:relative;mix-blend-mode:difference;color:#d4f000}
+.ovl>*{flex-shrink:0}
+.rt-clock{font-family:'Bebas Neue',sans-serif;font-size:7rem;line-height:1;color:var(--lime);text-align:center;margin:6px 0 22px}
 </style>
 </head>
 <body>
@@ -4501,6 +4535,230 @@ function closeLookBack(){var l=document.getElementById('lookBack');if(l)l.classL
     var l=lbl.previousElementSibling;l.style.display='flex';l.style.justifyContent='space-between';l.style.alignItems='center';
     l.insertAdjacentHTML('beforeend','<button id="rwEditBtn" onclick="rwOpen()">Edit</button>');
   }
+})();
+// ===== v42: affirmation system (library, ritual, reps) =====
+(function(){
+  var LK='ladder_aff_lines',GK='ladder_aff_grat',RK='ladder_aff_ritual';
+  var THEMES=[['worth','Worth'],['word','My word'],['fear','Fear'],['persist','Persistence'],['discipline','Discipline'],['detach','Detachment'],['peace','Peace and plenty'],['own','In my words']];
+  function tn(k){for(var i=0;i<THEMES.length;i++)if(THEMES[i][0]===k)return THEMES[i][1];return k;}
+  var SEED=[
+    ['fear',1,'Let fear be a compass, of exactly what you need to do.'],
+    ['worth',1,"We don't fear, we don't hide, we don't shrink. We decide our worth."],
+    ['persist',1,"We don't give up, we persist, and determine our outcome."],
+    ['word',0,'We keep our word always.'],
+    ['word',0,'I am someone who does what he says.','am'],
+    ['word',0,'I keep my word to myself.','am'],
+    ['word',0,'I kept my word to myself, or I will say where I did not.','pm'],
+    ['word',0,"I don't need a perfect day. I need an honest one.",'pm'],
+    ['persist',0,'Knowing when to push through the wall and making the wall stronger is a skill few master.'],
+    ['persist',0,"It feels forced until it isn't, until it's just you."],
+    ['persist',0,'Action breeds confidence.'],
+    ['persist',0,'Action, patience, persistence and getting actually shit done.'],
+    ['persist',0,'Relentless action crushes doubt.'],
+    ['persist',0,"Don't lose momentum because of moments of weakness. Push through, it is the only way to yield the true treasures behind your efforts."],
+    ['persist',0,"I am persistent. I kill every fear and doubt that enters my mind. I won't let a single weak thought determine my greatness."],
+    ['persist',0,'Not intensity. Repetition.','am'],
+    ['persist',0,'Tomorrow I start again. Same work. Same standard.','pm'],
+    ['discipline',0,'To be consistent is to be able to withstand boredom.'],
+    ['discipline',0,'Earn your dopamine and comfort.'],
+    ['discipline',0,"Don't negotiate with yourself. Make the harder choice every single time."],
+    ['discipline',0,"Do what you don't want to do. Don't do what you want to do."],
+    ['discipline',0,'Wanting gets a vote. Never the decision.'],
+    ['discipline',0,'I am not what I felt today. I am what I did.','pm'],
+    ['detach',0,"Focus on what you have control over, and don't trouble yourself with what you can't control. That's a great life."],
+    ['detach',0,'Move as if everything always works out for you.'],
+    ['detach',0,'Move as if the outcome is already determined. It is only a matter of time.'],
+    ['detach',0,'A person only sees clearly when not attached.'],
+    ['detach',0,'Attach to the work, never to the outcome. Attach to the moment, as that is the only time that can be controlled. Attach to the game, not the outcome of the game.'],
+    ['detach',0,"Your honesty is yours, your effort is yours, your response in any given moment is yours. The outcome isn't. Other people's opinions of you aren't."],
+    ['detach',0,"I don't control the outcome. I control my effort.",'am'],
+    ['detach',0,'I did the work. The outcome is not mine to decide.','pm'],
+    ['peace',0,'I am at peace.'],
+    ['peace',0,'I am rich in thought.'],
+    ['peace',0,'I am aligned with the law of increase.'],
+    ['peace',0,'Prosperity moves through me with ease.'],
+    ['peace',0,'I am grateful, and I tell no one.'],
+    ['peace',0,'I am grateful for my nuances and my perspectives. I am grateful that love will always be in my vision.']
+  ];
+  function norm(t){return String(t).toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
+  function readLib(){try{var a=JSON.parse(localStorage.getItem(LK)||'null');return Array.isArray(a)?a:null;}catch(e){return null;}}
+  function writeLib(a){try{localStorage.setItem(LK,JSON.stringify(a));}catch(e){}}
+  function seed(){
+    var a=[];SEED.forEach(function(s,i){a.push({id:'s'+i,t:s[2],th:s[0],core:s[1],fav:s[1]?1:0,reps:0,custom:0,when:s[3]||'any'});});
+    var seen={};a.forEach(function(l){seen[norm(l.t)]=1;});
+    (S.bookAffirmations||[]).forEach(function(t,i){if(!seen[norm(t)]){seen[norm(t)]=1;a.push({id:'m'+i,t:t,th:'own',core:0,fav:0,reps:0,custom:1,when:'any'});}});
+    writeLib(a);return a;
+  }
+  function lib(){return readLib()||seed();}
+  window.affLib=lib;
+
+  // the cards and the rotation read from the library now
+  affSet=function(set){return lib().filter(function(l){return l.when==='any'||l.when===set;}).map(function(l){return l.t;});};
+  function bump(t){var a=lib(),n=norm(t);for(var i=0;i<a.length;i++){if(norm(a[i].t)===n){a[i].reps=(a[i].reps||0)+1;break;}}writeLib(a);}
+  var _as=affSaid;
+  affSaid=function(set){try{var l=affSet(set);affPick(set);var t=l[affIdx[set]];if(affToday().indexOf(t)<0)bump(t);}catch(e){}_as(set);};
+  function totalReps(){return lib().reduce(function(n,l){return n+(l.reps||0);},0);}
+
+  affRemove=function(set){
+    try{var l=affSet(set),t=l[affIdx[set]],a=lib().filter(function(x){return !(x.custom&&norm(x.t)===norm(t));});writeLib(a);affIdx.am=null;affIdx.pm=null;affRender();}catch(e){}
+  };
+  affSave=function(b,set){
+    var box=b.closest('.aff-add'),i=box.querySelector('input'),t=i.value.trim();if(!t)return;
+    var a=lib();a.push({id:'u'+Date.now(),t:t,th:'own',core:0,fav:0,reps:0,custom:1,when:'any'});writeLib(a);
+    affIdx.am=null;affIdx.pm=null;affIdx[set]=affSet(set).length-1;affRender();
+  };
+  affRender=function(){
+    document.querySelectorAll('.aff[data-set]').forEach(function(box){
+      var set=box.getAttribute('data-set'),l=affSet(set);affPick(set);
+      var t=l[affIdx[set]],said=affToday(),isSaid=said.indexOf(t)>=0,n=Math.min(said.length,AFF_GOAL),dots='';
+      for(var i=0;i<AFF_GOAL;i++)dots+='<i class="aff-dot'+(i<n?' on':'')+'"></i>';
+      var line=lib().filter(function(x){return norm(x.t)===norm(t);})[0]||{};
+      var custom=!!line.custom;
+      var lbl=set==='pm'?'Read it before you answer':'Say it out loud';
+      var hint=isSaid?'Said. That counts.':(set==='pm'?'Read it slowly. Then tap the button.':'Out loud, not in your head. Then tap the button.');
+      var st=0;try{st=affStreak();}catch(e){}
+      var cnt=(n>=AFF_GOAL?'done for today':n+' of '+AFF_GOAL+' said today')+(st>0?' · '+st+' day streak':'');
+      var openAdd=box.querySelector('.aff-add')&&box.querySelector('.aff-add').style.display==='flex';
+      box.innerHTML='<div class="aff-lbl">'+lbl+'</div>'
+        +'<div class="aff-prog"><div class="aff-dots">'+dots+'</div><span class="aff-cnt">'+cnt+'</span></div>'
+        +'<div class="aff-text'+(isSaid?' said':'')+'">'+esc(t)+'</div>'
+        +'<button class="aff-say'+(isSaid?' said':'')+'" onclick="affSaid(\''+set+'\')">'+(isSaid?'✓ Said':'I said it')+'</button>'
+        +'<div class="aff-hint">'+hint+(line.reps?' · said '+line.reps+' time'+(line.reps===1?'':'s'):'')+'</div>'
+        +'<div class="aff-tools"><button onclick="affRitual()">Full ritual ›</button><button onclick="affHub()">Library</button><button onclick="affNext(\''+set+'\')">Another ›</button>'+(custom?'<button onclick="affRemove(\''+set+'\')">Remove</button>':'')+'</div>'
+        +'<div class="aff-add" style="'+(openAdd?'display:flex':'')+'"><input class="li aff-in" placeholder="A line in your own words"><button class="aff-btn main" style="flex:0 0 90px" onclick="affSave(this,\''+set+'\')">Save</button></div>';
+    });
+  };
+  affRender();
+
+  // ---------- overlays ----------
+  function mk(id,cls){var d=document.createElement('div');d.id=id;d.className='ovl '+(cls||'');document.body.appendChild(d);return d;}
+  var hub=mk('affHub','aff-ovl'),rt=mk('affRitual','aff-ovl');
+  function ritualDone(){try{return !!JSON.parse(localStorage.getItem(RK)||'{}')[TODAY];}catch(e){return false;}}
+  function ritualCount(){try{return Object.keys(JSON.parse(localStorage.getItem(RK)||'{}')).length;}catch(e){return 0;}}
+  function byReps(a,b){return (a.reps||0)-(b.reps||0);}
+  function dayIdx(){return Math.floor(Date.now()/86400000);}
+
+  // library hub
+  var filter='all';
+  function hubRender(){
+    var a=lib(),st=0;try{st=affStreak();}catch(e){}
+    var h='<button class="aff-x" onclick="affHubClose()">Close</button>'
+      +'<h2>AFFIRM<span>ATIONS.</span></h2>'
+      +'<div class="ah-stats"><div><span>'+st+'</span>day streak</div><div><span>'+totalReps()+'</span>times said</div><div><span>'+ritualCount()+'</span>rituals</div></div>'
+      +'<button class="ov-go" onclick="affHubClose();affRitual()">'+(ritualDone()?'DO IT AGAIN':'START TODAY\'S RITUAL')+'</button>'
+      +'<div class="ah-sub">Said out loud, with weight. Repetition is the whole point.</div>'
+      +'<div class="ah-chips"><button data-f="all" class="'+(filter==='all'?'on':'')+'">All</button><button data-f="fav" class="'+(filter==='fav'?'on':'')+'">Starred</button>'+THEMES.map(function(x){return '<button data-f="'+x[0]+'" class="'+(filter===x[0]?'on':'')+'">'+x[1]+'</button>';}).join('')+'</div>';
+    var list=a.filter(function(l){return filter==='all'||(filter==='fav'?l.fav:l.th===filter);});
+    list.sort(function(x,y){return (y.core||0)-(x.core||0)||(y.fav||0)-(x.fav||0);});
+    list.forEach(function(l){
+      h+='<div class="ah-line" data-id="'+l.id+'"><div class="ah-t">'+esc(l.t)+'</div><div class="ah-m">'+(l.core?'Core · ':'')+tn(l.th)+' · said '+(l.reps||0)+'x</div>'
+        +'<div class="ah-b"><button class="ah-star'+(l.fav?' on':'')+'" data-a="fav">'+(l.fav?'★ Starred':'☆ Star')+'</button>'+(l.custom?'<button data-a="del">Delete</button>':'')+'</div></div>';
+    });
+    if(!list.length)h+='<div class="ah-empty">Nothing here yet.</div>';
+    h+='<div class="ah-new"><div class="ah-h">Write your own</div><textarea class="li" id="ahNew" rows="2" placeholder="Present tense. As if it is already true."></textarea>'
+      +'<select class="li" id="ahTheme">'+THEMES.map(function(x){return '<option value="'+x[0]+'"'+(x[0]==='own'?' selected':'')+'>'+x[1]+'</option>';}).join('')+'</select>'
+      +'<button class="ov-go" style="font-size:1.3rem;padding:12px" onclick="ahAdd()">ADD TO LIBRARY</button></div>';
+    var sc=hub.scrollTop;hub.innerHTML=h;hub.scrollTop=sc;
+  }
+  hub.addEventListener('click',function(e){
+    var f=e.target.closest('.ah-chips button');if(f){filter=f.getAttribute('data-f');hubRender();return;}
+    var b=e.target.closest('.ah-b button');if(!b)return;
+    var id=b.closest('.ah-line').getAttribute('data-id'),a=lib();
+    for(var i=0;i<a.length;i++)if(a[i].id===id){if(b.getAttribute('data-a')==='fav')a[i].fav=a[i].fav?0:1;else a.splice(i,1);break;}
+    writeLib(a);affIdx.am=null;affIdx.pm=null;hubRender();affRender();
+  });
+  window.ahAdd=function(){
+    var t=document.getElementById('ahNew').value.trim();if(!t)return;
+    var a=lib();a.push({id:'u'+Date.now(),t:t,th:document.getElementById('ahTheme').value,core:0,fav:1,reps:0,custom:1,when:'any'});writeLib(a);
+    affIdx.am=null;affIdx.pm=null;hubRender();affRender();hap('success');
+  };
+  window.affHub=function(){filter='all';hubRender();hub.classList.add('on');hub.scrollTop=0;};
+  window.affHubClose=function(){hub.classList.remove('on');affRender();};
+
+  // ritual
+  var R=null,holdRaf=null,holdT0=0,vizTimer=null;
+  function pickRitual(){
+    var a=lib(),d=dayIdx(),picks=[];
+    var core=a.filter(function(l){return l.core;});
+    if(core.length)picks.push(core[d%core.length]);
+    var ths=THEMES.map(function(x){return x[0];}).filter(function(k){return a.some(function(l){return l.th===k&&!l.core;});});
+    if(ths.length){var tk=ths[d%ths.length];var p=a.filter(function(l){return l.th===tk&&!l.core;}).sort(byReps)[0];if(p)picks.push(p);}
+    var rest=a.filter(function(l){return picks.indexOf(l)<0&&picks.map(function(x){return x.id;}).indexOf(l.id)<0;});
+    var fav=rest.filter(function(l){return l.fav;}).sort(byReps)[0]||rest.sort(byReps)[0];
+    if(fav)picks.push(fav);
+    return picks.map(function(l){return l.id;});
+  }
+  function lineById(id){return lib().filter(function(l){return l.id===id;})[0];}
+  window.affRitual=function(){
+    hub.classList.remove('on');
+    R={ids:pickRitual(),i:0,phase:'say',gr:''};
+    rtRender();rt.classList.add('on');
+  };
+  window.affRitualClose=function(){clearInterval(vizTimer);cancelAnimationFrame(holdRaf);rt.classList.remove('on');R=null;affRender();};
+  function dots(cur,total){var s='';for(var i=0;i<total;i++)s+='<i class="'+(i<cur?'on':(i===cur?'cur':''))+'"></i>';return '<div class="rt-dots">'+s+'</div>';}
+  function sizeCls(t){return t.length<=62?'lg':(t.length<=120?'md':'sm');}
+  function rtRender(){
+    if(!R)return;
+    var total=R.ids.length,h='<button class="aff-x" onclick="affRitualClose()">Close</button>';
+    if(R.phase==='say'){
+      var l=lineById(R.ids[R.i]);
+      h+=dots(R.i,total+2)+'<div class="rt-k">Say it out loud. With weight.</div>'
+       +'<div class="rt-line '+sizeCls(l.t)+'">'+esc(l.t)+'</div>'
+       +'<div class="rt-th">'+(l.core?'Core · ':'')+tn(l.th)+' · said '+(l.reps||0)+'x</div>'
+       +'<button class="rt-hold" id="rtHold"><i></i><span>HOLD WHILE YOU SAY IT</span></button>'
+       +'<button class="ov-skip" onclick="rtSwap()">Another line</button>';
+    }else if(R.phase==='grat'){
+      h+=dots(total,total+2)+'<h2>ONE THING<br><span>YOU\'RE GRATEFUL FOR.</span></h2><p>Tell no one. Just know it.</p>'
+       +'<input class="li" id="rtGr" type="text" placeholder="Today I am grateful for" value="'+esc(R.gr)+'">'
+       +'<button class="ov-go" onclick="rtGrNext()">NEXT</button><button class="ov-skip" onclick="rtGrNext(1)">Skip</button>';
+    }else if(R.phase==='viz'){
+      h+=dots(total+1,total+2)+'<h2>NOW<br><span>SEE IT.</span></h2><p>Close your eyes. See yourself having done the work. Feel what that is like.</p>'
+       +'<div class="rt-clock" id="rtClock">60</div><button class="ov-go" id="rtVizBtn" onclick="rtViz()">START 60 SECONDS</button><button class="ov-skip" onclick="rtFinish()">Skip</button>';
+    }else{
+      var st=0;try{st=affStreak();}catch(e){}
+      h+='<h2>RITUAL<br><span>DONE.</span></h2><p>'+(st>0?st+' day streak. ':'')+totalReps()+' times said in total. Repetition does the work. Go and do it.</p><button class="ov-go" onclick="affRitualClose()">GO</button>';
+    }
+    rt.innerHTML=h;
+    var hb=document.getElementById('rtHold');if(hb)bindHold(hb);
+  }
+  function bindHold(btn){
+    var bar=btn.querySelector('i'),DUR=2400,held=false;
+    function frame(){if(!held)return;var f=Math.min(1,(Date.now()-holdT0)/DUR);bar.style.width=(f*100)+'%';if(f>=1){held=false;rtSaid();return;}holdRaf=requestAnimationFrame(frame);}
+    function start(e){e.preventDefault();if(held)return;held=true;holdT0=Date.now();hap('light');frame();}
+    function stop(){if(!held)return;held=false;cancelAnimationFrame(holdRaf);bar.style.width='0';}
+    btn.addEventListener('pointerdown',start);btn.addEventListener('pointerup',stop);btn.addEventListener('pointerleave',stop);btn.addEventListener('pointercancel',stop);
+    btn.addEventListener('contextmenu',function(e){e.preventDefault();});
+  }
+  function rtSaid(){
+    try{
+      var l=lineById(R.ids[R.i]);
+      var log=affLogGet();if(!log[TODAY])log[TODAY]=[];
+      if(log[TODAY].indexOf(l.t)<0){log[TODAY].push(l.t);try{localStorage.setItem('ladder_aff_log',JSON.stringify(log));}catch(e){}bump(l.t);}
+      try{S.affirmedAt=Date.now();save();}catch(e){}
+    }catch(e){}
+    hap('success');
+    R.i++;if(R.i>=R.ids.length)R.phase='grat';
+    rtRender();
+  }
+  window.rtSwap=function(){
+    var a=lib(),cur=lineById(R.ids[R.i]);
+    var pool=a.filter(function(l){return R.ids.indexOf(l.id)<0&&l.th===cur.th&&!l.core;}).sort(byReps);
+    if(!pool.length)pool=a.filter(function(l){return R.ids.indexOf(l.id)<0&&!l.core;}).sort(byReps);
+    if(pool.length){R.ids[R.i]=pool[0].id;rtRender();}
+  };
+  window.rtGrNext=function(skip){
+    if(!skip){var v=(document.getElementById('rtGr').value||'').trim();if(v){try{var g=JSON.parse(localStorage.getItem(GK)||'{}');g[TODAY]=v;localStorage.setItem(GK,JSON.stringify(g));}catch(e){}}}
+    R.phase='viz';rtRender();
+  };
+  window.rtViz=function(){
+    var n=60,c=document.getElementById('rtClock'),b=document.getElementById('rtVizBtn');b.style.display='none';
+    clearInterval(vizTimer);vizTimer=setInterval(function(){n--;if(c)c.textContent=n;if(n<=0){clearInterval(vizTimer);hap('success');rtFinish();}},1000);
+  };
+  window.rtFinish=function(){
+    clearInterval(vizTimer);
+    try{var r=JSON.parse(localStorage.getItem(RK)||'{}');r[TODAY]=Date.now();localStorage.setItem(RK,JSON.stringify(r));}catch(e){}
+    R.phase='done';hap('success');rtRender();
+  };
 })();
 </script>
 </body>
