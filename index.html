@@ -643,6 +643,22 @@ body.on-morning #catchFab{bottom:calc(92px + var(--sab))}
 #floorEdit .fb-add input{flex:1}
 #floorEdit .fb-add button{background:transparent;border:1px solid var(--lime);color:var(--lime);border-radius:14px;padding:0 18px;font-family:'IBM Plex Sans',sans-serif;font-weight:600}
 #floorEdit .fb-warn{font-family:'IBM Plex Sans',sans-serif;font-size:.82rem;color:#ff8a8a;margin-top:10px}
+
+/* v47 floor builder polish + safe area */
+#ovTop{display:none;position:fixed;top:0;left:0;right:0;height:calc(var(--sat) + 12px);background:linear-gradient(180deg,#0a0a0a 78%,rgba(10,10,10,0));z-index:1500;pointer-events:none}
+body:has(.ovl.on) #ovTop{display:block}
+.ovl{padding-top:calc(var(--sat) + 24px)}
+#floorEdit .fb-row{padding:12px 14px;margin-bottom:10px}
+#floorEdit .fb-row .fb-t{height:46px;font-size:1rem;margin-bottom:10px}
+#floorEdit .fb-line{gap:10px}
+#floorEdit .fb-tw{position:relative;height:40px;min-width:96px;border-radius:12px;background:#1b1b1b;border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;overflow:hidden}
+#floorEdit .fb-tw input.fb-time{-webkit-appearance:none;appearance:none;background:transparent;border:0;color:#fff;font-family:'IBM Plex Sans',sans-serif;font-size:.95rem;height:100%;width:100%;padding:0 10px;text-align:center}
+#floorEdit .fb-tw.empty input.fb-time{color:transparent}
+#floorEdit .fb-tw.empty:after{content:'Time';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#777;font-family:'IBM Plex Sans',sans-serif;font-size:.9rem;pointer-events:none}
+#floorEdit label.fb-rm{display:flex;align-items:center;height:40px;padding:0 14px;border-radius:999px;border:1px solid rgba(255,255,255,.14);color:#aaa;font-family:'IBM Plex Sans',sans-serif;font-size:.85rem}
+#floorEdit label.fb-rm.on{background:rgba(212,240,0,.12);border-color:var(--lime);color:var(--lime)}
+#floorEdit label.fb-rm input{display:none}
+#floorEdit .fb-x{font-size:.8rem;color:#777}
 </style>
 </head>
 <body>
@@ -4962,7 +4978,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     SUGG.forEach(function(s,i){h+='<button class="'+(has(s)?'on':'')+'" data-s="'+i+'">'+esc2(s)+'</button>';});
     h+='</div><div class="fb-k">Your floor ('+draft.length+' of '+MAXI+')</div>';
     draft.forEach(function(it){
-      h+='<div class="fb-row" data-id="'+esc2(it.id)+'"><input class="li fb-t" value="'+esc2(it.t)+'" placeholder="What is it?"><div class="fb-line"><input class="li fb-time" type="time" value="'+esc2(it.time||'')+'"><label><input type="checkbox" class="fb-rem"'+(it.remind?' checked':'')+'> Remind me</label><button class="fb-x">Remove</button></div></div>';
+      h+='<div class="fb-row" data-id="'+esc2(it.id)+'"><input class="li fb-t" value="'+esc2(it.t)+'" placeholder="What is it?"><div class="fb-line"><div class="fb-tw'+(it.time?'':' empty')+'"><input class="fb-time" type="time" value="'+esc2(it.time||'')+'"></div><label class="fb-rm'+(it.remind?' on':'')+'"><input type="checkbox" class="fb-rem"'+(it.remind?' checked':'')+'>Remind me</label><button class="fb-x">Remove</button></div></div>';
     });
     h+='<div class="fb-add"><input class="li" id="fbNew" placeholder="Write your own"><button id="fbAdd">Add</button></div>'
       +(draft.length>5?'<div class="fb-warn">More than five is how a floor breaks. Keep it small.</div>':'')
@@ -4976,6 +4992,11 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     if(t.id==='fbAdd'){collect();var v=document.getElementById('fbNew').value.trim();if(v&&draft.length<MAXI&&!has(v))draft.push({id:'u'+Date.now(),t:v,time:'',remind:false});bRender();return;}
     if(t.id==='fbCancel'){ed.classList.remove('on');return;}
     if(t.id==='fbSave'){collect();draft=draft.filter(function(x){return x.t;});if(!draft.length)return;save(IK,draft);ed.classList.remove('on');render();schedule();hap('success');}
+  });
+  ed.addEventListener('change',function(e){
+    var t=e.target;
+    if(t.classList.contains('fb-time')){t.parentNode.classList.toggle('empty',!t.value);if(!t.value){var r=t.closest('.fb-row').querySelector('.fb-rm');r.classList.remove('on');r.querySelector('input').checked=false;}}
+    if(t.classList.contains('fb-rem')){var row=t.closest('.fb-row'),tm=row.querySelector('.fb-time');if(t.checked&&!tm.value){tm.value='20:00';tm.parentNode.classList.remove('empty');}t.parentNode.classList.toggle('on',t.checked);}
   });
   window.floorEdit=function(){draft=(items()||[]).map(function(x){return Object.assign({},x);});bRender();ed.classList.add('on');ed.scrollTop=0;};
 
@@ -4998,5 +5019,6 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   setInterval(function(){if(curScreen==='s-morning')render();},60000);
 })();
 </script>
+<div id="ovTop"></div>
 </body>
 </html>
