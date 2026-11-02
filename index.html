@@ -627,6 +627,22 @@ body.on-morning #catchFab{bottom:calc(92px + var(--sab))}
 .fl-edit{background:none;border:0;color:#888;font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;text-decoration:underline;padding:10px 0}
 #floorEdit .fl-l{font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:#999;margin:10px 0 4px}
 #floorEdit input.li{width:100%}
+/* v46 floor builder */
+.fl-build{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.06em;background:var(--lime);color:#000;border:0;border-radius:16px;padding:14px;width:100%;margin:6px 0 10px}
+#floorEdit .fb-k{font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;color:#8a8a8a;margin:18px 0 8px}
+#floorEdit .fb-chips{display:flex;flex-wrap:wrap;gap:8px}
+#floorEdit .fb-chips button{font-family:'IBM Plex Sans',sans-serif;font-size:.88rem;font-weight:600;padding:9px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:transparent;color:#ddd}
+#floorEdit .fb-chips button.on{background:var(--lime);border-color:var(--lime);color:#000}
+#floorEdit .fb-row{background:var(--card);border-radius:16px;box-shadow:inset 0 0 0 1px var(--line);padding:12px;margin-bottom:10px}
+#floorEdit .fb-row .fb-t{width:100%;margin-bottom:8px}
+#floorEdit .fb-line{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:#aaa}
+#floorEdit .fb-line .fb-time{width:auto;min-width:110px}
+#floorEdit .fb-line label{display:flex;align-items:center;gap:6px}
+#floorEdit .fb-x{margin-left:auto;background:none;border:0;color:#888;text-decoration:underline;font:inherit}
+#floorEdit .fb-add{display:flex;gap:8px;margin-top:6px}
+#floorEdit .fb-add input{flex:1}
+#floorEdit .fb-add button{background:transparent;border:1px solid var(--lime);color:var(--lime);border-radius:14px;padding:0 18px;font-family:'IBM Plex Sans',sans-serif;font-weight:600}
+#floorEdit .fb-warn{font-family:'IBM Plex Sans',sans-serif;font-size:.82rem;color:#ff8a8a;margin-top:10px}
 </style>
 </head>
 <body>
@@ -4878,85 +4894,106 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   document.addEventListener('visibilitychange',function(){if(!document.hidden){refresh();gate();}});
   setTimeout(function(){init();subRender();gate();},2600);
 })();
-// ===== v45: The Floor (non negotiable daily minimum) =====
+// ===== v46: The Floor, built by each person =====
 (function(){
-  var FK='ladder_floor',TK='ladder_floor_times';
-  var DEFT={shutdown:'22:30',lights:'23:00',wake:'07:30'};
-  function times(){try{return Object.assign({},DEFT,JSON.parse(localStorage.getItem(TK)||'{}'));}catch(e){return Object.assign({},DEFT);}}
-  function data(){try{return JSON.parse(localStorage.getItem(FK)||'{}');}catch(e){return {};}}
-  function put(d){try{localStorage.setItem(FK,JSON.stringify(d));}catch(e){}}
-  function items(){var t=times();return [
-    ['Phone in the closet, laptop closed','by '+t.shutdown],
-    ['Head dump on paper','before bed'],
-    ['Lights out','at '+t.lights],
-    ['Up, feet on the floor','by '+t.wake],
-    ['Move for ten minutes','before 18:00']
-  ];}
+  var FK='ladder_floor',IK='ladder_floor_items',MAXI=7;
+  var SUGG=['Phone out of the bedroom','Lights out on time','Up on time','Move for ten minutes','Plan tomorrow in one line','Read ten pages','Write for ten minutes','Meditate five minutes','Drink water before coffee','Eat a proper meal'];
+  var LEGACY=[{id:'0',t:'Phone in the closet, laptop closed',time:'22:30',remind:true},{id:'1',t:'Head dump on paper',time:'',remind:false},{id:'2',t:'Lights out',time:'23:00',remind:true},{id:'3',t:'Up, feet on the floor',time:'07:30',remind:false},{id:'4',t:'Move for ten minutes',time:'',remind:false}];
+  function load(k,d){try{var v=JSON.parse(localStorage.getItem(k)||'null');return v==null?d:v;}catch(e){return d;}}
+  function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  function isExisting(){
+    try{
+      var fs=localStorage.getItem('ladder_first_seen');
+      if(!fs){localStorage.setItem('ladder_first_seen',String(Date.now()));return false;}
+      return parseInt(fs,10)<Date.parse('2026-11-02T00:00:00');
+    }catch(e){return false;}
+  }
+  function items(){
+    var it=load(IK,null);
+    if(it===null&&isExisting()){it=LEGACY.slice();save(IK,it);}
+    return it;
+  }
+  function data(){return load(FK,{});}
   function dstr(n){var d=new Date();d.setDate(d.getDate()-n);return d.toDateString();}
-  function held(k,d){var x=(d||data())[k]||{};return [0,1,2,3,4].every(function(i){return x[i];});}
-  function streak(){var d=data(),n=0,s=held(dstr(0),d)?0:1;while(held(dstr(s+n),d))n++;return n;}
+  function heldDay(k,d){var x=(d||data())[k]||{};return !!x.held||['0','1','2','3','4'].every(function(i){return x[i];});}
+  function streak(){var d=data(),n=0,s=heldDay(dstr(0),d)?0:1;while(heldDay(dstr(s+n),d))n++;return n;}
   window.floorStreak=streak;
-  function card(){
-    var host=document.getElementById('yBar');if(!host)return null;
+  function host(){
+    var h=document.getElementById('yBar');if(!h)return null;
     var c=document.getElementById('floorCard');
-    if(!c){c=document.createElement('div');c.id='floorCard';host.parentNode.insertBefore(c,host.nextSibling);}
+    if(!c){c=document.createElement('div');c.id='floorCard';h.parentNode.insertBefore(c,h.nextSibling);}
     return c;
   }
+  function esc2(s){return typeof esc==='function'?esc(s):String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   function render(){
-    var c=card();if(!c)return;
-    var d=data(),x=d[TODAY]||{},its=items(),n=0,h='';
-    its.forEach(function(it,i){if(x[i])n++;h+='<div class="fl-row'+(x[i]?' on':'')+'" data-i="'+i+'"><i></i><div class="fl-t">'+it[0]+'</div><div class="fl-s">'+it[1]+'</div></div>';});
-    var ok=n===5,st=streak();
+    var c=host();if(!c)return;
+    var its=items();
+    if(!its||!its.length){
+      c.className='fl-card';
+      c.innerHTML='<div class="fl-top"><div class="fl-k">YOUR FLOOR</div></div><div class="fl-q">The minimum you do every day, even on your worst day. Three to five small things. You choose them.</div><button class="fl-build" onclick="floorEdit()">BUILD MY FLOOR</button>';
+      return;
+    }
+    var d=data(),x=d[TODAY]||{},n=0,h='';
+    its.forEach(function(it){var on=!!x[it.id];if(on)n++;h+='<div class="fl-row'+(on?' on':'')+'" data-id="'+esc2(it.id)+'"><i></i><div class="fl-t">'+esc2(it.t)+'</div><div class="fl-s">'+esc2(it.time||'')+'</div></div>';});
+    var ok=n===its.length,st=streak();
     c.className='fl-card'+(ok?' held':'');
-    c.innerHTML='<div class="fl-top"><div class="fl-k">THE FLOOR</div><div class="fl-n">'+n+'/5'+(st>0?' · '+st+' day streak':'')+'</div></div>'
-      +(ok?'<div class="fl-big">THE FLOOR HELD.</div>':'<div class="fl-q">Five things. Every day. No negotiating.</div>')
-      +h+'<button class="fl-edit" onclick="floorEdit()">Edit times</button>';
+    c.innerHTML='<div class="fl-top"><div class="fl-k">THE FLOOR</div><div class="fl-n">'+n+'/'+its.length+(st>0?' · '+st+' day streak':'')+'</div></div>'
+      +(ok?'<div class="fl-big">THE FLOOR HELD.</div>':'<div class="fl-q">Every day. No negotiating.</div>')
+      +h+'<button class="fl-edit" onclick="floorEdit()">Edit my floor</button>';
   }
   document.addEventListener('click',function(e){
     var r=e.target.closest&&e.target.closest('#floorCard .fl-row');if(!r)return;
-    var i=+r.getAttribute('data-i'),d=data();if(!d[TODAY])d[TODAY]={};d[TODAY][i]=!d[TODAY][i];put(d);
-    hap(d[TODAY][i]?'success':'light');render();
-    if(held(TODAY,d)){hap('heavy');}
+    var id=r.getAttribute('data-id'),d=data();if(!d[TODAY])d[TODAY]={};d[TODAY][id]=!d[TODAY][id];
+    var its=items()||[];var all=its.length>0&&its.every(function(i){return d[TODAY][i.id];});
+    d[TODAY].held=all;save(FK,d);
+    hap(d[TODAY][id]?'success':'light');render();if(all)hap('heavy');
   });
   window.floorRender=render;
 
-  // edit times overlay
-  var ed=document.createElement('div');ed.id='floorEdit';ed.className='ovl';document.body.appendChild(ed);
-  window.floorEdit=function(){
-    var t=times();
-    ed.innerHTML='<h2>YOUR<br><span>TIMES.</span></h2><p>Set them once. Then they do not move.</p>'
-      +'<label class="fl-l">Phone away and laptop closed</label><input class="li" type="time" id="flS" value="'+t.shutdown+'">'
-      +'<label class="fl-l">Lights out</label><input class="li" type="time" id="flL" value="'+t.lights+'">'
-      +'<label class="fl-l">Up by</label><input class="li" type="time" id="flW" value="'+t.wake+'">'
-      +'<button class="ov-go" style="margin-top:18px" onclick="floorSave()">SAVE</button><button class="ov-skip" onclick="floorClose()">Cancel</button>';
-    ed.classList.add('on');
-  };
-  window.floorClose=function(){ed.classList.remove('on');};
-  window.floorSave=function(){
-    var t={shutdown:document.getElementById('flS').value||DEFT.shutdown,lights:document.getElementById('flL').value||DEFT.lights,wake:document.getElementById('flW').value||DEFT.wake};
-    try{localStorage.setItem(TK,JSON.stringify(t));}catch(e){}
-    floorClose();render();schedule();hap('success');
-  };
+  // builder
+  var ed=document.createElement('div');ed.id='floorEdit';ed.className='ovl';ed.style.justifyContent='flex-start';document.body.appendChild(ed);
+  var draft=[];
+  function collect(){
+    draft=[].slice.call(ed.querySelectorAll('.fb-row')).map(function(r){return {id:r.getAttribute('data-id'),t:r.querySelector('.fb-t').value.trim(),time:r.querySelector('.fb-time').value||'',remind:r.querySelector('.fb-rem').checked};});
+  }
+  function has(t){return draft.some(function(x){return x.t.toLowerCase()===t.toLowerCase();});}
+  function bRender(){
+    var h='<h2>BUILD YOUR<br><span>FLOOR.</span></h2><p>The minimum you do every day, even on your worst day. Small enough that you never skip it. Three to five things.</p><div class="fb-k">Tap to add</div><div class="fb-chips">';
+    SUGG.forEach(function(s,i){h+='<button class="'+(has(s)?'on':'')+'" data-s="'+i+'">'+esc2(s)+'</button>';});
+    h+='</div><div class="fb-k">Your floor ('+draft.length+' of '+MAXI+')</div>';
+    draft.forEach(function(it){
+      h+='<div class="fb-row" data-id="'+esc2(it.id)+'"><input class="li fb-t" value="'+esc2(it.t)+'" placeholder="What is it?"><div class="fb-line"><input class="li fb-time" type="time" value="'+esc2(it.time||'')+'"><label><input type="checkbox" class="fb-rem"'+(it.remind?' checked':'')+'> Remind me</label><button class="fb-x">Remove</button></div></div>';
+    });
+    h+='<div class="fb-add"><input class="li" id="fbNew" placeholder="Write your own"><button id="fbAdd">Add</button></div>'
+      +(draft.length>5?'<div class="fb-warn">More than five is how a floor breaks. Keep it small.</div>':'')
+      +'<button class="ov-go" style="margin-top:20px" id="fbSave">SAVE MY FLOOR</button><button class="ov-skip" id="fbCancel">Cancel</button>';
+    var sc=ed.scrollTop;ed.innerHTML=h;ed.scrollTop=sc;
+  }
+  ed.addEventListener('click',function(e){
+    var t=e.target;
+    if(t.closest('.fb-chips button')){collect();var s=SUGG[+t.closest('button').getAttribute('data-s')];var i=draft.findIndex(function(x){return x.t.toLowerCase()===s.toLowerCase();});if(i>-1)draft.splice(i,1);else if(draft.length<MAXI)draft.push({id:'u'+Date.now()+Math.floor(Math.random()*99),t:s,time:'',remind:false});bRender();return;}
+    if(t.classList.contains('fb-x')){collect();var id=t.closest('.fb-row').getAttribute('data-id');draft=draft.filter(function(x){return x.id!==id;});bRender();return;}
+    if(t.id==='fbAdd'){collect();var v=document.getElementById('fbNew').value.trim();if(v&&draft.length<MAXI&&!has(v))draft.push({id:'u'+Date.now(),t:v,time:'',remind:false});bRender();return;}
+    if(t.id==='fbCancel'){ed.classList.remove('on');return;}
+    if(t.id==='fbSave'){collect();draft=draft.filter(function(x){return x.t;});if(!draft.length)return;save(IK,draft);ed.classList.remove('on');render();schedule();hap('success');}
+  });
+  window.floorEdit=function(){draft=(items()||[]).map(function(x){return Object.assign({},x);});bRender();ed.classList.add('on');ed.scrollTop=0;};
 
-  // notifications
-  function hm(s){var p=s.split(':');return {h:+p[0],m:+p[1]};}
-  function minus(s,mins){var o=hm(s),t=((o.h*60+o.m-mins)%1440+1440)%1440;return {h:Math.floor(t/60),m:t%60};}
+  // reminders per item
   async function schedule(){
     var ln=lnPlugin();if(!ln)return;
     try{
+      var list=(items()||[]).filter(function(x){return x.time&&x.remind;});
+      var ids=[{id:30},{id:31},{id:32}];for(var i=40;i<50;i++)ids.push({id:i});
+      await ln.cancel({notifications:ids});
+      if(!list.length)return;
       var p=await ln.checkPermissions();if(p.display!=='granted'){p=await ln.requestPermissions();if(p.display!=='granted')return;}
-      await ln.cancel({notifications:[{id:30},{id:31},{id:32}]});
-      var t=times(),a=minus(t.shutdown,15),b=hm(t.shutdown),c=hm(t.lights);
-      await ln.schedule({notifications:[
-        {id:30,title:'LADDER',body:'Fifteen minutes to shutdown. Finish what you are doing.',schedule:{on:{hour:a.h,minute:a.m},allowWhileIdle:true}},
-        {id:31,title:'LADDER',body:'Phone in the closet. Laptop closed. Head dump on paper.',schedule:{on:{hour:b.h,minute:b.m},allowWhileIdle:true}},
-        {id:32,title:'LADDER',body:'Lights out.',schedule:{on:{hour:c.h,minute:c.m},allowWhileIdle:true}}
-      ]});
-      localStorage.setItem('ladder_floor_sched','1');
+      await ln.schedule({notifications:list.map(function(it,i){var tm=it.time.split(':');return {id:40+i,title:'LADDER',body:it.t,schedule:{on:{hour:+tm[0],minute:+tm[1]},allowWhileIdle:true}};})});
+      localStorage.setItem('ladder_floor_sched','2');
     }catch(e){}
   }
   window.floorSchedule=schedule;
-  setTimeout(function(){render();try{if(!localStorage.getItem('ladder_floor_sched'))schedule();}catch(e){}},1800);
+  setTimeout(function(){render();try{if(localStorage.getItem('ladder_floor_sched')!=='2'&&(items()||[]).length)schedule();}catch(e){}},1800);
   var _g=goTo;goTo=function(id){_g(id);if(id==='s-morning')render();};
   setInterval(function(){if(curScreen==='s-morning')render();},60000);
 })();
