@@ -706,6 +706,8 @@ body:has(.ovl.on) #tmStrip{display:none!important}
 .cp-rt{flex:1;font-size:.98rem;line-height:1.35}
 .cp-tag{font-family:'Bebas Neue',sans-serif;letter-spacing:.08em;color:var(--lime);font-size:1rem}
 .cp-card.held{border-color:rgba(212,240,0,.7);background:#161a0a}
+.cp-btn.ghost.lime{border-color:rgba(212,240,0,.5);color:var(--lime);margin:12px 0 10px}
+.cp-btn:disabled{opacity:.5}
 </style>
 </head>
 <body>
@@ -5163,7 +5165,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   }
   function moreIdeas(){var o=goalIdeas().slice(0,4);['Sort my Drafts for 15 minutes','Move for 20 minutes','Read my goals out loud','Close one open loop'].forEach(function(x){o.push(x);});var seen={},r=[];o.forEach(function(x){if(!seen[x]){seen[x]=1;r.push(x);}});return r.slice(0,6);}
   function chips(list,fn){var h='<div class="cp-chips">';list.forEach(function(x,i){h+='<button class="cp-chip" onclick="'+fn+'('+i+')">'+E(x)+'</button>';});return h+'</div>';}
-  var ideas=[];
+  var ideas=[],opts=[],asking=false;
   function render(force){
     var host=document.getElementById('complainCard');if(!host)return;
     var st=complainState(),w=wp(),sig=st.s+(st.s==='closed'?':'+(w?w.step+(w.d?w.d.join(''):''):'-'):'');
@@ -5181,9 +5183,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
       var Q=['What exactly is bothering me?','What do I actually want?','What am I avoiding?'];
       host.innerHTML='<div class="cp-card run"><div class="cp-k">Step 1 of 3</div><div class="cp-q">Three questions. Honest, not neat.</div>'+Q.map(function(q,i){return '<div class="cp-lab">'+q+'</div><textarea class="cp-ta s" id="wq'+i+'" oninput="wpAns('+i+',this.value)">'+E((w.a||[])[i]||'')+'</textarea>';}).join('')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpToAction()">NEXT: ONE ACTION</button></div>';
     }else if(w.step==='a'){
-      var kinds=[['conversation','Conversation'],['question','Question'],['decision','Decision']];
-      pickKind=w.kind||pickKind||'conversation';ideas=hardIdeas(w,pickKind);
-      host.innerHTML='<div class="cp-card run"><div class="cp-k">Step 2 of 3</div><div class="cp-q">Pick one action. It becomes your hard task and the first thing you do.</div><div class="cp-kinds">'+kinds.map(function(k){return '<button class="cp-kind'+(pickKind===k[0]?' on':'')+'" onclick="wpKind(\''+k[0]+'\')">'+k[1]+'</button>';}).join('')+'</div><textarea class="cp-ta s" id="wHard" placeholder="The one action" oninput="wpHard(this.value)">'+E(w.hard||'')+'</textarea><div class="cp-lab">Ideas from your answers and goals</div>'+chips(ideas,'wpIdeaH')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpToMore()">THIS IS MY HARD TASK</button></div>';
+      host.innerHTML='<div class="cp-card run"><div class="cp-k">Step 2 of 3</div><div class="cp-q">Pick one action. It becomes your hard task and the first thing you do. Write it yourself or ask for ideas.</div><textarea class="cp-ta s" id="wHard" placeholder="The one action" oninput="wpHard(this.value)">'+E(w.hard||'')+'</textarea><button class="cp-btn ghost lime" id="cpIdeaBtn" onclick="wpAsk()">'+(opts.length?'MORE IDEAS':'GIVE ME IDEAS')+'</button>'+(opts.length?chips(opts,'wpIdeaH'):'')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpToMore()">THIS IS MY HARD TASK</button></div>';
     }else if(w.step==='t'){
       ideas=moreIdeas();
       host.innerHTML='<div class="cp-card run"><div class="cp-k">Step 3 of 3</div><div class="cp-q">Two more things to go home satisfied. Three total, hard task first.</div><div class="cp-row hard"><span class="cp-tag">HARD</span><span class="cp-rt">'+E(w.hard)+'</span></div><input class="cp-in" id="wT0" placeholder="Second thing" value="'+E((w.t||[])[0]||'')+'" oninput="wpT(0,this.value)"><input class="cp-in" id="wT1" placeholder="Third thing" value="'+E((w.t||[])[1]||'')+'" oninput="wpT(1,this.value)"><div class="cp-lab">Ideas</div>'+chips(ideas,'wpIdeaT')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpLock()">LOCK IN THREE</button></div>';
@@ -5200,9 +5200,23 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   window.wpGo=function(st){msg='';setW(function(w){w.step=st;});render(true);};
   window.wpAns=function(i,v){setW(function(w){w.a=w.a||['','',''];w.a[i]=v;});};
   window.wpToAction=function(){var w=wp()||{a:[]};var ok=[0,1,2].every(function(i){return ((w.a||[])[i]||'').trim().length>1;});if(!ok){msg='Answer all three. Short is fine.';var e=document.getElementById('cpErr');if(e)e.textContent=msg;return;}msg='';setW(function(w){w.step='a';});render(true);if(window.hap)hap('light');};
-  window.wpKind=function(k){pickKind=k;setW(function(w){w.kind=k;});render(true);};
+  window.wpAsk=async function(){
+    if(asking)return;var w=wp();if(!w)return;asking=true;var btn=document.getElementById('cpIdeaBtn');if(btn){btn.textContent='THINKING...';btn.disabled=true;}
+    var fb=function(){var g=goalIdeas().slice(0,2),o=['Say the one thing I have been avoiding to the person it concerns','Take a 20 minute walk without my phone','Write down the decision I keep postponing and pick one','Close one open loop that has been sitting for days'];return g.concat(o).slice(0,4);};
+    try{
+      var goals=[];try{loadGoals().forEach(function(x){if(x.outcome)goals.push(x.outcome);(x.actions||[]).forEach(function(y){if(y.text)goals.push(y.text);});});}catch(e){}
+      var ctl=new AbortController();var to=setTimeout(function(){ctl.abort();},15000);
+      var r=await fetch(API_BASE+'/api/suggest-actions',{method:'POST',headers:ladderHeaders(),signal:ctl.signal,body:JSON.stringify({answers:w.a,complaint:(localStorage.getItem(tkey())||''),goals:goals,current:w.hard||'',hour:new Date().getHours()})});
+      clearTimeout(to);
+      if(!r.ok)throw new Error('http '+r.status);
+      var d=await r.json();var txt=(d.content||[]).map(function(i){return i.type==='text'?i.text:'';}).join('').replace(/```json|```/g,'').trim();
+      var p=JSON.parse(txt);opts=(p.options||[]).filter(function(x){return typeof x==='string'&&x.trim();}).slice(0,4);
+      if(!opts.length)throw new Error('empty');msg='';
+    }catch(e){opts=fb();msg='Offline or busy. Here are simple ones.';}
+    asking=false;render(true);
+  };
   window.wpHard=function(v){setW(function(w){w.hard=v;});};
-  window.wpIdeaH=function(i){var v=ideas[i];setW(function(w){w.hard=v;});render(true);};
+  window.wpIdeaH=function(i){var v=opts[i];setW(function(w){w.hard=v;});render(true);};
   window.wpToMore=function(){var w=wp();if(!w||!(w.hard||'').trim()){msg='Write the one action first.';var e=document.getElementById('cpErr');if(e)e.textContent=msg;return;}msg='';setW(function(w){w.step='t';});render(true);};
   window.wpT=function(i,v){setW(function(w){w.t=w.t||['',''];w.t[i]=v;});};
   window.wpIdeaT=function(i){var v=ideas[i];setW(function(w){w.t=w.t||['',''];if(!(w.t[0]||'').trim())w.t[0]=v;else w.t[1]=v;});render(true);};
