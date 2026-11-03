@@ -678,6 +678,17 @@ body:has(.ovl.on) #tmStrip{display:none!important}
 .tm-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
 .tm-t{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;letter-spacing:.05em;color:var(--lime)}
 .tm-chip.late .tm-t{color:var(--red)}
+#complainCard{margin-bottom:32px}
+.cp-card{border:1px solid rgba(255,255,255,.12);border-radius:18px;background:#121212;padding:16px 16px 18px}
+.cp-card.run{border-color:rgba(212,240,0,.55);background:#141808}
+.cp-card.closed{opacity:.75}
+.cp-k{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.14em;color:#8c8c8c;text-transform:uppercase}
+.cp-q{font-family:'IBM Plex Sans',sans-serif;font-size:1.05rem;color:#fff;margin:8px 0 14px;line-height:1.4}
+.cp-big{font-family:'Bebas Neue',sans-serif;font-size:3.4rem;line-height:1;color:var(--lime);letter-spacing:.04em}
+.cp-btn{width:100%;padding:14px;border-radius:14px;border:0;background:var(--lime);color:#000;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:.08em}
+.cp-btn.ghost{background:none;border:1px solid rgba(255,255,255,.18);color:#bbb;font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;letter-spacing:0;margin-top:10px;padding:11px}
+.cp-ta{width:100%;min-height:110px;margin-top:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:'IBM Plex Sans',sans-serif;font-size:.95rem;padding:12px;outline:none;resize:none;box-sizing:border-box}
+.cp-done{font-family:'IBM Plex Sans',sans-serif;color:#bbb;font-size:.95rem;line-height:1.45;margin-top:6px}
 </style>
 </head>
 <body>
@@ -703,10 +714,7 @@ body:has(.ovl.on) #tmStrip{display:none!important}
     <div class="idstmt" id="idStmt">Someone who does<br>what he <span class="acc">says.</span></div>
 
     <div class="aff" data-set="am"></div>
-    <div class="lbl" style="margin-bottom:8px">What will you want today that you won't give in to?
-      <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tw2')">i</span><div class="tip-box" id="tw2" style="text-transform:none;">One thing you'll probably want today that won't take you where you're going. Decide now, before the want shows up.</div></span>
-    </div>
-    <input class="li" id="refuseToday" type="text" placeholder="the one thing I refuse today" oninput="S.refuseToday=this.value;save();" style="margin-bottom:32px">
+    <div id="complainCard"></div>
 
     <div class="lbl" style="margin-bottom:8px">What do you need to do today to go home satisfied?
       <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tw1')">i</span><div class="tip-box" id="tw1">One thing. Not a list. The one thing that, if you do it, makes today count.</div></span>
@@ -3068,7 +3076,7 @@ function goTo(id){
     document.getElementById('mGreet').innerHTML=g+'<br>Are you <em>ready?</em>';
     setIdentity();
     document.getElementById('todayWord').value=S.todayWord||'';
-    document.getElementById('refuseToday').value=S.refuseToday||'';
+    if(window.complainRender)complainRender();
     renderPlan();
     buildYBar();
   }
@@ -4131,7 +4139,7 @@ setTimeout(function(){try{var t=S.todayTask;liveDiag('boot check task='+(t&&t.st
 // ---- tutorial ----
 var TOUR=[
  {ic:'s-ladder',k:'Welcome',h:'Do what you <em>said</em> you would do.',p:'LADDER is one daily loop: <b>morning, work, evening</b>. It takes a minute to learn. Tap Next.'},
- {ic:'s-morning',k:'1. Morning',h:'Start the <em>day</em> here.',p:'Say your line out loud and <b>tap I said it</b>. Write what you will not give in to. Set <b>one task with a deadline</b> and press start: the countdown follows you on your lock screen.'},
+ {ic:'s-morning',k:'1. Morning',h:'Start the <em>day</em> here.',p:'Say your line out loud and <b>tap I said it</b>. Take your five minutes to complain, then stop. Set <b>one task with a deadline</b> and press start: the countdown follows you on your lock screen.'},
  {ic:'s-goals',k:'2. Goals',h:'Where you are <em>going.</em>',p:'Each goal has an outcome with a date and <b>daily actions</b>. Actions with a time have a <b>timer</b>. Start it and it counts down outside the app too. Check in every Sunday.'},
  {ic:'s-wiring',k:'3. Wiring',h:'Sit with <em>nothing.</em>',p:'Pick 3, 5 or 10 minutes and do nothing. No phone, no music. Your <b>unbreakable rules</b> and km debt live here as well. Break a rule, add km. Pay it back.'},
  {ic:'fab',k:'Anytime',h:'The <em>I feel it</em> button.',p:'When you want to quit, scroll or chase the result, tap <b>I FEEL IT</b> at the bottom right. It walks you through the urge in under a minute. On the Goals screen, the <b>Art of detachment</b> chip does the same for outcome stress.'},
@@ -4159,7 +4167,7 @@ function coachFindRules(){var l=[].slice.call(document.querySelectorAll('#s-wiri
 var COACH=[
  {screen:'s-morning',k:'Welcome',h:'Do what you <em>said</em> you would do.',p:'LADDER is one daily loop: <b>morning, work, evening</b>. I will show you around on the real screens. Use the bar at the bottom to move between them.'},
  {screen:'s-morning',sel:'.aff[data-set="am"]',k:'Morning',h:'Say it <em>out loud.</em>',p:'Read the line out loud, then tap <b>I said it</b>. Three a day. Tap <b>Another line</b> or write your own.'},
- {screen:'s-morning',sel:'#refuseToday',k:'Morning',h:'What will you <em>not</em> give in to?',p:'Write it before the day tests you. Naming it makes it easier to hold.'},
+ {screen:'s-morning',sel:'#complainCard',k:'Morning',h:'Five minutes to <em>complain</em>.',p:'Get it all out, out loud or on paper. When the clock ends, the window closes and you do not complain again today.'},
  {screen:'s-morning',sel:'#planForm',k:'Morning',h:'One task. One <em>deadline.</em>',p:'Pick the first task and when it must be done, then press start. The countdown follows you on your <b>lock screen</b> and in the Dynamic Island.'},
  {screen:'s-goals',sel:'#goalsList',k:'Goals',h:'Where you are <em>going.</em>',p:'Each goal has an outcome with a date and daily actions. Actions with a time have a <b>timer</b>. Start one and it also counts down outside the app. Check in every Sunday.'},
  {screen:'s-goals',sel:'.chip-det',k:'Goals',h:'The art of <em>detachment.</em>',p:'You cannot control the result: the sale, the reply, the number on the scale. You can only control the work. When you catch yourself stressing about the result, tap this. It sends you back to the work.'},
@@ -5067,6 +5075,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
       var ft=loadFreeTimerState(tp.id);if(!ft.running)return;var el=timerElapsedSec(ft);
       L.push({id:'f'+tp.id,title:tp.name,start:now-el*1000,deadline:now-el*1000+tp.minutes*60000,screen:fsc?fsc.id:'s-goals'});
     });}catch(e){}
+    try{var cs=complainState();if(cs.s==='run')L.push({id:'complain',title:'Complain window',start:cs.c.start,deadline:cs.c.start+300000,screen:'s-morning'});}catch(e){}
     try{if(typeof wiringInterval!=='undefined'&&wiringInterval&&wiringEndsAt)L.push({id:'wiring',title:'Wiring',start:wiringEndsAt-wiringDurMin*60000,deadline:wiringEndsAt,screen:'s-wiring'});}catch(e){}
     return L;
   }
@@ -5086,7 +5095,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   liveEnd=function(){setTimeout(function(){sync(false);},50);};
   var el=document.createElement('div');el.id='tmStrip';document.body.appendChild(el);
   function strip(L){
-    var X=L.filter(function(x){return x.id!=='plan';}),boot=document.getElementById('s-boot')&&document.getElementById('s-boot').classList.contains('active');
+    var X=L.filter(function(x){return x.id!=='plan'&&x.screen!==curScreen;}),boot=document.getElementById('s-boot')&&document.getElementById('s-boot').classList.contains('active');
     if(!X.length||boot){el.innerHTML='';el.style.display='none';return;}
     el.style.display='flex';
     var now=Date.now(),h='';
@@ -5104,6 +5113,42 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
 
 
 
+
+/* v61 complaint window */
+(function(){
+  var DUR=5*60*1000;
+  function key(){return 'ladder_complain_'+TODAY;}
+  function tkey(){return 'ladder_complain_txt_'+TODAY;}
+  function get(){try{return JSON.parse(localStorage.getItem(key())||'null');}catch(e){return null;}}
+  function put(v){try{localStorage.setItem(key(),JSON.stringify(v));}catch(e){}}
+  window.complainState=function(){var c=get();if(!c)return {s:'idle'};if(c.done||Date.now()>=c.start+DUR)return {s:'closed',c:c};return {s:'run',c:c,left:c.start+DUR-Date.now()};};
+  var shown='';
+  function render(force){
+    var host=document.getElementById('complainCard');if(!host)return;
+    var st=complainState(),sig=st.s;
+    if(!force&&shown===sig&&sig!=='run')return;
+    if(sig==='run'&&shown==='run'&&!force){tickEl();return;}
+    shown=sig;
+    var txt='';try{txt=localStorage.getItem(tkey())||'';}catch(e){}
+    if(sig==='idle'){
+      host.innerHTML='<div class="cp-card"><div class="cp-k">Complain window</div><div class="cp-q">What is bothering you right now? You get five minutes to say all of it. Then it is closed for the day.</div><button class="cp-btn" onclick="complainStart()">START 5 MIN</button></div>';
+    }else if(sig==='run'){
+      host.innerHTML='<div class="cp-card run"><div class="cp-k">Complain window open</div><div class="cp-big" id="cpClock">'+fmt(st.left)+'</div><textarea class="cp-ta" id="cpTxt" placeholder="Everything that annoys you. Out loud or here. Go." oninput="complainSave(this.value)">'+(typeof esc==='function'?esc(txt):txt)+'</textarea><button class="cp-btn ghost" onclick="complainEnd()">I am done early</button></div>';
+    }else{
+      host.innerHTML='<div class="cp-card closed"><div class="cp-k">Complain window</div><div class="cp-done">Closed. You said it. No more complaining today. If it comes back, it goes to tomorrow.</div></div>';
+    }
+  }
+  function fmt(ms){var s=Math.max(0,Math.ceil(ms/1000));return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2);}
+  function tickEl(){var st=complainState();if(st.s!=='run'){render(true);if(window.hap)hap('success');if(window.timerHubSync)timerHubSync(false);return;}var e=document.getElementById('cpClock');if(e)e.textContent=fmt(st.left);}
+  window.complainStart=function(){if(get())return;put({start:Date.now(),done:false});render(true);if(window.hap)hap('heavy');notify(true);if(window.timerHubSync)timerHubSync(false);};
+  window.complainEnd=function(){var c=get();if(!c)return;c.done=true;put(c);render(true);notify(false);if(window.hap)hap('success');if(window.timerHubSync)timerHubSync(false);};
+  window.complainSave=function(v){try{localStorage.setItem(tkey(),v);}catch(e){}};
+  async function notify(on){try{var ln=lnPlugin();if(!ln)return;await ln.cancel({notifications:[{id:50}]});if(!on)return;var p=await ln.checkPermissions();if(p.display!=='granted'){p=await ln.requestPermissions();if(p.display!=='granted')return;}await ln.schedule({notifications:[{id:50,title:'LADDER',body:'Complain window closed. No more today.',schedule:{at:new Date(Date.now()+DUR),allowWhileIdle:true}}]});}catch(e){}}
+  window.complainRender=function(){shown='';render(true);};
+  setInterval(function(){render(false);},1000);
+  setTimeout(function(){render(true);},600);
+  var _g3=goTo;goTo=function(id){_g3(id);if(id==='s-morning')setTimeout(function(){render(true);},50);};
+})();
 </script>
 <div id="ovTop"></div>
 </body>
