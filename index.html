@@ -712,6 +712,8 @@ body:has(.ovl.on) #tmStrip{display:none!important}
 .cp-links button{background:none;border:1px solid rgba(255,255,255,.14);border-radius:999px;color:#aaa;font-family:'IBM Plex Sans',sans-serif;font-size:.78rem;padding:7px 12px}
 #wpHist{padding:calc(20px + env(safe-area-inset-top)) 20px 40px;overflow-y:auto}
 #wpHist .fs-h{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;line-height:1;color:#fff;margin:28px 0 18px}
+body.wp-on #oldWord,body.wp-on #oldFirst{display:none}
+body.wp-on.wp-pick #oldFirst{display:block}
 </style>
 </head>
 <body>
@@ -739,11 +741,14 @@ body:has(.ovl.on) #tmStrip{display:none!important}
     <div class="aff" data-set="am"></div>
     <div id="complainCard"></div>
 
+    <div id="oldWord">
     <div class="lbl" style="margin-bottom:8px">What do you need to do today to go home satisfied?
       <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tw1')">i</span><div class="tip-box" id="tw1">One thing. Not a list. The one thing that, if you do it, makes today count.</div></span>
     </div>
     <input class="li" id="todayWord" type="text" placeholder="the one thing that matters today" style="margin-bottom:24px">
+    </div>
 
+    <div id="oldFirst">
     <div class="lbl" style="margin-bottom:8px">First task, and by when
       <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tw3')">i</span><div class="tip-box" id="tw3" style="text-transform:none;">Not a time block. One specific thing to finish, with a deadline. An hour can pass and feel like work. A task either gets done, or it didn't.</div></span>
     </div>
@@ -755,6 +760,7 @@ body:has(.ovl.on) #tmStrip{display:none!important}
       </div>
       <div class="bychips"><button type="button" onclick="byIn(30)">in 30 min</button><button type="button" onclick="byIn(60)">in 1 hour</button><button type="button" onclick="byIn(120)">in 2 hours</button></div>
       <div id="planMsg" style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--muted);min-height:14px;"></div>
+    </div>
     </div>
     <div id="planRun" style="display:none;border-left:2px solid var(--lime);padding:4px 0 4px 14px;">
       <div id="planRunText" style="font-family:'IBM Plex Mono',monospace;font-size:0.9rem;color:var(--white);line-height:1.5;margin-bottom:6px;"></div>
@@ -5172,7 +5178,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   var ideas=[],opts=[],asking=false;
   function render(force){
     var host=document.getElementById('complainCard');if(!host)return;
-    var st=complainState(),w=wp(),sig=st.s+(st.s==='closed'?':'+(cEdit?'ce':'')+(rArmed?'ra':'')+(w?w.step+(w.edit?'e':'')+(w.d?w.d.join(''):''):'-'):'');
+    var st=complainState(),w=wp();document.body.classList.toggle('wp-on',!!(st.s==='closed'&&w&&w.step==='done'&&!cEdit));if(!(st.s==='closed'&&w&&w.step==='done'))document.body.classList.remove('wp-pick');var sig=st.s+(st.s==='closed'?':'+(cEdit?'ce':'')+(rArmed?'ra':'')+(w?w.step+(w.edit?'e':'')+(w.d?w.d.join(''):'')+((S.todayTask&&S.todayTask.startedAt)?'p':''):'-'):'');
     if(!force&&shown===sig&&st.s!=='run')return;
     if(st.s==='run'&&shown==='run'&&!force){tickEl();return;}
     shown=st.s==='run'?'run':sig;
@@ -5200,7 +5206,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
       var rows='<div class="cp-row hard'+(d[0]?' on':'')+'" onclick="wpTick(0)"><i></i><span class="cp-rt">'+E(w.hard)+'</span><span class="cp-tag">HARD</span></div>';
       ex.forEach(function(e){rows+='<div class="cp-row'+(d[e[1]]?' on':'')+'" onclick="wpTick('+e[1]+')"><i></i><span class="cp-rt">'+E(e[0])+'</span></div>';});
       if(gts.length){rows+='<div class="cp-lab">Then your goal tasks</div>';gts.forEach(function(g){rows+='<div class="cp-row'+(g.on?' on':'')+'" onclick="goTo(\'s-goals\')"><i></i><span class="cp-rt">'+E(g.t)+'</span></div>';});}
-      host.innerHTML='<div class="cp-card'+(all?' held':' run')+'"><div class="cp-k">Today</div>'+rows+(all?'<div class="cp-done" style="margin-top:10px">All done. Today counts.</div>':'')+(!all&&!d[0]&&!(S.todayTask&&S.todayTask.startedAt)?'<button class="cp-btn" style="margin-top:14px" onclick="wpStartHard()">START HARD TASK NOW</button>':'')+'<div class="cp-links"><button onclick="wpEdit(\'q\')">Edit answers</button><button onclick="wpEdit(\'a\')">Edit hard task</button><button onclick="wpEdit(\'t\')">Add extras</button><button onclick="complainEdit()">Edit complaints</button><button onclick="wpReset()">'+(rArmed?'Tap again: new 5 minutes':'Start over')+'</button><button onclick="wpHistOpen()">Past days</button></div></div>';
+      host.innerHTML='<div class="cp-card'+(all?' held':' run')+'"><div class="cp-k">Today</div>'+rows+(all?'<div class="cp-done" style="margin-top:10px">All done. Today counts.</div>':'')+(!all&&!d[0]&&!(S.todayTask&&S.todayTask.startedAt)?'<div class="cp-lab">Start the hard task now. Finish it by</div><div class="cp-kinds"><button class="cp-kind" onclick="wpGoIn(30)">30 min</button><button class="cp-kind" onclick="wpGoIn(60)">1 hour</button><button class="cp-kind" onclick="wpGoIn(120)">2 hours</button><button class="cp-kind" onclick="wpPick()">Pick time</button></div>':'')+'<div class="cp-links"><button onclick="wpEdit(\'q\')">Edit answers</button><button onclick="wpEdit(\'a\')">Edit hard task</button><button onclick="wpEdit(\'t\')">Add extras</button><button onclick="complainEdit()">Edit complaints</button><button onclick="wpReset()">'+(rArmed?'Tap again: new 5 minutes':'Start over')+'</button><button onclick="wpHistOpen()">Past days</button></div></div>';
     }
   }
   function tickEl(){var st=complainState();if(st.s!=='run'){render(true);if(window.hap)hap('success');if(window.timerHubSync)timerHubSync(false);return;}var e=document.getElementById('cpClock');if(e)e.textContent=fmt(st.left);}
@@ -5265,6 +5271,8 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   window.wpHistClose=function(){hist.classList.remove('on');};
   window.wpHistDel=function(day){if(armed!==day){armed=day;histRender();setTimeout(function(){if(armed===day){armed='';if(hist.classList.contains('on'))histRender();}},3000);return;}armed='';try{localStorage.removeItem('ladder_wp_'+day);localStorage.removeItem('ladder_complain_txt_'+day);}catch(e){}histRender();};
   window.wpTick=function(i){setW(function(w){w.d=w.d||[false,false,false];w.d[i]=!w.d[i];});render(true);if(window.hap)hap('light');};
+  window.wpGoIn=function(min){var w=wp();if(!w)return;var t=document.getElementById('todayTask');if(t)t.value=w.hard;byIn(min);startPlan();render(true);if(window.hap)hap('heavy');};
+  window.wpPick=function(){document.body.classList.add('wp-pick');var w=wp();var t=document.getElementById('todayTask');if(t&&w)t.value=w.hard;try{t.scrollIntoView({block:'center',behavior:'smooth'});}catch(e){}};
   window.wpStartHard=function(){var w=wp();if(!w)return;var t=document.getElementById('todayTask');if(t){t.value=w.hard;}try{var b=document.getElementById('tbH');if(b)b.scrollIntoView({block:'center',behavior:'smooth'});}catch(e){}if(window.hap)hap('light');};
   var _dp=window.donePlan;window.donePlan=function(){var t=S.todayTask&&S.todayTask.text,r=_dp.apply(this,arguments);try{var w=wp();if(w&&w.step==='done'&&t&&t===w.hard&&!w.d[0]){w.d[0]=true;jput(wkey(),w);render(true);}}catch(e){}return r;};
   async function notify(on){try{var ln=lnPlugin();if(!ln)return;await ln.cancel({notifications:[{id:50}]});if(!on)return;var p=await ln.checkPermissions();if(p.display!=='granted'){p=await ln.requestPermissions();if(p.display!=='granted')return;}await ln.schedule({notifications:[{id:50,title:'LADDER',body:'Complain window closed. Now the three questions.',schedule:{at:new Date(Date.now()+DUR),allowWhileIdle:true}}]});}catch(e){}}
