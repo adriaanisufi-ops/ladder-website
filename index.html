@@ -4528,7 +4528,7 @@ function closeLookBack(){var l=document.getElementById('lookBack');if(l)l.classL
       if(first>=new Date(dstr(1)).getTime())return;
       var n=0;while(isWin(dstr(2+n)))n++;
       document.getElementById('mdText').textContent=(n>0?'Your streak was '+n+' day'+(n===1?'':'s')+'. It stopped there. ':'Yesterday is gone. ')+'What counts now is today. One task, one deadline.';
-      md.classList.add('on');hap('heavy');
+      md.classList.add('on');hap('heavy');if(window.soundCue)soundCue('low');
     }catch(e){}
   }
   window.missedCheck=missedCheck;
@@ -5001,7 +5001,8 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     var id=r.getAttribute('data-id'),d=data();if(!d[TODAY])d[TODAY]={};d[TODAY][id]=!d[TODAY][id];
     var its=items()||[];var all=its.length>0&&its.every(function(i){return d[TODAY][i.id];});
     d[TODAY].held=all;save(FK,d);
-    hap(d[TODAY][id]?'success':'light');render();if(all)hap('heavy');
+    hap(d[TODAY][id]?'success':'light');render();if(all){hap('heavy');if(window.soundCue)soundCue('bowl');}
+    try{var it0=its.filter(function(i){return i.id===id;})[0];if(d[TODAY][id]&&it0&&/lights?\s*out|sleep|bed/i.test(it0.t)&&window.soundSet&&!(window.soundAny&&soundAny())){soundSet('rain',true);soundSleep(30);}}catch(e){}
   });
   window.floorRender=render;
 
@@ -5135,9 +5136,10 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     h+='<div class="snd-lab">VOLUME</div><input id="sndVol" type="range" min="5" max="100" value="'+Math.round(st.vol*100)+'" oninput="soundVol(this.value)">';
     h+='<div class="snd-lab">STOP AFTER</div><div class="snd-pills">';
     [[0,'No timer'],[15,'15 min'],[30,'30 min'],[60,'60 min']].forEach(function(p){var act=(p[0]===0&&!sleepAt)||(sleepAt&&p[0]&&Math.abs((sleepAt-Date.now())/60000-p[0])<1.2);h+='<button class="snd-pill'+(act?' on':'')+'" onclick="soundSleep('+p[0]+')">'+p[1]+'</button>';});
-    h+='</div>';if(on)h+='<button class="snd-stop" onclick="soundStop()">Stop all</button>';
+    h+='</div>';h+='<div class="snd-lab">CUES</div><button class="snd-row'+(window.soundCue&&soundCue.get()?' on':'')+'" onclick="soundCue.set(!soundCue.get());soundOpen()"><span class="snd-t">Calm cues</span><span class="snd-d">A soft bowl when you finish. A low tone when you missed.</span><span class="snd-s">'+(window.soundCue&&soundCue.get()?'ON':'OFF')+'</span></button>';if(on)h+='<button class="snd-stop" onclick="soundStop()">Stop all</button>';
     sheet.innerHTML=h;
   }
+  window.soundSet=setLayer;window.soundAny=anyOn;
   window.soundOpen=function(){paint();sheet.classList.add('on');sheet.scrollTop=0;if(window.hap)hap('light');};
   window.soundClose=function(){sheet.classList.remove('on');};
   window.soundToggle=function(n){setLayer(n,!st.on[n]);if(window.hap)hap('light');};
@@ -5147,6 +5149,23 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   function place(){var f=document.getElementById('floorChip');var w=f&&f.offsetWidth?f.offsetWidth:96;chip.style.right=(52+w+8)+'px';chip.style.display=(f&&f.style.display==='block')?'flex':'none';}
   var _g2=goTo;goTo=function(id){_g2(id);setTimeout(place,60);};
   setInterval(place,1500);setTimeout(place,800);paint();
+})();
+
+/* v53 calm cues */
+(function(){
+  var AC=window.AudioContext||window.webkitAudioContext,c=null;
+  function on(){try{return localStorage.getItem('ladder_cues')!=='0';}catch(e){return true;}}
+  function ctx(){if(!AC)return null;if(!c)c=new AC();if(c.state==='suspended')c.resume();return c;}
+  function partial(f,t,dur,vol,type){var x=c,o=x.createOscillator(),g=x.createGain();o.type=type||'sine';o.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);g.connect(x.destination);o.start(t);o.stop(t+dur+.05);}
+  function cue(k){
+    if(!on()||!ctx())return;var t=c.currentTime+.02;
+    if(k==='bowl'){[[1,.16,6],[2.76,.07,4.2],[5.4,.03,2.6]].forEach(function(p){partial(220*p[0],t,p[2],p[1]);partial(220*p[0]*1.004,t,p[2],p[1]*.6);});}
+    else if(k==='soft'){partial(330,t,2.2,.08);partial(330*2.76,t,1.2,.025);}
+    else if(k==='low'){[[98,.14,5],[147,.07,4]].forEach(function(p){var o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=p[0];g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(p[1],t+1.4);g.gain.exponentialRampToValueAtTime(.0001,t+p[2]);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+p[2]+.05);});}
+  }
+  window.soundCue=cue;cue.get=on;cue.set=function(v){try{localStorage.setItem('ladder_cues',v?'1':'0');}catch(e){}if(v)cue('soft');};
+  function wrap(n,k){var f=window[n];if(typeof f!=='function')return;window[n]=function(){var r=f.apply(this,arguments);try{cue(k);}catch(e){}return r;};}
+  wrap('finishCatch','bowl');wrap('donePlan','bowl');wrap('closeDay','bowl');wrap('affSaid','soft');
 })();
 </script>
 <div id="ovTop"></div>
