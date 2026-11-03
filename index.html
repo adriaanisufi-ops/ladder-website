@@ -708,6 +708,10 @@ body:has(.ovl.on) #tmStrip{display:none!important}
 .cp-card.held{border-color:rgba(212,240,0,.7);background:#161a0a}
 .cp-btn.ghost.lime{border-color:rgba(212,240,0,.5);color:var(--lime);margin:12px 0 10px}
 .cp-btn:disabled{opacity:.5}
+.cp-links{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+.cp-links button{background:none;border:1px solid rgba(255,255,255,.14);border-radius:999px;color:#aaa;font-family:'IBM Plex Sans',sans-serif;font-size:.78rem;padding:7px 12px}
+#wpHist{padding:calc(20px + env(safe-area-inset-top)) 20px 40px;overflow-y:auto}
+#wpHist .fs-h{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;line-height:1;color:#fff;margin:28px 0 18px}
 </style>
 </head>
 <body>
@@ -5178,18 +5182,18 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     }else if(st.s==='run'){
       host.innerHTML='<div class="cp-card run"><div class="cp-k">Complain window open</div><div class="cp-big" id="cpClock">'+fmt(st.left)+'</div><textarea class="cp-ta" id="cpTxt" placeholder="Everything that annoys you. Out loud or here. Go." oninput="complainSave(this.value)">'+E(txt)+'</textarea><button class="cp-btn ghost" onclick="complainEnd()">I am done early</button></div>';
     }else if(!w){
-      host.innerHTML='<div class="cp-card"><div class="cp-k">Window closed</div><div class="cp-done">You said it. No more complaining today. Now turn it into one move.</div><button class="cp-btn" style="margin-top:14px" onclick="wpGo(\'q\')">NEXT: THREE QUESTIONS</button></div>';
+      host.innerHTML='<div class="cp-card"><div class="cp-k">Window closed</div><div class="cp-done">You said it. No more complaining today. Now turn it into one move.</div><button class="cp-btn" style="margin-top:14px" onclick="wpGo(\'q\')">NEXT: THREE QUESTIONS</button><div class="cp-links"><button onclick="wpHistOpen()">Past days</button></div></div>';
     }else if(w.step==='q'){
       var Q=['What exactly is bothering me?','What do I actually want?','What am I avoiding?'];
-      host.innerHTML='<div class="cp-card run"><div class="cp-k">Step 1 of 3</div><div class="cp-q">Three questions. Honest, not neat.</div>'+Q.map(function(q,i){return '<div class="cp-lab">'+q+'</div><textarea class="cp-ta s" id="wq'+i+'" oninput="wpAns('+i+',this.value)">'+E((w.a||[])[i]||'')+'</textarea>';}).join('')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpToAction()">NEXT: ONE ACTION</button></div>';
+      host.innerHTML='<div class="cp-card run"><div class="cp-k">Step 1 of 3</div><div class="cp-q">Three questions. Honest, not neat.</div>'+Q.map(function(q,i){return '<div class="cp-lab">'+q+'</div><textarea class="cp-ta s" id="wq'+i+'" oninput="wpAns('+i+',this.value)">'+E((w.a||[])[i]||'')+'</textarea>';}).join('')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpToAction()">'+(w.edit?'SAVE':'NEXT: ONE ACTION')+'</button>'+(w.edit?'<button class="cp-btn ghost" onclick="wpCancel()">Cancel</button>':'')+'</div>';
     }else if(w.step==='a'){
-      host.innerHTML='<div class="cp-card run"><div class="cp-k">Step 2 of 3</div><div class="cp-q">Pick one action. It becomes your hard task and the first thing you do. Write it yourself or ask for ideas.</div><textarea class="cp-ta s" id="wHard" placeholder="The one action" oninput="wpHard(this.value)">'+E(w.hard||'')+'</textarea><button class="cp-btn ghost lime" id="cpIdeaBtn" onclick="wpAsk()">'+(opts.length?'MORE IDEAS':'GIVE ME IDEAS')+'</button>'+(opts.length?chips(opts,'wpIdeaH'):'')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpToMore()">THIS IS MY HARD TASK</button></div>';
+      host.innerHTML='<div class="cp-card run"><div class="cp-k">Step 2 of 3</div><div class="cp-q">Pick one action. It becomes your hard task and the first thing you do. Write it yourself or ask for ideas.</div><textarea class="cp-ta s" id="wHard" placeholder="The one action" oninput="wpHard(this.value)">'+E(w.hard||'')+'</textarea><button class="cp-btn ghost lime" id="cpIdeaBtn" onclick="wpAsk()">'+(opts.length?'MORE IDEAS':'GIVE ME IDEAS')+'</button>'+(opts.length?chips(opts,'wpIdeaH'):'')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpToMore()">THIS IS MY HARD TASK</button>'+(w.edit?'<button class="cp-btn ghost" onclick="wpCancel()">Cancel</button>':'')+'</div>';
     }else if(w.step==='t'){
       ideas=moreIdeas();
-      host.innerHTML='<div class="cp-card run"><div class="cp-k">Step 3 of 3</div><div class="cp-q">Two more things to go home satisfied. Three total, hard task first.</div><div class="cp-row hard"><span class="cp-tag">HARD</span><span class="cp-rt">'+E(w.hard)+'</span></div><input class="cp-in" id="wT0" placeholder="Second thing" value="'+E((w.t||[])[0]||'')+'" oninput="wpT(0,this.value)"><input class="cp-in" id="wT1" placeholder="Third thing" value="'+E((w.t||[])[1]||'')+'" oninput="wpT(1,this.value)"><div class="cp-lab">Ideas</div>'+chips(ideas,'wpIdeaT')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpLock()">LOCK IN THREE</button></div>';
+      host.innerHTML='<div class="cp-card run"><div class="cp-k">Step 3 of 3</div><div class="cp-q">Two more things to go home satisfied. Three total, hard task first.</div><div class="cp-row hard"><span class="cp-tag">HARD</span><span class="cp-rt">'+E(w.hard)+'</span></div><input class="cp-in" id="wT0" placeholder="Second thing" value="'+E((w.t||[])[0]||'')+'" oninput="wpT(0,this.value)"><input class="cp-in" id="wT1" placeholder="Third thing" value="'+E((w.t||[])[1]||'')+'" oninput="wpT(1,this.value)"><div class="cp-lab">Ideas</div>'+chips(ideas,'wpIdeaT')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpLock()">'+(w.edit?'SAVE':'LOCK IN THREE')+'</button>'+(w.edit?'<button class="cp-btn ghost" onclick="wpCancel()">Cancel</button>':'')+'</div>';
     }else{
       var items=[w.hard,(w.t||[])[0],(w.t||[])[1]],d=w.d||[false,false,false],all=d[0]&&d[1]&&d[2];
-      host.innerHTML='<div class="cp-card'+(all?' held':' run')+'"><div class="cp-k">Today\'s three</div>'+items.map(function(t,i){return '<div class="cp-row'+(d[i]?' on':'')+(i===0?' hard':'')+'" onclick="wpTick('+i+')"><i></i><span class="cp-rt">'+E(t)+'</span>'+(i===0?'<span class="cp-tag">HARD</span>':'')+'</div>';}).join('')+(all?'<div class="cp-done" style="margin-top:10px">All three done. Today counts.</div>':'')+(!all&&!d[0]&&!(S.todayTask&&S.todayTask.startedAt)?'<button class="cp-btn" style="margin-top:14px" onclick="wpStartHard()">START HARD TASK NOW</button>':'')+'</div>';
+      host.innerHTML='<div class="cp-card'+(all?' held':' run')+'"><div class="cp-k">Today\'s three</div>'+items.map(function(t,i){return '<div class="cp-row'+(d[i]?' on':'')+(i===0?' hard':'')+'" onclick="wpTick('+i+')"><i></i><span class="cp-rt">'+E(t)+'</span>'+(i===0?'<span class="cp-tag">HARD</span>':'')+'</div>';}).join('')+(all?'<div class="cp-done" style="margin-top:10px">All three done. Today counts.</div>':'')+(!all&&!d[0]&&!(S.todayTask&&S.todayTask.startedAt)?'<button class="cp-btn" style="margin-top:14px" onclick="wpStartHard()">START HARD TASK NOW</button>':'')+'<div class="cp-links"><button onclick="wpEdit(\'q\')">Edit answers</button><button onclick="wpEdit(\'a\')">Edit tasks</button><button onclick="wpHistOpen()">Past days</button></div></div>';
     }
   }
   function tickEl(){var st=complainState();if(st.s!=='run'){render(true);if(window.hap)hap('success');if(window.timerHubSync)timerHubSync(false);return;}var e=document.getElementById('cpClock');if(e)e.textContent=fmt(st.left);}
@@ -5199,7 +5203,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   function setW(f){var w=wp()||{step:'q',a:['','',''],t:['',''],d:[false,false,false]};f(w);jput(wkey(),w);return w;}
   window.wpGo=function(st){msg='';setW(function(w){w.step=st;});render(true);};
   window.wpAns=function(i,v){setW(function(w){w.a=w.a||['','',''];w.a[i]=v;});};
-  window.wpToAction=function(){var w=wp()||{a:[]};var ok=[0,1,2].every(function(i){return ((w.a||[])[i]||'').trim().length>1;});if(!ok){msg='Answer all three. Short is fine.';var e=document.getElementById('cpErr');if(e)e.textContent=msg;return;}msg='';setW(function(w){w.step='a';});render(true);if(window.hap)hap('light');};
+  window.wpToAction=function(){var _w0=wp();var w=wp()||{a:[]};var ok=[0,1,2].every(function(i){return ((w.a||[])[i]||'').trim().length>1;});if(!ok){msg='Answer all three. Short is fine.';var e=document.getElementById('cpErr');if(e)e.textContent=msg;return;}msg='';var ed=_w0&&_w0.edit;setW(function(w){w.step=ed?'done':'a';if(ed)w.edit=false;});render(true);if(window.hap)hap('light');};
   window.wpAsk=async function(){
     if(asking)return;var w=wp();if(!w)return;asking=true;var btn=document.getElementById('cpIdeaBtn');if(btn){btn.textContent='THINKING...';btn.disabled=true;}
     var fb=function(){var g=goalIdeas().slice(0,2),o=['Say the one thing I have been avoiding to the person it concerns','Take a 20 minute walk without my phone','Write down the decision I keep postponing and pick one','Close one open loop that has been sitting for days'];return g.concat(o).slice(0,4);};
@@ -5220,7 +5224,32 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   window.wpToMore=function(){var w=wp();if(!w||!(w.hard||'').trim()){msg='Write the one action first.';var e=document.getElementById('cpErr');if(e)e.textContent=msg;return;}msg='';setW(function(w){w.step='t';});render(true);};
   window.wpT=function(i,v){setW(function(w){w.t=w.t||['',''];w.t[i]=v;});};
   window.wpIdeaT=function(i){var v=ideas[i];setW(function(w){w.t=w.t||['',''];if(!(w.t[0]||'').trim())w.t[0]=v;else w.t[1]=v;});render(true);};
-  window.wpLock=function(){var w=wp();var ok=w&&(w.t||[]).every(function(x){return (x||'').trim().length>1;})&&(w.t||[]).length===2;if(!ok){msg='Two more. Short is fine.';var e=document.getElementById('cpErr');if(e)e.textContent=msg;return;}msg='';setW(function(w){w.step='done';w.d=[false,false,false];});try{S.todayWord=w.hard;save();var tw=document.getElementById('todayWord');if(tw)tw.value=w.hard;}catch(e){}render(true);if(window.hap)hap('success');};
+  window.wpLock=function(){var w=wp();var ok=w&&(w.t||[]).every(function(x){return (x||'').trim().length>1;})&&(w.t||[]).length===2;if(!ok){msg='Two more. Short is fine.';var e=document.getElementById('cpErr');if(e)e.textContent=msg;return;}msg='';var ed2=w.edit;setW(function(w){w.step='done';if(!ed2||!w.d)w.d=[false,false,false];w.edit=false;});try{S.todayWord=w.hard;save();var tw=document.getElementById('todayWord');if(tw)tw.value=w.hard;}catch(e){}render(true);if(window.hap)hap('success');};
+  window.wpEdit=function(st){setW(function(w){w.edit=true;w.step=st;});msg='';render(true);};
+  window.wpCancel=function(){setW(function(w){w.edit=false;w.step='done';});msg='';render(true);};
+  function dayList(){
+    var map={};
+    for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);var m=k.match(/^ladder_(wp|complain_txt)_(.+)$/);if(!m)continue;var d=m[2];map[d]=map[d]||{day:d};var v=localStorage.getItem(k);if(m[1]==='wp'){try{map[d].wp=JSON.parse(v);}catch(e){}}else map[d].txt=v;}
+    return Object.keys(map).map(function(d){return map[d];}).filter(function(x){return (x.txt&&x.txt.trim())||x.wp;}).sort(function(a,b){return new Date(b.day)-new Date(a.day);});
+  }
+  var hist=document.createElement('div');hist.id='wpHist';hist.className='ovl';hist.style.justifyContent='flex-start';document.body.appendChild(hist);
+  var armed='';
+  function histRender(){
+    var L=dayList(),h='<button class="aff-x" onclick="wpHistClose()">Close</button><div class="fs-h">PAST DAYS</div>';
+    if(!L.length)h+='<div class="cp-done" style="margin-top:10px">Nothing yet. Your complaints, answers and hard tasks show up here after your first window.</div>';
+    L.forEach(function(x){
+      var w=x.wp,dt=new Date(x.day),lbl=isNaN(dt)?x.day:dt.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+      h+='<div class="cp-card" style="margin-bottom:12px"><div class="cp-k">'+E(lbl)+'</div>';
+      if(w&&w.hard)h+='<div class="cp-lab">Hard task'+(w.d&&w.d[0]?' (done)':'')+'</div><div class="cp-done">'+E(w.hard)+'</div>';
+      if(w&&w.a&&w.a.some(function(z){return z;})){['Bothering me','What I want','Avoiding'].forEach(function(n,i){if(w.a[i])h+='<div class="cp-lab">'+n+'</div><div class="cp-done">'+E(w.a[i])+'</div>';});}
+      if(x.txt&&x.txt.trim())h+='<div class="cp-lab">Complaints</div><div class="cp-done">'+E(x.txt)+'</div>';
+      h+='<button class="cp-btn ghost" onclick="wpHistDel(\''+E(x.day).replace(/'/g,'')+'\')">'+(armed===x.day?'Tap again to remove':'Remove this day')+'</button></div>';
+    });
+    hist.innerHTML=h;
+  }
+  window.wpHistOpen=function(){armed='';histRender();hist.classList.add('on');hist.scrollTop=0;};
+  window.wpHistClose=function(){hist.classList.remove('on');};
+  window.wpHistDel=function(day){if(armed!==day){armed=day;histRender();setTimeout(function(){if(armed===day){armed='';if(hist.classList.contains('on'))histRender();}},3000);return;}armed='';try{localStorage.removeItem('ladder_wp_'+day);localStorage.removeItem('ladder_complain_txt_'+day);}catch(e){}histRender();};
   window.wpTick=function(i){setW(function(w){w.d=w.d||[false,false,false];w.d[i]=!w.d[i];});render(true);if(window.hap)hap('light');};
   window.wpStartHard=function(){var w=wp();if(!w)return;var t=document.getElementById('todayTask');if(t){t.value=w.hard;}try{var b=document.getElementById('tbH');if(b)b.scrollIntoView({block:'center',behavior:'smooth'});}catch(e){}if(window.hap)hap('light');};
   var _dp=window.donePlan;window.donePlan=function(){var t=S.todayTask&&S.todayTask.text,r=_dp.apply(this,arguments);try{var w=wp();if(w&&w.step==='done'&&t&&t===w.hard&&!w.d[0]){w.d[0]=true;jput(wkey(),w);render(true);}}catch(e){}return r;};
