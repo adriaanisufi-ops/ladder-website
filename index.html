@@ -689,6 +689,23 @@ body:has(.ovl.on) #tmStrip{display:none!important}
 .cp-btn.ghost{background:none;border:1px solid rgba(255,255,255,.18);color:#bbb;font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;letter-spacing:0;margin-top:10px;padding:11px}
 .cp-ta{width:100%;min-height:110px;margin-top:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:'IBM Plex Sans',sans-serif;font-size:.95rem;padding:12px;outline:none;resize:none;box-sizing:border-box}
 .cp-done{font-family:'IBM Plex Sans',sans-serif;color:#bbb;font-size:.95rem;line-height:1.45;margin-top:6px}
+
+.cp-lab{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.1em;color:#8c8c8c;text-transform:uppercase;margin:14px 0 6px}
+.cp-ta.s{min-height:64px;margin-top:0}
+.cp-err{color:var(--red);font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;min-height:1.2em;margin:8px 0}
+.cp-kinds{display:flex;gap:8px;margin-bottom:12px}
+.cp-kind{flex:1;padding:10px 6px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:none;color:#bbb;font-family:'IBM Plex Sans',sans-serif;font-size:.85rem}
+.cp-kind.on{background:var(--lime);color:#000;border-color:var(--lime)}
+.cp-chips{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
+.cp-chip{text-align:left;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);color:#ddd;font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;line-height:1.35}
+.cp-in{width:100%;box-sizing:border-box;margin-bottom:8px;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#fff;font-family:'IBM Plex Sans',sans-serif;font-size:.95rem;outline:none}
+.cp-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.08);color:#fff;font-family:'IBM Plex Sans',sans-serif}
+.cp-row i{width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(255,255,255,.3);flex-shrink:0}
+.cp-row.on i{background:var(--lime);border-color:var(--lime)}
+.cp-row.on .cp-rt{text-decoration:line-through;color:#777}
+.cp-rt{flex:1;font-size:.98rem;line-height:1.35}
+.cp-tag{font-family:'Bebas Neue',sans-serif;letter-spacing:.08em;color:var(--lime);font-size:1rem}
+.cp-card.held{border-color:rgba(212,240,0,.7);background:#161a0a}
 </style>
 </head>
 <body>
@@ -5114,36 +5131,86 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
 
 
 
-/* v61 complaint window */
+/* v62 complaint window + worry time follow up */
 (function(){
   var DUR=5*60*1000;
   function key(){return 'ladder_complain_'+TODAY;}
   function tkey(){return 'ladder_complain_txt_'+TODAY;}
-  function get(){try{return JSON.parse(localStorage.getItem(key())||'null');}catch(e){return null;}}
-  function put(v){try{localStorage.setItem(key(),JSON.stringify(v));}catch(e){}}
+  function wkey(){return 'ladder_wp_'+TODAY;}
+  function jget(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch(e){return null;}}
+  function jput(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  function get(){return jget(key());}
+  function wp(){return jget(wkey());}
+  function E(x){return (x||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
   window.complainState=function(){var c=get();if(!c)return {s:'idle'};if(c.done||Date.now()>=c.start+DUR)return {s:'closed',c:c};return {s:'run',c:c,left:c.start+DUR-Date.now()};};
-  var shown='';
+  var shown='',msg='',pickKind='';
+  function fmt(ms){var s=Math.max(0,Math.ceil(ms/1000));return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2);}
+  function cut(t,n){t=(t||'').trim().replace(/\s+/g,' ');return t.length>n?t.slice(0,n-1)+'…':t;}
+  function goalIdeas(){var o=[];try{loadGoals().forEach(function(g){(g.actions||[]).forEach(function(a){if(a.text)o.push(a.text);});});}catch(e){}return o;}
+  function hardIdeas(w,kind){
+    var av=cut(w.a[2],60).toLowerCase(),want=cut(w.a[1],60).toLowerCase(),o=[];
+    if(av){
+      if(kind==='conversation')o.push('Have the conversation I am avoiding: '+av);
+      else if(kind==='question')o.push('Ask the question I am avoiding: '+av);
+      else o.push('Decide on '+av+' and write the decision down');
+      o.push('Do the first 10 minutes of: '+av);
+    }
+    if(want)o.push('Take one step toward: '+want);
+    var P={conversation:['Call or message the person I keep putting off','Ask someone for honest feedback on my work'],question:['Ask for the thing I want, out loud, today','Ask one person how they would solve this'],decision:['Decide, then tell one person today','Pick the date it gets done and put it in the calendar']};
+    (P[kind]||[]).forEach(function(x){o.push(x);});
+    goalIdeas().slice(0,2).forEach(function(x){o.push(x);});
+    return o.slice(0,6);
+  }
+  function moreIdeas(){var o=goalIdeas().slice(0,4);['Sort my Drafts for 15 minutes','Move for 20 minutes','Read my goals out loud','Close one open loop'].forEach(function(x){o.push(x);});var seen={},r=[];o.forEach(function(x){if(!seen[x]){seen[x]=1;r.push(x);}});return r.slice(0,6);}
+  function chips(list,fn){var h='<div class="cp-chips">';list.forEach(function(x,i){h+='<button class="cp-chip" onclick="'+fn+'('+i+')">'+E(x)+'</button>';});return h+'</div>';}
+  var ideas=[];
   function render(force){
     var host=document.getElementById('complainCard');if(!host)return;
-    var st=complainState(),sig=st.s;
-    if(!force&&shown===sig&&sig!=='run')return;
-    if(sig==='run'&&shown==='run'&&!force){tickEl();return;}
-    shown=sig;
+    var st=complainState(),w=wp(),sig=st.s+(st.s==='closed'?':'+(w?w.step+(w.d?w.d.join(''):''):'-'):'');
+    if(!force&&shown===sig&&st.s!=='run')return;
+    if(st.s==='run'&&shown==='run'&&!force){tickEl();return;}
+    shown=st.s==='run'?'run':sig;
     var txt='';try{txt=localStorage.getItem(tkey())||'';}catch(e){}
-    if(sig==='idle'){
+    if(st.s==='idle'){
       host.innerHTML='<div class="cp-card"><div class="cp-k">Complain window</div><div class="cp-q">What is bothering you right now? You get five minutes to say all of it. Then it is closed for the day.</div><button class="cp-btn" onclick="complainStart()">START 5 MIN</button></div>';
-    }else if(sig==='run'){
-      host.innerHTML='<div class="cp-card run"><div class="cp-k">Complain window open</div><div class="cp-big" id="cpClock">'+fmt(st.left)+'</div><textarea class="cp-ta" id="cpTxt" placeholder="Everything that annoys you. Out loud or here. Go." oninput="complainSave(this.value)">'+(typeof esc==='function'?esc(txt):txt)+'</textarea><button class="cp-btn ghost" onclick="complainEnd()">I am done early</button></div>';
+    }else if(st.s==='run'){
+      host.innerHTML='<div class="cp-card run"><div class="cp-k">Complain window open</div><div class="cp-big" id="cpClock">'+fmt(st.left)+'</div><textarea class="cp-ta" id="cpTxt" placeholder="Everything that annoys you. Out loud or here. Go." oninput="complainSave(this.value)">'+E(txt)+'</textarea><button class="cp-btn ghost" onclick="complainEnd()">I am done early</button></div>';
+    }else if(!w){
+      host.innerHTML='<div class="cp-card"><div class="cp-k">Window closed</div><div class="cp-done">You said it. No more complaining today. Now turn it into one move.</div><button class="cp-btn" style="margin-top:14px" onclick="wpGo(\'q\')">NEXT: THREE QUESTIONS</button></div>';
+    }else if(w.step==='q'){
+      var Q=['What exactly is bothering me?','What do I actually want?','What am I avoiding?'];
+      host.innerHTML='<div class="cp-card run"><div class="cp-k">Step 1 of 3</div><div class="cp-q">Three questions. Honest, not neat.</div>'+Q.map(function(q,i){return '<div class="cp-lab">'+q+'</div><textarea class="cp-ta s" id="wq'+i+'" oninput="wpAns('+i+',this.value)">'+E((w.a||[])[i]||'')+'</textarea>';}).join('')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpToAction()">NEXT: ONE ACTION</button></div>';
+    }else if(w.step==='a'){
+      var kinds=[['conversation','Conversation'],['question','Question'],['decision','Decision']];
+      pickKind=w.kind||pickKind||'conversation';ideas=hardIdeas(w,pickKind);
+      host.innerHTML='<div class="cp-card run"><div class="cp-k">Step 2 of 3</div><div class="cp-q">Pick one action. It becomes your hard task and the first thing you do.</div><div class="cp-kinds">'+kinds.map(function(k){return '<button class="cp-kind'+(pickKind===k[0]?' on':'')+'" onclick="wpKind(\''+k[0]+'\')">'+k[1]+'</button>';}).join('')+'</div><textarea class="cp-ta s" id="wHard" placeholder="The one action" oninput="wpHard(this.value)">'+E(w.hard||'')+'</textarea><div class="cp-lab">Ideas from your answers and goals</div>'+chips(ideas,'wpIdeaH')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpToMore()">THIS IS MY HARD TASK</button></div>';
+    }else if(w.step==='t'){
+      ideas=moreIdeas();
+      host.innerHTML='<div class="cp-card run"><div class="cp-k">Step 3 of 3</div><div class="cp-q">Two more things to go home satisfied. Three total, hard task first.</div><div class="cp-row hard"><span class="cp-tag">HARD</span><span class="cp-rt">'+E(w.hard)+'</span></div><input class="cp-in" id="wT0" placeholder="Second thing" value="'+E((w.t||[])[0]||'')+'" oninput="wpT(0,this.value)"><input class="cp-in" id="wT1" placeholder="Third thing" value="'+E((w.t||[])[1]||'')+'" oninput="wpT(1,this.value)"><div class="cp-lab">Ideas</div>'+chips(ideas,'wpIdeaT')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpLock()">LOCK IN THREE</button></div>';
     }else{
-      host.innerHTML='<div class="cp-card closed"><div class="cp-k">Complain window</div><div class="cp-done">Closed. You said it. No more complaining today. If it comes back, it goes to tomorrow.</div></div>';
+      var items=[w.hard,(w.t||[])[0],(w.t||[])[1]],d=w.d||[false,false,false],all=d[0]&&d[1]&&d[2];
+      host.innerHTML='<div class="cp-card'+(all?' held':' run')+'"><div class="cp-k">Today\'s three</div>'+items.map(function(t,i){return '<div class="cp-row'+(d[i]?' on':'')+(i===0?' hard':'')+'" onclick="wpTick('+i+')"><i></i><span class="cp-rt">'+E(t)+'</span>'+(i===0?'<span class="cp-tag">HARD</span>':'')+'</div>';}).join('')+(all?'<div class="cp-done" style="margin-top:10px">All three done. Today counts.</div>':'')+(!all&&!d[0]&&!(S.todayTask&&S.todayTask.startedAt)?'<button class="cp-btn" style="margin-top:14px" onclick="wpStartHard()">START HARD TASK NOW</button>':'')+'</div>';
     }
   }
-  function fmt(ms){var s=Math.max(0,Math.ceil(ms/1000));return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2);}
   function tickEl(){var st=complainState();if(st.s!=='run'){render(true);if(window.hap)hap('success');if(window.timerHubSync)timerHubSync(false);return;}var e=document.getElementById('cpClock');if(e)e.textContent=fmt(st.left);}
-  window.complainStart=function(){if(get())return;put({start:Date.now(),done:false});render(true);if(window.hap)hap('heavy');notify(true);if(window.timerHubSync)timerHubSync(false);};
-  window.complainEnd=function(){var c=get();if(!c)return;c.done=true;put(c);render(true);notify(false);if(window.hap)hap('success');if(window.timerHubSync)timerHubSync(false);};
+  window.complainStart=function(){if(get())return;jput(key(),{start:Date.now(),done:false});render(true);if(window.hap)hap('heavy');notify(true);if(window.timerHubSync)timerHubSync(false);};
+  window.complainEnd=function(){var c=get();if(!c)return;c.done=true;jput(key(),c);render(true);notify(false);if(window.hap)hap('success');if(window.timerHubSync)timerHubSync(false);};
   window.complainSave=function(v){try{localStorage.setItem(tkey(),v);}catch(e){}};
-  async function notify(on){try{var ln=lnPlugin();if(!ln)return;await ln.cancel({notifications:[{id:50}]});if(!on)return;var p=await ln.checkPermissions();if(p.display!=='granted'){p=await ln.requestPermissions();if(p.display!=='granted')return;}await ln.schedule({notifications:[{id:50,title:'LADDER',body:'Complain window closed. No more today.',schedule:{at:new Date(Date.now()+DUR),allowWhileIdle:true}}]});}catch(e){}}
+  function setW(f){var w=wp()||{step:'q',a:['','',''],t:['',''],d:[false,false,false]};f(w);jput(wkey(),w);return w;}
+  window.wpGo=function(st){msg='';setW(function(w){w.step=st;});render(true);};
+  window.wpAns=function(i,v){setW(function(w){w.a=w.a||['','',''];w.a[i]=v;});};
+  window.wpToAction=function(){var w=wp()||{a:[]};var ok=[0,1,2].every(function(i){return ((w.a||[])[i]||'').trim().length>1;});if(!ok){msg='Answer all three. Short is fine.';var e=document.getElementById('cpErr');if(e)e.textContent=msg;return;}msg='';setW(function(w){w.step='a';});render(true);if(window.hap)hap('light');};
+  window.wpKind=function(k){pickKind=k;setW(function(w){w.kind=k;});render(true);};
+  window.wpHard=function(v){setW(function(w){w.hard=v;});};
+  window.wpIdeaH=function(i){var v=ideas[i];setW(function(w){w.hard=v;});render(true);};
+  window.wpToMore=function(){var w=wp();if(!w||!(w.hard||'').trim()){msg='Write the one action first.';var e=document.getElementById('cpErr');if(e)e.textContent=msg;return;}msg='';setW(function(w){w.step='t';});render(true);};
+  window.wpT=function(i,v){setW(function(w){w.t=w.t||['',''];w.t[i]=v;});};
+  window.wpIdeaT=function(i){var v=ideas[i];setW(function(w){w.t=w.t||['',''];if(!(w.t[0]||'').trim())w.t[0]=v;else w.t[1]=v;});render(true);};
+  window.wpLock=function(){var w=wp();var ok=w&&(w.t||[]).every(function(x){return (x||'').trim().length>1;})&&(w.t||[]).length===2;if(!ok){msg='Two more. Short is fine.';var e=document.getElementById('cpErr');if(e)e.textContent=msg;return;}msg='';setW(function(w){w.step='done';w.d=[false,false,false];});try{S.todayWord=w.hard;save();var tw=document.getElementById('todayWord');if(tw)tw.value=w.hard;}catch(e){}render(true);if(window.hap)hap('success');};
+  window.wpTick=function(i){setW(function(w){w.d=w.d||[false,false,false];w.d[i]=!w.d[i];});render(true);if(window.hap)hap('light');};
+  window.wpStartHard=function(){var w=wp();if(!w)return;var t=document.getElementById('todayTask');if(t){t.value=w.hard;}try{var b=document.getElementById('tbH');if(b)b.scrollIntoView({block:'center',behavior:'smooth'});}catch(e){}if(window.hap)hap('light');};
+  var _dp=window.donePlan;window.donePlan=function(){var t=S.todayTask&&S.todayTask.text,r=_dp.apply(this,arguments);try{var w=wp();if(w&&w.step==='done'&&t&&t===w.hard&&!w.d[0]){w.d[0]=true;jput(wkey(),w);render(true);}}catch(e){}return r;};
+  async function notify(on){try{var ln=lnPlugin();if(!ln)return;await ln.cancel({notifications:[{id:50}]});if(!on)return;var p=await ln.checkPermissions();if(p.display!=='granted'){p=await ln.requestPermissions();if(p.display!=='granted')return;}await ln.schedule({notifications:[{id:50,title:'LADDER',body:'Complain window closed. Now the three questions.',schedule:{at:new Date(Date.now()+DUR),allowWhileIdle:true}}]});}catch(e){}}
   window.complainRender=function(){shown='';render(true);};
   setInterval(function(){render(false);},1000);
   setTimeout(function(){render(true);},600);
