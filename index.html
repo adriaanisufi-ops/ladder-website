@@ -5075,7 +5075,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   function persist(){try{localStorage.setItem('ladder_snd',JSON.stringify(st));}catch(e){}}
   function init(){
     if(ctx)return true;if(!AC)return false;
-    try{if(navigator.audioSession)navigator.audioSession.type='playback';var ua=document.createElement('audio');ua.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';ua.loop=true;ua.setAttribute('playsinline','');ua.volume=.01;var pr=ua.play();if(pr&&pr.catch)pr.catch(function(){});window.__sndUnlock=ua;}catch(e){}
+    try{if(navigator.audioSession)navigator.audioSession.type='playback';var ua=document.createElement('audio');ua.setAttribute('data-unlock','1');ua.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';ua.loop=true;ua.setAttribute('playsinline','');ua.volume=.01;var pr=ua.play();if(pr&&pr.catch)pr.catch(function(){});window.__sndUnlock=ua;}catch(e){}
     ctx=new AC();master=ctx.createGain();master.gain.value=st.vol;master.connect(ctx.destination);
     var len=ctx.sampleRate*2,ir=ctx.createBuffer(2,len,ctx.sampleRate);
     for(var c=0;c<2;c++){var d=ir.getChannelData(c);for(var i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3);}
@@ -5123,10 +5123,13 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   function setLayer(name,on){
     if(!init())return;if(ctx.state==='suspended')ctx.resume();
     var L=layers[name]||build(name);
-    if(on){L.on=true;st.on[name]=true;fade(name,1,name==='rain'?1.2:2.5);if(name==='music'){clearTimeout(musicT);chord();}}
+    if(on){ensureUnlock();L.on=true;st.on[name]=true;fade(name,1,name==='rain'?1.2:2.5);if(name==='music'){clearTimeout(musicT);chord();}}
     else{L.on=false;delete st.on[name];fade(name,0,1.5);if(name==='music')clearTimeout(musicT);}
     persist();paint();
+    if(!anyOn()){setTimeout(function(){if(!anyOn())releaseUnlock();},1800);}
   }
+  function ensureUnlock(){try{if(window.__sndUnlock)return;var ua=document.createElement('audio');ua.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';ua.loop=true;ua.setAttribute('playsinline','');ua.volume=.01;var pr=ua.play();if(pr&&pr.catch)pr.catch(function(){});window.__sndUnlock=ua;}catch(e){}}
+  function releaseUnlock(){try{var u=window.__sndUnlock;if(u){u.pause();u.removeAttribute('src');u.load();window.__sndUnlock=null;}if(navigator.mediaSession){navigator.mediaSession.metadata=null;navigator.mediaSession.playbackState='none';}}catch(e){}}
   function anyOn(){return Object.keys(st.on).some(function(k){return st.on[k];});}
   function stopAll(){Object.keys(layers).forEach(function(k){if(layers[k].on)setLayer(k,false);});clearSleep();}
   function clearSleep(){clearTimeout(sleepT);sleepT=null;sleepAt=0;}
@@ -5227,6 +5230,9 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     try{
       if(!url)url=wav();
       var a=new Audio(url);a.setAttribute('playsinline','');a.volume=1;
+      var rel=function(){try{a.pause();a.removeAttribute('src');a.load();if(navigator.mediaSession){navigator.mediaSession.metadata=null;navigator.mediaSession.playbackState='none';}}catch(e){}};
+      a.addEventListener('ended',rel);setTimeout(rel,6500);
+      try{if(navigator.mediaSession){navigator.mediaSession.metadata=null;['play','pause','stop','seekbackward','seekforward','previoustrack','nexttrack'].forEach(function(k){try{navigator.mediaSession.setActionHandler(k,null);}catch(e){}});}}catch(e){}
       var pr=a.play();
       if(pr&&pr.then)pr.then(function(){played=true;}).catch(function(){});else played=true;
     }catch(e){}
