@@ -5135,7 +5135,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     h+='<div class="snd-lab">VOLUME</div><input id="sndVol" type="range" min="5" max="100" value="'+Math.round(st.vol*100)+'" oninput="soundVol(this.value)">';
     h+='<div class="snd-lab">STOP AFTER</div><div class="snd-pills">';
     [[0,'No timer'],[15,'15 min'],[30,'30 min'],[60,'60 min']].forEach(function(p){var act=(p[0]===0&&!sleepAt)||(sleepAt&&p[0]&&Math.abs((sleepAt-Date.now())/60000-p[0])<1.2);h+='<button class="snd-pill'+(act?' on':'')+'" onclick="soundSleep('+p[0]+')">'+p[1]+'</button>';});
-    h+='</div>';h+='<div class="snd-lab">TAP SOUNDS</div><button class="snd-row'+(window.tapSnd&&tapSnd.get()?' on':'')+'" onclick="tapSnd.set(!tapSnd.get());soundOpen()"><span class="snd-t">Click sounds</span><span class="snd-d">A soft tick on buttons, a chime when you finish something.</span><span class="snd-s">'+(window.tapSnd&&tapSnd.get()?'ON':'OFF')+'</span></button>';if(on)h+='<button class="snd-stop" onclick="soundStop()">Stop all</button>';
+    h+='</div>';if(on)h+='<button class="snd-stop" onclick="soundStop()">Stop all</button>';
     sheet.innerHTML=h;
   }
   window.soundOpen=function(){paint();sheet.classList.add('on');sheet.scrollTop=0;if(window.hap)hap('light');};
@@ -5147,22 +5147,6 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   function place(){var f=document.getElementById('floorChip');var w=f&&f.offsetWidth?f.offsetWidth:96;chip.style.right=(52+w+8)+'px';chip.style.display=(f&&f.style.display==='block')?'flex':'none';}
   var _g2=goTo;goTo=function(id){_g2(id);setTimeout(place,60);};
   setInterval(place,1500);setTimeout(place,800);paint();
-})();
-
-/* v51 tap sounds */
-(function(){
-  var AC=window.AudioContext||window.webkitAudioContext,c=null,last=0;
-  function on(){try{return localStorage.getItem('ladder_tapsnd')!=='0';}catch(e){return true;}}
-  function ctx(){if(!AC)return null;if(!c)c=new AC();if(c.state==='suspended')c.resume();return c;}
-  function tone(f0,f1,t0,dur,type,vol){var x=ctx();if(!x)return;var o=x.createOscillator(),g=x.createGain(),t=x.currentTime+t0;o.type=type;o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+dur);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.005);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);g.connect(x.destination);o.start(t);o.stop(t+dur+.02);}
-  function play(k){
-    if(!on())return;var n=Date.now();if(n-last<35&&k==='light')return;last=n;
-    if(k==='success'){tone(660,660,0,.16,'triangle',.07);tone(990,990,.09,.28,'triangle',.07);}
-    else if(k==='heavy'){tone(140,50,0,.14,'sine',.25);}
-    else tone(1000,650,0,.04,'sine',.05);
-  }
-  window.tapSnd={get:on,set:function(v){try{localStorage.setItem('ladder_tapsnd',v?'1':'0');}catch(e){}if(v)play('success');}};
-  var _h=hap;hap=function(k){_h(k);play(k);};
 })();
 </script>
 <div id="ovTop"></div>
