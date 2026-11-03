@@ -5009,7 +5009,6 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     var its=items()||[];var all=its.length>0&&its.every(function(i){return d[TODAY][i.id];});
     d[TODAY].held=all;save(FK,d);
     hap(d[TODAY][id]?'success':'light');render();if(all)hap('heavy');
-    try{var it0=its.filter(function(i){return i.id===id;})[0];if(d[TODAY][id]&&it0&&/lights?\s*out|sleep|bed/i.test(it0.t)&&window.soundSet&&!(window.soundAny&&soundAny())){soundSet('rain',true);soundSleepMs(10000);}}catch(e){}
   });
   window.floorRender=render;
 
@@ -5207,6 +5206,25 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   setTimeout(function(){sync(true);},2800);
   document.addEventListener('visibilitychange',function(){if(!document.hidden)sync(true);});
   window.timerHubSync=sync;
+})();
+
+/* v56 start sound */
+(function(){
+  var AC=window.AudioContext||window.webkitAudioContext,played=false;
+  function note(x,f,t,dur,vol){var o=x.createOscillator(),g=x.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.5);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);g.connect(x.destination);o.start(t);o.stop(t+dur+.05);}
+  function play(){
+    if(played||!AC)return;
+    try{
+      if(navigator.audioSession)navigator.audioSession.type='playback';
+      var x=new AC();if(x.state==='suspended'){x.resume();}
+      if(x.state!=='running'){x.close();return;}
+      played=true;var t=x.currentTime+.05;
+      [[130.8,.16,5],[196,.1,5],[261.6,.07,4.5]].forEach(function(p,i){note(x,p[0],t+i*.45,p[2],p[1]);note(x,p[0]*1.003,t+i*.45,p[2],p[1]*.5);});
+      setTimeout(function(){try{x.close();}catch(e){}},8000);
+    }catch(e){}
+  }
+  function arm(){var f=function(){play();if(played){document.removeEventListener('pointerdown',f,true);document.removeEventListener('touchstart',f,true);}};document.addEventListener('pointerdown',f,true);document.addEventListener('touchstart',f,true);}
+  setTimeout(function(){play();if(!played)arm();},900);
 })();
 </script>
 <div id="ovTop"></div>
