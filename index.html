@@ -714,7 +714,10 @@ body:has(.ovl.on) #tmStrip{display:none!important}
 #wpHist .fs-h{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;line-height:1;color:#fff;margin:28px 0 18px}
 #oldWord{display:none!important}
 body.wp-on #oldFirst{display:none!important}
-body.wp-same #planRunText{display:none}
+body.wp-run #complainCard{display:none}
+#wpMoreBtn{display:none;position:absolute;right:0;top:0}
+body.wp-on #wpMoreBtn{display:block}
+#planRun{position:relative}
 .cp-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;min-height:30px}
 .cp-back{background:none;border:0;color:var(--lime);font-family:'IBM Plex Sans',sans-serif;font-size:.95rem;padding:4px 0}
 .cp-more{background:none;border:1px solid rgba(255,255,255,.18);border-radius:999px;color:#bbb;font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;padding:6px 14px}
@@ -784,6 +787,7 @@ body.wp-same #planRunText{display:none}
     </div>
     </div>
     <div id="planRun" style="display:none;border-left:2px solid var(--lime);padding:4px 0 4px 14px;">
+      <button id="wpMoreBtn" class="cp-more" onclick="wpMenu()">More</button>
       <div id="planRunText" style="font-family:'IBM Plex Mono',monospace;font-size:0.9rem;color:var(--white);line-height:1.5;margin-bottom:6px;"></div>
       <div id="planRunClock" style="font-family:'Bebas Neue',sans-serif;font-size:3.6rem;line-height:1;letter-spacing:.04em;color:var(--lime);margin:2px 0 8px;font-variant-numeric:tabular-nums"></div>
       <div id="planRunBar" style="height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;margin-bottom:10px"><i style="display:block;height:100%;width:0;background:var(--lime)"></i></div>
@@ -5211,7 +5215,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   var ideas=[],opts=[],asking=false;
   function render(force){
     var host=document.getElementById('complainCard');if(!host)return;
-    var st=complainState(),w=wp();document.body.classList.toggle('wp-on',!!(st.s==='closed'&&w));document.body.classList.toggle('wp-same',!!(st.s==='closed'&&w&&S.todayTask&&S.todayTask.startedAt&&(S.todayTask.text||'').trim()===(w.hard||'').trim()));if(!(st.s==='closed'&&w&&w.step==='done'))document.body.classList.remove('wp-pick');var sig=st.s+(st.s==='closed'?':'+(cEdit?'ce':'')+(rArmed?'ra':'')+(pickOpen?'po':'')+(w?w.step+(w.edit?'e':'')+(w.d?w.d.join(''):'')+((S.todayTask&&S.todayTask.startedAt)?'p':''):'-'):'');
+    var st=complainState(),w=wp();document.body.classList.toggle('wp-on',!!(st.s==='closed'&&w));document.body.classList.toggle('wp-run',!!(st.s==='closed'&&w&&w.step==='done'&&S.todayTask&&S.todayTask.startedAt));if(!(st.s==='closed'&&w&&w.step==='done'))document.body.classList.remove('wp-pick');var sig=st.s+(st.s==='closed'?':'+(cEdit?'ce':'')+(rArmed?'ra':'')+(pickOpen?'po':'')+(w?w.step+(w.edit?'e':'')+(w.d?w.d.join(''):'')+((S.todayTask&&S.todayTask.startedAt)?'p':''):'-'):'');
     if(!force&&shown===sig&&st.s!=='run')return;
     if(st.s==='run'&&shown==='run'&&!force){tickEl();return;}
     shown=st.s==='run'?'run':sig;
@@ -5236,9 +5240,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
       host.innerHTML='<div class="cp-card'+(all?' held':' run')+'"><div class="cp-top"><span class="cp-k">Today\'s one thing</span><button class="cp-more" onclick="wpMenu()">More</button></div>'
         +'<div class="cp-one'+(d[0]?' on':'')+'" onclick="wpTick(0)"><i></i><span>'+E(w.hard)+'</span></div>'
         +(!d[0]&&!(S.todayTask&&S.todayTask.startedAt)?'<div class="cp-lab">Start it. Finish it by</div><div class="cp-kinds"><button class="cp-kind" onclick="wpGoIn(30)">30 min</button><button class="cp-kind" onclick="wpGoIn(60)">1 hour</button><button class="cp-kind" onclick="wpGoIn(120)">2 hours</button><button class="cp-kind'+(pickOpen?' on':'')+'" onclick="wpPick()">Other</button></div>'+(pickOpen?'<div class="cp-pick"><input type="time" id="wpTime" value="'+defTime()+'"><button class="cp-btn" onclick="wpGoAt()">START</button></div>':''):'')
-        +(running&&!d[0]?'<div class="cp-done" style="margin:2px 0 4px">On the clock. Timer below.</div>':'')
-        +(all?'<div class="cp-done" style="margin:2px 0 4px">All done. Today counts.</div>':'')
-        +(gn?'<button class="cp-goalrow" onclick="goTo(\'s-goals\')"><span>Goal tasks</span><span>'+gd+'/'+gn+' done &rsaquo;</span></button>':'')
+
         +'</div>';
     }
   }
