@@ -112,6 +112,7 @@
 .mq-chip{background:rgba(244,240,232,.05);border:1px solid rgba(244,240,232,.14);color:rgba(244,240,232,.8);border-radius:999px;padding:12px 16px;min-height:44px;font-family:'IBM Plex Sans',sans-serif;font-size:.92rem;font-weight:400;cursor:pointer;transition:all .15s;}
 .mq-chip.on{background:var(--lime);border-color:var(--lime);color:var(--black);font-weight:500;}
 .mq-why{font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:.92rem;line-height:1.5;color:rgba(244,240,232,.6);border-left:2px solid var(--lime);padding:2px 0 2px 12px;margin:0 0 22px;}
+.mq-w{font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:.85rem;line-height:1.4;color:rgba(244,240,232,.5);margin:-2px 0 12px}
 .mq-actions{display:flex;justify-content:space-between;align-items:center;margin-top:10px;}
 .mq-more,.mq-skip{background:none;border:none;color:rgba(244,240,232,.5);font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;padding:12px 4px;min-height:44px;cursor:pointer;}
 .mq-block .mq-ta{height:84px;}
@@ -691,6 +692,7 @@ body:has(.ovl.on) #tmStrip{display:none!important}
 .cp-ta{width:100%;min-height:110px;margin-top:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:'IBM Plex Sans',sans-serif;font-size:.95rem;padding:12px;outline:none;resize:none;box-sizing:border-box}
 .cp-done{font-family:'IBM Plex Sans',sans-serif;color:#bbb;font-size:.95rem;line-height:1.45;margin-top:6px}
 
+.cp-why{font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:.88rem;line-height:1.45;color:rgba(244,240,232,.55);margin:-4px 0 14px}
 .cp-lab{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.1em;color:#8c8c8c;text-transform:uppercase;margin:14px 0 6px}
 .cp-ta.s{min-height:64px;margin-top:0}
 .cp-err{color:var(--red);font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;min-height:1.2em;margin:8px 0}
@@ -2417,11 +2419,11 @@ function buildRewards(){
 }
 
 var MIRROR_QS=[
-  {id:'q1', label:'01: the promise', q:'How did you do on what you planned today?', ph:'Say why. In your own words.', chips:['All of it','Most of it','Some of it','Not much']},
-  {id:'q2', label:'02: the wall', q:'What, if anything, was hard today?', ph:'Say why. In your own words.', pillar:'resistance', chips:['Nothing','Getting started','Staying focused','Wanting something too much']},
-  {id:'q3', label:'03: the work', q:'How was your focus today?', ph:'Say why. In your own words.', pillar:'detachment', chips:['On the work','On the result','Scattered','A mix']},
-  {id:'q4', label:'04: the stillness', q:'What did you do in your quiet moments today?', ph:'Say why. In your own words.', pillar:'boredom', chips:['Sat with it','Reached for my phone','Had none']},
-  {id:'q5', label:'05: tomorrow', q:'What will you do first tomorrow?', ph:'One thing. Specific.', goalChips:true},
+  {id:'q1', label:'01: the promise', q:'How did you do on what you planned today?', why:'Why: honest scoring is how you stop lying to yourself.', ph:'For example: I did the thesis block but skipped the gym because I was tired.', chips:['All of it','Most of it','Some of it','Not much']},
+  {id:'q2', label:'02: the wall', q:'What, if anything, was hard today?', why:'Why: the hard part shows you what to fix tomorrow.', ph:'For example: Starting. I opened my laptop and drifted for 20 minutes.', pillar:'resistance', chips:['Nothing','Getting started','Staying focused','Wanting something too much']},
+  {id:'q3', label:'03: the work', q:'How was your focus today?', why:'Why: focus on the work, not the result, keeps you going.', ph:'For example: I kept thinking about the result instead of the next step.', pillar:'detachment', chips:['On the work','On the result','Scattered','A mix']},
+  {id:'q4', label:'04: the stillness', q:'What did you do in your quiet moments today?', why:'Why: what you do when bored shows your real habits.', ph:'For example: I scrolled Instagram while waiting for the bus.', pillar:'boredom', chips:['Sat with it','Reached for my phone','Had none']},
+  {id:'q5', label:'05: tomorrow', q:'What will you do first tomorrow?', why:'Why: deciding tonight means no thinking at 8am.', ph:'For example: Email the company before 10.', goalChips:true},
 ];
 
 // ── FLASHCARD: resurfacing decisions, renew or let go ──
@@ -2810,7 +2812,7 @@ function mqChip(qid,val,btn){
   [].slice.call(btn.parentNode.children).forEach(function(c){c.classList.remove('on');});
   if(!on) btn.classList.add('on');
   mqCommit(qid);
-  if(!on){var bl=btn.closest('.mq-block'),ta=bl.querySelector('textarea'),mo=bl.querySelector('.mq-more');if(ta){ta.style.display='block';ta.placeholder='Now say why. In your own words.';}if(mo)mo.style.display='none';}
+  if(!on){var bl=btn.closest('.mq-block'),ta=bl.querySelector('textarea'),mo=bl.querySelector('.mq-more');if(ta){ta.style.display='block';ta.placeholder=(MIRROR_QS.filter(function(x){return x.id===qid;})[0]||{}).ph||'Now say why.';}if(mo)mo.style.display='none';}
   try{hap('light');}catch(e){}
 }
 function mqMore(qid,btn){
@@ -2832,7 +2834,7 @@ function buildMirrorQuestions(){
     }
     var chipHtml=chips.length?'<div class="mq-chips">'+chips.map(function(t){return '<button type="button" class="mq-chip'+(S.mirrorChips[q.id]===t?' on':'')+'" data-v="'+t.replace(/"/g,'&quot;')+'">'+esc(t)+'</button>';}).join('')+'</div>':'';
     var hasText=!!(S.mirrorText[q.id]);
-    block.innerHTML='<div class="mq-label">'+q.label+'</div><div class="mq-question">'+q.q+'</div>'+chipHtml
+    block.innerHTML='<div class="mq-label">'+q.label+'</div><div class="mq-question">'+q.q+'</div><div class="mq-w">'+(q.why||'')+'</div>'+chipHtml
       +'<textarea class="mq-ta" data-qid="'+q.id+'" placeholder="'+q.ph.replace(/"/g,'&quot;')+'" style="display:'+((hasText||!chips.length)?'block':'none')+'"></textarea>'
       +(chips.length&&!hasText?'<button type="button" class="mq-more"><span>+</span> Now say why</button>':'');
     var ta=block.querySelector('textarea');
@@ -5224,16 +5226,16 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     shown=st.s==='run'?'run':sig;
     var txt='';try{txt=localStorage.getItem(tkey())||'';}catch(e){}
     if(st.s==='idle'){
-      host.innerHTML='<div class="cp-card"><div class="cp-k">Complain window</div><div class="cp-q">What is bothering you right now? You get five minutes to say all of it. Then it is closed for the day.</div><button class="cp-btn" onclick="complainStart()">START 5 MIN</button></div>';
+      host.innerHTML='<div class="cp-card"><div class="cp-k">Complain window</div><div class="cp-q">What is bothering you right now? You get five minutes to say all of it. Then it is closed for the day.</div><div class="cp-why">Why: what you keep in your head keeps running all day. Said once, it loses its grip. Say it, then move on.</div><button class="cp-btn" onclick="complainStart()">START 5 MIN</button></div>';
     }else if(st.s==='run'){
-      host.innerHTML='<div class="cp-card run"><div class="cp-k">Complain window open</div><div class="cp-big" id="cpClock">'+fmt(st.left)+'</div><textarea class="cp-ta" id="cpTxt" placeholder="Everything that annoys you. Out loud or here. Go." oninput="complainSave(this.value)">'+E(txt)+'</textarea><button class="cp-btn ghost" onclick="complainEnd()">I am done early</button></div>';
+      host.innerHTML='<div class="cp-card run"><div class="cp-k">Complain window open</div><div class="cp-big" id="cpClock">'+fmt(st.left)+'</div><textarea class="cp-ta" id="cpTxt" placeholder="Everything, no filter. For example: I am tired. I feel behind on my thesis. I am annoyed at my phone habit. Go." oninput="complainSave(this.value)">'+E(txt)+'</textarea><button class="cp-btn ghost" onclick="complainEnd()">I am done early</button></div>';
     }else if(cEdit){
       host.innerHTML='<div class="cp-card run">'+top('Your complaints','complainEditDone()')+'<textarea class="cp-ta" id="cpTxt" placeholder="Everything that annoys you." oninput="complainSave(this.value)">'+E(txt)+'</textarea><button class="cp-btn" style="margin-top:12px" onclick="complainEditDone()">SAVE</button></div>';
     }else if(!w){
       host.innerHTML='<div class="cp-card"><div class="cp-k">Window closed</div><div class="cp-done">You said it. No more complaining today. Now turn it into one move.</div><button class="cp-btn" style="margin-top:14px" onclick="wpGo(\'q\')">NEXT: THREE QUESTIONS</button><div class="cp-links"><button onclick="complainEdit()">Edit complaints</button><button onclick="wpReset()">'+(rArmed?'Tap again: new 5 minutes':'Start over')+'</button><button onclick="wpHistOpen()">Past days</button></div></div>';
     }else if(w.step==='q'){
-      var Q=['What exactly is bothering me?','What do I actually want?','What am I avoiding?'];
-      host.innerHTML='<div class="cp-card run">'+top('Step 1 of 2',w.edit?'wpCancel()':'complainEdit()')+'<div class="cp-q">Three questions. Honest, not neat.</div>'+Q.map(function(q,i){return '<div class="cp-lab">'+q+'</div><textarea class="cp-ta s" id="wq'+i+'" oninput="wpAns('+i+',this.value)">'+E((w.a||[])[i]||'')+'</textarea>';}).join('')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpToAction()">'+(w.edit?'SAVE':'NEXT')+'</button></div>';
+      var Q=['What exactly is bothering me?','What do I actually want?','What am I avoiding?'],QX=['For example: I keep scrolling and I feel behind on my thesis.','For example: one real chapter done and a calm evening.','For example: emailing the company. I keep saying later.'];
+      host.innerHTML='<div class="cp-card run">'+top('Step 1 of 2',w.edit?'wpCancel()':'complainEdit()')+'<div class="cp-q">Three questions. Honest, not neat.</div><div class="cp-why">Why: what bothers you, what you want and what you avoid are usually the same story. Seeing it written shows you what to do next. A few words each is enough.</div>'+Q.map(function(q,i){return '<div class="cp-lab">'+q+'</div><textarea class="cp-ta s" id="wq'+i+'" placeholder="'+QX[i]+'" oninput="wpAns('+i+',this.value)">'+E((w.a||[])[i]||'')+'</textarea>';}).join('')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpToAction()">'+(w.edit?'SAVE':'NEXT')+'</button></div>';
     }else if(w.step==='a'){
       host.innerHTML='<div class="cp-card run">'+top('Step 2 of 2',w.edit?'wpCancel()':'wpGo(\'q\')')+'<div class="cp-q">Pick the one thing. It is the first thing you do today. Write it, or ask for ideas.</div><textarea class="cp-ta s" id="wHard" placeholder="The one thing" oninput="wpHard(this.value)">'+E(w.hard||'')+'</textarea><button class="cp-btn ghost lime" id="cpIdeaBtn" onclick="wpAsk()">'+(opts.length?'MORE IDEAS':'GIVE ME IDEAS')+'</button>'+(opts.length?chips(opts,'wpIdeaH'):'')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpToMore()">'+(w.edit?'SAVE':'THIS IS MY ONE THING')+'</button></div>';
     }else{
