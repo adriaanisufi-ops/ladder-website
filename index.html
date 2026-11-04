@@ -715,6 +715,23 @@ body:has(.ovl.on) #tmStrip{display:none!important}
 #oldWord{display:none!important}
 body.wp-on #oldFirst{display:none}
 body.wp-on.wp-pick #oldFirst{display:block}
+.cp-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;min-height:30px}
+.cp-back{background:none;border:0;color:var(--lime);font-family:'IBM Plex Sans',sans-serif;font-size:.95rem;padding:4px 0}
+.cp-more{background:none;border:1px solid rgba(255,255,255,.18);border-radius:999px;color:#bbb;font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;padding:6px 14px}
+.cp-one{display:flex;align-items:flex-start;gap:14px;padding:6px 0 14px;font-family:'IBM Plex Sans',sans-serif;font-size:1.45rem;line-height:1.25;color:#fff;font-weight:500}
+.cp-one i{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.35);flex-shrink:0;margin-top:2px}
+.cp-one.on i{background:var(--lime);border-color:var(--lime)}
+.cp-one.on span{text-decoration:line-through;color:#777}
+.cp-goalrow{display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:12px;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:#bbb;font-family:'IBM Plex Sans',sans-serif;font-size:.9rem}
+.cp-goalrow span:last-child{color:var(--lime)}
+#wpMenu{padding:calc(20px + env(safe-area-inset-top)) 20px 40px;overflow-y:auto}
+#wpMenu .fs-h{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;line-height:1;color:#fff;margin:28px 0 18px}
+.cp-mrow{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left;padding:16px;margin-bottom:10px;border-radius:16px;border:1px solid rgba(255,255,255,.1);background:#121212;color:#fff;font-family:'IBM Plex Sans',sans-serif;font-size:1rem}
+.cp-mrow em{display:block;font-style:normal;color:#8c8c8c;font-size:.78rem;margin-top:3px;font-weight:400}
+.cp-mrow i{font-style:normal;color:#777;font-size:1.4rem}
+.cp-mrow b{font-family:'Bebas Neue',sans-serif;letter-spacing:.08em;font-size:1.1rem;color:#666;font-weight:400}
+.cp-mrow b.on{color:var(--lime)}
+.cp-mrow.warn{border-color:rgba(255,80,80,.3)}
 </style>
 </head>
 <body>
@@ -4583,7 +4600,8 @@ function closeLookBack(){var l=document.getElementById('lookBack');if(l)l.classL
     if(!liveNative())return;
     try{
       var t=S.todayTask,run=!!(t&&t.startedAt&&!t.doneAt);
-      var o={streak:calcStreak(),task:run?t.text:'',startedAt:run?t.startedAt:0,deadline:run?planDeadline(t.by,t.startedAt):0};
+      var hard='';try{var wv=JSON.parse(localStorage.getItem('ladder_wp_'+TODAY)||'null');if(wv&&wv.step==='done'&&wv.hard&&!(wv.d&&wv.d[0])&&!run)hard=wv.hard;}catch(e){}
+      var o={streak:calcStreak(),task:run?t.text:'',hard:hard,startedAt:run?t.startedAt:0,deadline:run?planDeadline(t.by,t.startedAt):0};
       var k=JSON.stringify(o);if(k===last)return;last=k;
       liveCall('sync',o).catch(function(){last='';});
     }catch(e){}
@@ -5148,7 +5166,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   setInterval(function(){sync(false);},3000);
   setTimeout(function(){sync(true);},2800);
   document.addEventListener('visibilitychange',function(){if(!document.hidden)sync(true);});
-  window.timerHubSync=sync;
+  window.timerHubSync=sync;window.timerHubRunning=running;
 })();
 
 
@@ -5200,27 +5218,45 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     }else if(st.s==='run'){
       host.innerHTML='<div class="cp-card run"><div class="cp-k">Complain window open</div><div class="cp-big" id="cpClock">'+fmt(st.left)+'</div><textarea class="cp-ta" id="cpTxt" placeholder="Everything that annoys you. Out loud or here. Go." oninput="complainSave(this.value)">'+E(txt)+'</textarea><button class="cp-btn ghost" onclick="complainEnd()">I am done early</button></div>';
     }else if(cEdit){
-      host.innerHTML='<div class="cp-card run"><div class="cp-k">Your complaints</div><textarea class="cp-ta" id="cpTxt" placeholder="Everything that annoys you." oninput="complainSave(this.value)">'+E(txt)+'</textarea><button class="cp-btn" style="margin-top:12px" onclick="complainEditDone()">SAVE</button></div>';
+      host.innerHTML='<div class="cp-card run">'+top('Your complaints','complainEditDone()')+'<textarea class="cp-ta" id="cpTxt" placeholder="Everything that annoys you." oninput="complainSave(this.value)">'+E(txt)+'</textarea><button class="cp-btn" style="margin-top:12px" onclick="complainEditDone()">SAVE</button></div>';
     }else if(!w){
       host.innerHTML='<div class="cp-card"><div class="cp-k">Window closed</div><div class="cp-done">You said it. No more complaining today. Now turn it into one move.</div><button class="cp-btn" style="margin-top:14px" onclick="wpGo(\'q\')">NEXT: THREE QUESTIONS</button><div class="cp-links"><button onclick="complainEdit()">Edit complaints</button><button onclick="wpReset()">'+(rArmed?'Tap again: new 5 minutes':'Start over')+'</button><button onclick="wpHistOpen()">Past days</button></div></div>';
     }else if(w.step==='q'){
       var Q=['What exactly is bothering me?','What do I actually want?','What am I avoiding?'];
-      host.innerHTML='<div class="cp-card run"><div class="cp-k">Step 1 of 2</div><div class="cp-q">Three questions. Honest, not neat.</div>'+Q.map(function(q,i){return '<div class="cp-lab">'+q+'</div><textarea class="cp-ta s" id="wq'+i+'" oninput="wpAns('+i+',this.value)">'+E((w.a||[])[i]||'')+'</textarea>';}).join('')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpToAction()">'+(w.edit?'SAVE':'NEXT: ONE ACTION')+'</button>'+(w.edit?'<button class="cp-btn ghost" onclick="wpCancel()">Cancel</button>':'<div class="cp-links"><button onclick="complainEdit()">Back to complaints</button><button onclick="wpReset()">'+(rArmed?'Tap again: new 5 minutes':'Start over')+'</button></div>')+'</div>';
+      host.innerHTML='<div class="cp-card run">'+top('Step 1 of 2',w.edit?'wpCancel()':'complainEdit()')+'<div class="cp-q">Three questions. Honest, not neat.</div>'+Q.map(function(q,i){return '<div class="cp-lab">'+q+'</div><textarea class="cp-ta s" id="wq'+i+'" oninput="wpAns('+i+',this.value)">'+E((w.a||[])[i]||'')+'</textarea>';}).join('')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpToAction()">'+(w.edit?'SAVE':'NEXT')+'</button></div>';
     }else if(w.step==='a'){
-      host.innerHTML='<div class="cp-card run"><div class="cp-k">Step 2 of 2</div><div class="cp-q">Pick one action. It becomes your hard task and the first thing you do. Write it yourself or ask for ideas.</div><textarea class="cp-ta s" id="wHard" placeholder="The one action" oninput="wpHard(this.value)">'+E(w.hard||'')+'</textarea><button class="cp-btn ghost lime" id="cpIdeaBtn" onclick="wpAsk()">'+(opts.length?'MORE IDEAS':'GIVE ME IDEAS')+'</button>'+(opts.length?chips(opts,'wpIdeaH'):'')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpToMore()">'+(w.edit?'SAVE':'THIS IS MY HARD TASK')+'</button>'+(w.edit?'<button class="cp-btn ghost" onclick="wpCancel()">Cancel</button>':'<div class="cp-links"><button onclick="wpGo(\'q\')">Back to questions</button></div>')+'</div>';
-    }else if(w.step==='t'){
-      ideas=moreIdeas();
-      host.innerHTML='<div class="cp-card run"><div class="cp-k">Optional</div><div class="cp-q">Anything else besides your goal tasks? Skip it if your goal tasks are enough.</div><div class="cp-row hard"><span class="cp-tag">HARD</span><span class="cp-rt">'+E(w.hard)+'</span></div><input class="cp-in" id="wT0" placeholder="Second thing" value="'+E((w.t||[])[0]||'')+'" oninput="wpT(0,this.value)"><input class="cp-in" id="wT1" placeholder="Third thing" value="'+E((w.t||[])[1]||'')+'" oninput="wpT(1,this.value)"><div class="cp-lab">Ideas</div>'+chips(ideas,'wpIdeaT')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpLock()">'+(w.edit?'SAVE':'SAVE EXTRAS')+'</button>'+(w.edit?'<button class="cp-btn ghost" onclick="wpCancel()">Cancel</button>':'<div class="cp-links"><button onclick="wpGo(\'a\')">Back to action</button></div>')+'</div>';
+      host.innerHTML='<div class="cp-card run">'+top('Step 2 of 2',w.edit?'wpCancel()':'wpGo(\'q\')')+'<div class="cp-q">Pick the one thing. It is the first thing you do today. Write it, or ask for ideas.</div><textarea class="cp-ta s" id="wHard" placeholder="The one thing" oninput="wpHard(this.value)">'+E(w.hard||'')+'</textarea><button class="cp-btn ghost lime" id="cpIdeaBtn" onclick="wpAsk()">'+(opts.length?'MORE IDEAS':'GIVE ME IDEAS')+'</button>'+(opts.length?chips(opts,'wpIdeaH'):'')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpToMore()">'+(w.edit?'SAVE':'THIS IS MY ONE THING')+'</button></div>';
     }else{
-      var d=w.d||[false,false,false],ex=[];(w.t||[]).forEach(function(x,i){if((x||'').trim())ex.push([x,i+1]);});
-      var gts=[];try{loadGoals().forEach(function(g){(g.actions||[]).forEach(function(a){if(a.text)gts.push({t:a.text,on:isActionDone(a)});});});}catch(e){}
-      var all=d[0]&&ex.every(function(e){return d[e[1]];})&&gts.every(function(g){return g.on;});
-      var rows='<div class="cp-row hard'+(d[0]?' on':'')+'" onclick="wpTick(0)"><i></i><span class="cp-rt">'+E(w.hard)+'</span><span class="cp-tag">HARD</span></div>';
-      ex.forEach(function(e){rows+='<div class="cp-row'+(d[e[1]]?' on':'')+'" onclick="wpTick('+e[1]+')"><i></i><span class="cp-rt">'+E(e[0])+'</span></div>';});
-      if(gts.length){rows+='<div class="cp-lab">Then your goal tasks</div>';gts.forEach(function(g){rows+='<div class="cp-row'+(g.on?' on':'')+'" onclick="goTo(\'s-goals\')"><i></i><span class="cp-rt">'+E(g.t)+'</span></div>';});}
-      host.innerHTML='<div class="cp-card'+(all?' held':' run')+'"><div class="cp-k">Today</div>'+rows+(all?'<div class="cp-done" style="margin-top:10px">All done. Today counts.</div>':'')+(!all&&!d[0]&&!(S.todayTask&&S.todayTask.startedAt)?'<div class="cp-lab">Start the hard task now. Finish it by</div><div class="cp-kinds"><button class="cp-kind" onclick="wpGoIn(30)">30 min</button><button class="cp-kind" onclick="wpGoIn(60)">1 hour</button><button class="cp-kind" onclick="wpGoIn(120)">2 hours</button><button class="cp-kind" onclick="wpPick()">Pick time</button></div>':'')+'<div class="cp-links"><button onclick="wpEdit(\'q\')">Edit answers</button><button onclick="wpEdit(\'a\')">Edit hard task</button><button onclick="wpEdit(\'t\')">Add extras</button><button onclick="complainEdit()">Edit complaints</button><button onclick="wpReset()">'+(rArmed?'Tap again: new 5 minutes':'Start over')+'</button><button onclick="wpHistOpen()">Past days</button></div></div>';
+      var d=w.d||[false,false,false];
+      var gn=0,gd=0;try{loadGoals().forEach(function(g){(g.actions||[]).forEach(function(a){if(a.text){gn++;if(isActionDone(a))gd++;}});});}catch(e){}
+      var running=!!(S.todayTask&&S.todayTask.startedAt&&!S.todayTask.doneAt),all=d[0]&&gd===gn;
+      host.innerHTML='<div class="cp-card'+(all?' held':' run')+'"><div class="cp-top"><span class="cp-k">Today\'s one thing</span><button class="cp-more" onclick="wpMenu()">More</button></div>'
+        +'<div class="cp-one'+(d[0]?' on':'')+'" onclick="wpTick(0)"><i></i><span>'+E(w.hard)+'</span></div>'
+        +(!d[0]&&!(S.todayTask&&S.todayTask.startedAt)?'<div class="cp-lab">Start it. Finish it by</div><div class="cp-kinds"><button class="cp-kind" onclick="wpGoIn(30)">30 min</button><button class="cp-kind" onclick="wpGoIn(60)">1 hour</button><button class="cp-kind" onclick="wpGoIn(120)">2 hours</button><button class="cp-kind" onclick="wpPick()">Other</button></div>':'')
+        +(running&&!d[0]?'<div class="cp-done" style="margin:2px 0 4px">On the clock. Timer below.</div>':'')
+        +(all?'<div class="cp-done" style="margin:2px 0 4px">All done. Today counts.</div>':'')
+        +(gn?'<button class="cp-goalrow" onclick="goTo(\'s-goals\')"><span>Goal tasks</span><span>'+gd+'/'+gn+' done &rsaquo;</span></button>':'')
+        +'</div>';
     }
   }
+  function top(label,back){return '<div class="cp-top"><button class="cp-back" onclick="'+back+'">&lsaquo; Back</button><span class="cp-k">'+label+'</span></div>';}
+  var menu=document.createElement('div');menu.id='wpMenu';menu.className='ovl';menu.style.justifyContent='flex-start';document.body.appendChild(menu);
+  function stayOn(){try{return localStorage.getItem('ladder_stay')!=='0';}catch(e){return true;}}
+  window.ladderStay=stayOn;
+  function menuRender(){
+    menu.innerHTML='<button class="aff-x" onclick="wpMenuClose()">Back</button><div class="fs-h">TODAY</div>'
+      +'<button class="cp-mrow" onclick="wpMenuGo(\'a\')"><span>Change my one thing</span><i>&rsaquo;</i></button>'
+      +'<button class="cp-mrow" onclick="wpMenuGo(\'q\')"><span>Change my answers</span><i>&rsaquo;</i></button>'
+      +'<button class="cp-mrow" onclick="wpMenuGo(\'c\')"><span>Change my complaints</span><i>&rsaquo;</i></button>'
+      +'<button class="cp-mrow" onclick="wpMenuGo(\'h\')"><span>Past days</span><i>&rsaquo;</i></button>'
+      +'<button class="cp-mrow" onclick="wpStay()"><span>Nudge me if I leave during a timer<em>Notifications when you leave the app while a timer runs.</em></span><b class="'+(stayOn()?'on':'')+'">'+(stayOn()?'ON':'OFF')+'</b></button>'
+      +'<button class="cp-mrow warn" onclick="wpMenuReset()"><span>'+(rArmed?'Tap again: erase today and start over':'Start over')+'<em>New 5 minutes. Today\'s answers are cleared.</em></span><i>&rsaquo;</i></button>';
+  }
+  window.wpMenu=function(){rArmed=false;menuRender();menu.classList.add('on');menu.scrollTop=0;};
+  window.wpMenuClose=function(){menu.classList.remove('on');rArmed=false;};
+  window.wpMenuGo=function(k){menu.classList.remove('on');if(k==='a'||k==='q')wpEdit(k);else if(k==='c')complainEdit();else wpHistOpen();};
+  window.wpStay=function(){try{localStorage.setItem('ladder_stay',stayOn()?'0':'1');}catch(e){}menuRender();};
+  window.wpMenuReset=function(){if(!rArmed){rArmed=true;menuRender();setTimeout(function(){if(rArmed){rArmed=false;if(menu.classList.contains('on'))menuRender();}},3000);return;}rArmed=false;menu.classList.remove('on');wpReset(true);};
   function tickEl(){var st=complainState();if(st.s!=='run'){render(true);if(window.hap)hap('success');if(window.timerHubSync)timerHubSync(false);return;}var e=document.getElementById('cpClock');if(e)e.textContent=fmt(st.left);}
   window.complainStart=function(){if(get())return;jput(key(),{start:Date.now(),done:false});render(true);if(window.hap)hap('heavy');notify(true);if(window.timerHubSync)timerHubSync(false);};
   window.complainEnd=function(){var c=get();if(!c)return;c.done=true;jput(key(),c);render(true);notify(false);if(window.hap)hap('success');if(window.timerHubSync)timerHubSync(false);};
@@ -5246,14 +5282,14 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   };
   window.wpHard=function(v){setW(function(w){w.hard=v;});};
   window.wpIdeaH=function(i){var v=opts[i];setW(function(w){w.hard=v;});render(true);};
-  window.wpToMore=function(){var w=wp();if(!w||!(w.hard||'').trim()){msg='Write the one action first.';var e=document.getElementById('cpErr');if(e)e.textContent=msg;return;}msg='';setW(function(x){x.step='done';x.edit=false;x.t=x.t||['',''];if(!x.d)x.d=[false,false,false];});try{S.todayWord=w.hard;save();var tw=document.getElementById('todayWord');if(tw)tw.value=w.hard;}catch(e){}render(true);if(window.hap)hap('success');};
+  window.wpToMore=function(){var w=wp();if(!w||!(w.hard||'').trim()){msg='Write the one action first.';var e=document.getElementById('cpErr');if(e)e.textContent=msg;return;}msg='';setW(function(x){x.step='done';x.edit=false;x.t=x.t||['',''];if(!x.d)x.d=[false,false,false];});try{S.todayWord=w.hard;save();var tw=document.getElementById('todayWord');if(tw)tw.value=w.hard;}catch(e){}render(true);if(window.hap)hap('success');setTimeout(function(){if(window.widgetSync)widgetSync();},300);};
   window.wpT=function(i,v){setW(function(w){w.t=w.t||['',''];w.t[i]=v;});};
   window.wpIdeaT=function(i){var v=ideas[i];setW(function(w){w.t=w.t||['',''];if(!(w.t[0]||'').trim())w.t[0]=v;else w.t[1]=v;});render(true);};
   window.wpLock=function(){msg='';setW(function(x){x.step='done';x.edit=false;if(!x.d)x.d=[false,false,false];x.t=(x.t||['','']);});render(true);if(window.hap)hap('success');};
   window.complainEdit=function(){cEdit=true;render(true);};
   window.complainEditDone=function(){cEdit=false;render(true);};
-  window.wpReset=function(){
-    if(!rArmed){rArmed=true;render(true);setTimeout(function(){if(rArmed){rArmed=false;render(true);}},3000);return;}
+  window.wpReset=function(force){
+    if(!force&&!rArmed){rArmed=true;render(true);setTimeout(function(){if(rArmed){rArmed=false;render(true);}},3000);return;}
     rArmed=false;cEdit=false;try{localStorage.removeItem(key());localStorage.removeItem(wkey());}catch(e){}
     notify(false);opts=[];render(true);if(window.hap)hap('light');if(window.timerHubSync)timerHubSync(false);
   };
@@ -5282,7 +5318,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   window.wpHistOpen=function(){armed='';histRender();hist.classList.add('on');hist.scrollTop=0;};
   window.wpHistClose=function(){hist.classList.remove('on');};
   window.wpHistDel=function(day){if(armed!==day){armed=day;histRender();setTimeout(function(){if(armed===day){armed='';if(hist.classList.contains('on'))histRender();}},3000);return;}armed='';try{localStorage.removeItem('ladder_wp_'+day);localStorage.removeItem('ladder_complain_txt_'+day);}catch(e){}histRender();};
-  window.wpTick=function(i){setW(function(w){w.d=w.d||[false,false,false];w.d[i]=!w.d[i];});render(true);if(window.hap)hap('light');};
+  window.wpTick=function(i){setW(function(w){w.d=w.d||[false,false,false];w.d[i]=!w.d[i];});render(true);setTimeout(function(){if(window.widgetSync)widgetSync();},300);if(window.hap)hap('light');};
   window.wpGoIn=function(min){var w=wp();if(!w)return;var t=document.getElementById('todayTask');if(t)t.value=w.hard;byIn(min);startPlan();render(true);if(window.hap)hap('heavy');};
   window.wpPick=function(){document.body.classList.add('wp-pick');var w=wp();var t=document.getElementById('todayTask');if(t&&w)t.value=w.hard;try{t.scrollIntoView({block:'center',behavior:'smooth'});}catch(e){}};
   window.wpStartHard=function(){var w=wp();if(!w)return;var t=document.getElementById('todayTask');if(t){t.value=w.hard;}try{var b=document.getElementById('tbH');if(b)b.scrollIntoView({block:'center',behavior:'smooth'});}catch(e){}if(window.hap)hap('light');};
@@ -5298,6 +5334,26 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
 (function(){
   var _sp=window.startPlan;
   window.startPlan=function(){var r=_sp.apply(this,arguments);try{if(S.todayTask&&S.todayTask.text){S.todayWord=S.todayTask.text;save();var tw=document.getElementById('todayWord');if(tw)tw.value=S.todayTask.text;}}catch(e){}return r;};
+})();
+
+/* v70 stay in LADDER nudges */
+(function(){
+  var IDS=[60,61,62,63],WAIT=[20,90,240,600];
+  function stay(){return window.ladderStay?ladderStay():true;}
+  async function cancel(){try{var ln=lnPlugin();if(ln)await ln.cancel({notifications:IDS.map(function(i){return {id:i};})});}catch(e){}}
+  async function arm(){
+    try{
+      if(!stay()||!window.timerHubRunning)return;var L=timerHubRunning().filter(function(x){return x.deadline>Date.now()+30000;});if(!L.length)return;
+      var ln=lnPlugin();if(!ln)return;var p=await ln.checkPermissions();if(p.display!=='granted'){p=await ln.requestPermissions();if(p.display!=='granted')return;}
+      var x=L.sort(function(a,b){return a.deadline-b.deadline;})[0],now=Date.now(),list=[];
+      WAIT.forEach(function(sec,i){var at=now+sec*1000;if(at>=x.deadline-5000)return;var left=Math.max(1,Math.round((x.deadline-at)/60000));
+        var body=['You left mid timer. '+x.title+'. Come back.','Still on the clock: '+x.title+'. '+left+' min left.','The timer is still running. '+left+' min left on '+x.title+'.','You are '+left+' min from done. '+x.title+'.'][i];
+        list.push({id:IDS[i],title:'LADDER',body:body,schedule:{at:new Date(at),allowWhileIdle:true}});});
+      await cancel();if(list.length)await ln.schedule({notifications:list});
+    }catch(e){}
+  }
+  document.addEventListener('visibilitychange',function(){if(document.hidden)arm();else cancel();});
+  setTimeout(cancel,2500);
 })();
 </script>
 <div id="ovTop"></div>
