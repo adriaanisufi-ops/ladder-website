@@ -5243,7 +5243,6 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   window.ladderStay=stayOn;
   function menuRender(){
     menu.innerHTML='<button class="aff-x" onclick="wpMenuClose()">Back</button><div class="fs-h">TODAY</div>'
-      +'<button class="cp-mrow" onclick="wpMenuGo(\'a\')"><span>Change my one thing</span><i>&rsaquo;</i></button>'
       +'<button class="cp-mrow" onclick="wpMenuGo(\'q\')"><span>Change my answers</span><i>&rsaquo;</i></button>'
       +'<button class="cp-mrow" onclick="wpMenuGo(\'c\')"><span>Change my complaints</span><i>&rsaquo;</i></button>'
       +'<button class="cp-mrow" onclick="wpMenuGo(\'h\')"><span>Past days</span><i>&rsaquo;</i></button>'
@@ -5306,7 +5305,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     L.forEach(function(x){
       var w=x.wp,dt=new Date(x.day),lbl=isNaN(dt)?x.day:dt.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
       h+='<div class="cp-card" style="margin-bottom:12px"><div class="cp-k">'+E(lbl)+'</div>';
-      if(w&&w.hard)h+='<div class="cp-lab">Hard task'+(w.d&&w.d[0]?' (done)':'')+'</div><div class="cp-done">'+E(w.hard)+'</div>';
+      if(false)h+='<div class="cp-lab">Hard task'+(w.d&&w.d[0]?' (done)':'')+'</div><div class="cp-done">'+E(w.hard)+'</div>';
       if(w&&w.a&&w.a.some(function(z){return z;})){['Bothering me','What I want','Avoiding'].forEach(function(n,i){if(w.a[i])h+='<div class="cp-lab">'+n+'</div><div class="cp-done">'+E(w.a[i])+'</div>';});}
       if(x.txt&&x.txt.trim())h+='<div class="cp-lab">Complaints</div><div class="cp-done">'+E(x.txt)+'</div>';
       h+='<button class="cp-btn ghost" onclick="wpHistDel(\''+E(x.day).replace(/'/g,'')+'\')">'+(armed===x.day?'Tap again to remove':'Remove this day')+'</button></div>';
