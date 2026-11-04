@@ -5234,14 +5234,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     }else if(w.step==='a'){
       host.innerHTML='<div class="cp-card run">'+top('Step 2 of 2',w.edit?'wpCancel()':'wpGo(\'q\')')+'<div class="cp-q">Pick the one thing. It is the first thing you do today. Write it, or ask for ideas.</div><textarea class="cp-ta s" id="wHard" placeholder="The one thing" oninput="wpHard(this.value)">'+E(w.hard||'')+'</textarea><button class="cp-btn ghost lime" id="cpIdeaBtn" onclick="wpAsk()">'+(opts.length?'MORE IDEAS':'GIVE ME IDEAS')+'</button>'+(opts.length?chips(opts,'wpIdeaH'):'')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpToMore()">'+(w.edit?'SAVE':'THIS IS MY ONE THING')+'</button></div>';
     }else{
-      var d=w.d||[false,false,false];
-      var gn=0,gd=0;try{loadGoals().forEach(function(g){(g.actions||[]).forEach(function(a){if(a.text){gn++;if(isActionDone(a))gd++;}});});}catch(e){}
-      var running=!!(S.todayTask&&S.todayTask.startedAt&&!S.todayTask.doneAt),all=d[0]&&gd===gn;
-      host.innerHTML='<div class="cp-card'+(all?' held':' run')+'"><div class="cp-top"><span class="cp-k">Today\'s one thing</span><button class="cp-more" onclick="wpMenu()">More</button></div>'
-        +'<div class="cp-one'+(d[0]?' on':'')+'" onclick="wpTick(0)"><i></i><span>'+E(w.hard)+'</span></div>'
-        +(!d[0]&&!(S.todayTask&&S.todayTask.startedAt)?'<div class="cp-lab">Start it. Finish it by</div><div class="cp-kinds"><button class="cp-kind" onclick="wpGoIn(30)">30 min</button><button class="cp-kind" onclick="wpGoIn(60)">1 hour</button><button class="cp-kind" onclick="wpGoIn(120)">2 hours</button><button class="cp-kind'+(pickOpen?' on':'')+'" onclick="wpPick()">Other</button></div>'+(pickOpen?'<div class="cp-pick"><input type="time" id="wpTime" value="'+defTime()+'"><button class="cp-btn" onclick="wpGoAt()">START</button></div>':''):'')
-
-        +'</div>';
+      host.innerHTML='<div class="cp-card held"><div class="cp-top"><span class="cp-k">Complaints and questions saved</span><button class="cp-more" onclick="wpMenu()">More</button></div><div class="cp-one" style="font-size:1.1rem;color:#aaa;cursor:default"><span>Now go to your goals.</span></div></div>';
     }
   }
   function top(label,back){return '<div class="cp-top"><button class="cp-back" onclick="'+back+'">&lsaquo; Back</button><span class="cp-k">'+label+'</span></div>';}
@@ -5269,7 +5262,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   function setW(f){var w=wp()||{step:'q',a:['','',''],t:['',''],d:[false,false,false]};f(w);jput(wkey(),w);return w;}
   window.wpGo=function(st){msg='';setW(function(w){w.step=st;});render(true);};
   window.wpAns=function(i,v){setW(function(w){w.a=w.a||['','',''];w.a[i]=v;});};
-  window.wpToAction=function(){var _w0=wp();var w=wp()||{a:[]};var ok=[0,1,2].every(function(i){return ((w.a||[])[i]||'').trim().length>1;});if(!ok){msg='Answer all three. Short is fine.';var e=document.getElementById('cpErr');if(e)e.textContent=msg;return;}msg='';var ed=_w0&&_w0.edit;setW(function(w){w.step=ed?'done':'a';if(ed)w.edit=false;});render(true);if(window.hap)hap('light');};
+  window.wpToAction=function(){var _w0=wp();var w=wp()||{a:[]};var ok=[0,1,2].every(function(i){return ((w.a||[])[i]||'').trim().length>1;});if(!ok){msg='Answer all three. Short is fine.';var e=document.getElementById('cpErr');if(e)e.textContent=msg;return;}msg='';var ed=_w0&&_w0.edit;setW(function(w){w.step='done';w.edit=false;});render(true);if(window.hap)hap('light');};
   window.wpAsk=async function(){
     if(asking)return;var w=wp();if(!w)return;asking=true;var btn=document.getElementById('cpIdeaBtn');if(btn){btn.textContent='THINKING...';btn.disabled=true;}
     var fb=function(){var g=goalIdeas().slice(0,2),o=['Say the one thing I have been avoiding to the person it concerns','Take a 20 minute walk without my phone','Write down the decision I keep postponing and pick one','Close one open loop that has been sitting for days'];return g.concat(o).slice(0,4);};
