@@ -713,8 +713,8 @@ body:has(.ovl.on) #tmStrip{display:none!important}
 #wpHist{padding:calc(20px + env(safe-area-inset-top)) 20px 40px;overflow-y:auto}
 #wpHist .fs-h{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;line-height:1;color:#fff;margin:28px 0 18px}
 #oldWord{display:none!important}
-body.wp-on #oldFirst{display:none}
-body.wp-on.wp-pick #oldFirst{display:block}
+body.wp-on #oldFirst{display:none!important}
+body.wp-same #planRunText{display:none}
 .cp-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;min-height:30px}
 .cp-back{background:none;border:0;color:var(--lime);font-family:'IBM Plex Sans',sans-serif;font-size:.95rem;padding:4px 0}
 .cp-more{background:none;border:1px solid rgba(255,255,255,.18);border-radius:999px;color:#bbb;font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;padding:6px 14px}
@@ -732,6 +732,9 @@ body.wp-on.wp-pick #oldFirst{display:block}
 .cp-mrow b{font-family:'Bebas Neue',sans-serif;letter-spacing:.08em;font-size:1.1rem;color:#666;font-weight:400}
 .cp-mrow b.on{color:var(--lime)}
 .cp-mrow.warn{border-color:rgba(255,80,80,.3)}
+.cp-pick{display:flex;gap:10px;margin-top:10px}
+.cp-pick input{flex:1;min-width:0;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:1.25rem;letter-spacing:.04em;color-scheme:dark}
+.cp-pick .cp-btn{flex:1;width:auto}
 </style>
 </head>
 <body>
@@ -5185,7 +5188,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   function wp(){return jget(wkey());}
   function E(x){return (x||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
   window.complainState=function(){var c=get();if(!c)return {s:'idle'};if(c.done||Date.now()>=c.start+DUR)return {s:'closed',c:c};return {s:'run',c:c,left:c.start+DUR-Date.now()};};
-  var shown='',msg='',pickKind='',cEdit=false,rArmed=false;
+  var shown='',msg='',pickKind='',cEdit=false,rArmed=false,pickOpen=false;
   function fmt(ms){var s=Math.max(0,Math.ceil(ms/1000));return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2);}
   function cut(t,n){t=(t||'').trim().replace(/\s+/g,' ');return t.length>n?t.slice(0,n-1)+'…':t;}
   function goalIdeas(){var o=[];try{loadGoals().forEach(function(g){(g.actions||[]).forEach(function(a){if(a.text)o.push(a.text);});});}catch(e){}return o;}
@@ -5208,7 +5211,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   var ideas=[],opts=[],asking=false;
   function render(force){
     var host=document.getElementById('complainCard');if(!host)return;
-    var st=complainState(),w=wp();document.body.classList.toggle('wp-on',!!(st.s==='closed'&&w));if(!(st.s==='closed'&&w&&w.step==='done'))document.body.classList.remove('wp-pick');var sig=st.s+(st.s==='closed'?':'+(cEdit?'ce':'')+(rArmed?'ra':'')+(w?w.step+(w.edit?'e':'')+(w.d?w.d.join(''):'')+((S.todayTask&&S.todayTask.startedAt)?'p':''):'-'):'');
+    var st=complainState(),w=wp();document.body.classList.toggle('wp-on',!!(st.s==='closed'&&w));document.body.classList.toggle('wp-same',!!(st.s==='closed'&&w&&S.todayTask&&S.todayTask.startedAt&&(S.todayTask.text||'').trim()===(w.hard||'').trim()));if(!(st.s==='closed'&&w&&w.step==='done'))document.body.classList.remove('wp-pick');var sig=st.s+(st.s==='closed'?':'+(cEdit?'ce':'')+(rArmed?'ra':'')+(pickOpen?'po':'')+(w?w.step+(w.edit?'e':'')+(w.d?w.d.join(''):'')+((S.todayTask&&S.todayTask.startedAt)?'p':''):'-'):'');
     if(!force&&shown===sig&&st.s!=='run')return;
     if(st.s==='run'&&shown==='run'&&!force){tickEl();return;}
     shown=st.s==='run'?'run':sig;
@@ -5232,7 +5235,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
       var running=!!(S.todayTask&&S.todayTask.startedAt&&!S.todayTask.doneAt),all=d[0]&&gd===gn;
       host.innerHTML='<div class="cp-card'+(all?' held':' run')+'"><div class="cp-top"><span class="cp-k">Today\'s one thing</span><button class="cp-more" onclick="wpMenu()">More</button></div>'
         +'<div class="cp-one'+(d[0]?' on':'')+'" onclick="wpTick(0)"><i></i><span>'+E(w.hard)+'</span></div>'
-        +(!d[0]&&!(S.todayTask&&S.todayTask.startedAt)?'<div class="cp-lab">Start it. Finish it by</div><div class="cp-kinds"><button class="cp-kind" onclick="wpGoIn(30)">30 min</button><button class="cp-kind" onclick="wpGoIn(60)">1 hour</button><button class="cp-kind" onclick="wpGoIn(120)">2 hours</button><button class="cp-kind" onclick="wpPick()">Other</button></div>':'')
+        +(!d[0]&&!(S.todayTask&&S.todayTask.startedAt)?'<div class="cp-lab">Start it. Finish it by</div><div class="cp-kinds"><button class="cp-kind" onclick="wpGoIn(30)">30 min</button><button class="cp-kind" onclick="wpGoIn(60)">1 hour</button><button class="cp-kind" onclick="wpGoIn(120)">2 hours</button><button class="cp-kind'+(pickOpen?' on':'')+'" onclick="wpPick()">Other</button></div>'+(pickOpen?'<div class="cp-pick"><input type="time" id="wpTime" value="'+defTime()+'"><button class="cp-btn" onclick="wpGoAt()">START</button></div>':''):'')
         +(running&&!d[0]?'<div class="cp-done" style="margin:2px 0 4px">On the clock. Timer below.</div>':'')
         +(all?'<div class="cp-done" style="margin:2px 0 4px">All done. Today counts.</div>':'')
         +(gn?'<button class="cp-goalrow" onclick="goTo(\'s-goals\')"><span>Goal tasks</span><span>'+gd+'/'+gn+' done &rsaquo;</span></button>':'')
@@ -5320,7 +5323,9 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   window.wpHistDel=function(day){if(armed!==day){armed=day;histRender();setTimeout(function(){if(armed===day){armed='';if(hist.classList.contains('on'))histRender();}},3000);return;}armed='';try{localStorage.removeItem('ladder_wp_'+day);localStorage.removeItem('ladder_complain_txt_'+day);}catch(e){}histRender();};
   window.wpTick=function(i){setW(function(w){w.d=w.d||[false,false,false];w.d[i]=!w.d[i];});render(true);setTimeout(function(){if(window.widgetSync)widgetSync();},300);if(window.hap)hap('light');};
   window.wpGoIn=function(min){var w=wp();if(!w)return;var t=document.getElementById('todayTask');if(t)t.value=w.hard;byIn(min);startPlan();render(true);if(window.hap)hap('heavy');};
-  window.wpPick=function(){document.body.classList.add('wp-pick');var w=wp();var t=document.getElementById('todayTask');if(t&&w)t.value=w.hard;try{t.scrollIntoView({block:'center',behavior:'smooth'});}catch(e){}};
+  function defTime(){var d=new Date(Date.now()+90*60000);return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
+  window.wpPick=function(){pickOpen=!pickOpen;render(true);};
+  window.wpGoAt=function(){var w=wp(),v=(document.getElementById('wpTime')||{}).value;if(!w||!v)return;var t=document.getElementById('todayTask'),by=document.getElementById('todayBy');if(t)t.value=w.hard;if(by)by.value=v;pickOpen=false;startPlan();render(true);if(window.hap)hap('heavy');};
   window.wpStartHard=function(){var w=wp();if(!w)return;var t=document.getElementById('todayTask');if(t){t.value=w.hard;}try{var b=document.getElementById('tbH');if(b)b.scrollIntoView({block:'center',behavior:'smooth'});}catch(e){}if(window.hap)hap('light');};
   var _dp=window.donePlan;window.donePlan=function(){var t=S.todayTask&&S.todayTask.text,r=_dp.apply(this,arguments);try{var w=wp();if(w&&w.step==='done'&&t&&t===w.hard&&!w.d[0]){w.d[0]=true;jput(wkey(),w);render(true);}}catch(e){}return r;};
   async function notify(on){try{var ln=lnPlugin();if(!ln)return;await ln.cancel({notifications:[{id:50}]});if(!on)return;var p=await ln.checkPermissions();if(p.display!=='granted'){p=await ln.requestPermissions();if(p.display!=='granted')return;}await ln.schedule({notifications:[{id:50,title:'LADDER',body:'Complain window closed. Now the three questions.',schedule:{at:new Date(Date.now()+DUR),allowWhileIdle:true}}]});}catch(e){}}
