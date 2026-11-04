@@ -111,6 +111,7 @@
 .mq-chips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 14px;}
 .mq-chip{background:rgba(244,240,232,.05);border:1px solid rgba(244,240,232,.14);color:rgba(244,240,232,.8);border-radius:999px;padding:12px 16px;min-height:44px;font-family:'IBM Plex Sans',sans-serif;font-size:.92rem;font-weight:400;cursor:pointer;transition:all .15s;}
 .mq-chip.on{background:var(--lime);border-color:var(--lime);color:var(--black);font-weight:500;}
+.mq-why{font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:.92rem;line-height:1.5;color:rgba(244,240,232,.6);border-left:2px solid var(--lime);padding:2px 0 2px 12px;margin:0 0 22px;}
 .mq-actions{display:flex;justify-content:space-between;align-items:center;margin-top:10px;}
 .mq-more,.mq-skip{background:none;border:none;color:rgba(244,240,232,.5);font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;padding:12px 4px;min-height:44px;cursor:pointer;}
 .mq-block .mq-ta{height:84px;}
@@ -991,6 +992,7 @@ body.wp-on #wpMoreBtn{display:block}
       <div class="m-top"><div class="lbl" style="margin:0">Evening mirror</div><div class="m-chips"><button class="m-chip" onclick="openLesson()">+ lesson</button></div></div>
       <div class="m-dots" id="mDots"></div>
 
+      <div class="mq-why">This is the most important two minutes of your day. The buttons only get you started. The real answer is the one you think through and write yourself.</div>
       <div id="mirrorQuestions"></div>
 
       <div class="mstep" id="mStepSum">
@@ -2415,10 +2417,10 @@ function buildRewards(){
 }
 
 var MIRROR_QS=[
-  {id:'q1', label:'01: the promise', q:'How did you do on what you planned today?', ph:'Say more if you want.', chips:['All of it','Most of it','Some of it','Not much']},
-  {id:'q2', label:'02: the wall', q:'What, if anything, was hard today?', ph:'Say more if you want.', pillar:'resistance', chips:['Nothing','Getting started','Staying focused','Wanting something too much']},
-  {id:'q3', label:'03: the work', q:'How was your focus today?', ph:'Say more if you want.', pillar:'detachment', chips:['On the work','On the result','Scattered','A mix']},
-  {id:'q4', label:'04: the stillness', q:'What did you do in your quiet moments today?', ph:'Say more if you want.', pillar:'boredom', chips:['Sat with it','Reached for my phone','Had none']},
+  {id:'q1', label:'01: the promise', q:'How did you do on what you planned today?', ph:'Say why. In your own words.', chips:['All of it','Most of it','Some of it','Not much']},
+  {id:'q2', label:'02: the wall', q:'What, if anything, was hard today?', ph:'Say why. In your own words.', pillar:'resistance', chips:['Nothing','Getting started','Staying focused','Wanting something too much']},
+  {id:'q3', label:'03: the work', q:'How was your focus today?', ph:'Say why. In your own words.', pillar:'detachment', chips:['On the work','On the result','Scattered','A mix']},
+  {id:'q4', label:'04: the stillness', q:'What did you do in your quiet moments today?', ph:'Say why. In your own words.', pillar:'boredom', chips:['Sat with it','Reached for my phone','Had none']},
   {id:'q5', label:'05: tomorrow', q:'What will you do first tomorrow?', ph:'One thing. Specific.', goalChips:true},
 ];
 
@@ -2808,6 +2810,7 @@ function mqChip(qid,val,btn){
   [].slice.call(btn.parentNode.children).forEach(function(c){c.classList.remove('on');});
   if(!on) btn.classList.add('on');
   mqCommit(qid);
+  if(!on){var bl=btn.closest('.mq-block'),ta=bl.querySelector('textarea'),mo=bl.querySelector('.mq-more');if(ta){ta.style.display='block';ta.placeholder='Now say why. In your own words.';}if(mo)mo.style.display='none';}
   try{hap('light');}catch(e){}
 }
 function mqMore(qid,btn){
@@ -2831,7 +2834,7 @@ function buildMirrorQuestions(){
     var hasText=!!(S.mirrorText[q.id]);
     block.innerHTML='<div class="mq-label">'+q.label+'</div><div class="mq-question">'+q.q+'</div>'+chipHtml
       +'<textarea class="mq-ta" data-qid="'+q.id+'" placeholder="'+q.ph.replace(/"/g,'&quot;')+'" style="display:'+((hasText||!chips.length)?'block':'none')+'"></textarea>'
-      +(chips.length&&!hasText?'<button type="button" class="mq-more"><span>+</span> Say more</button>':'');
+      +(chips.length&&!hasText?'<button type="button" class="mq-more"><span>+</span> Now say why</button>':'');
     var ta=block.querySelector('textarea');
     ta.value=S.mirrorText[q.id]||'';
     ta.addEventListener('input',function(){S.mirrorText[q.id]=ta.value;mqCommit(q.id);});
@@ -4500,7 +4503,7 @@ function closeLookBack(){var l=document.getElementById('lookBack');if(l)l.classL
     's-morning':['Your day','Pick one task, set a deadline, start the clock. Finish it before the time runs out.'],
     's-wiring':['Wiring','Choose 3, 5 or 10 minutes. Sit with nothing. No phone. Each session builds the picture.'],
     's-goals':['Goals','Every goal has actions. Start the timer, do the work, check it off.'],
-    's-mirror':['Mirror','Close the day. Tap what fits, add words only if you want to. Then you are done.'],
+    's-mirror':['Mirror','Close the day. Tap what fits, then say why in your own words. Then you are done.'],
     's-ladder':['Ladder','Your streak, your wins and your debt. Skip a rule and the kilometers add up.']
   };
   function hintShow(id){
