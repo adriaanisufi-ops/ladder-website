@@ -712,7 +712,8 @@ body:has(.ovl.on) #tmStrip{display:none!important}
 .cp-links button{background:none;border:1px solid rgba(255,255,255,.14);border-radius:999px;color:#aaa;font-family:'IBM Plex Sans',sans-serif;font-size:.78rem;padding:7px 12px}
 #wpHist{padding:calc(20px + env(safe-area-inset-top)) 20px 40px;overflow-y:auto}
 #wpHist .fs-h{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;line-height:1;color:#fff;margin:28px 0 18px}
-body.wp-on #oldWord,body.wp-on #oldFirst{display:none}
+#oldWord{display:none!important}
+body.wp-on #oldFirst{display:none}
 body.wp-on.wp-pick #oldFirst{display:block}
 </style>
 </head>
@@ -5189,7 +5190,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   var ideas=[],opts=[],asking=false;
   function render(force){
     var host=document.getElementById('complainCard');if(!host)return;
-    var st=complainState(),w=wp();document.body.classList.toggle('wp-on',!!(st.s==='closed'&&w&&w.step==='done'&&!cEdit));if(!(st.s==='closed'&&w&&w.step==='done'))document.body.classList.remove('wp-pick');var sig=st.s+(st.s==='closed'?':'+(cEdit?'ce':'')+(rArmed?'ra':'')+(w?w.step+(w.edit?'e':'')+(w.d?w.d.join(''):'')+((S.todayTask&&S.todayTask.startedAt)?'p':''):'-'):'');
+    var st=complainState(),w=wp();document.body.classList.toggle('wp-on',!!(st.s==='closed'&&w));if(!(st.s==='closed'&&w&&w.step==='done'))document.body.classList.remove('wp-pick');var sig=st.s+(st.s==='closed'?':'+(cEdit?'ce':'')+(rArmed?'ra':'')+(w?w.step+(w.edit?'e':'')+(w.d?w.d.join(''):'')+((S.todayTask&&S.todayTask.startedAt)?'p':''):'-'):'');
     if(!force&&shown===sig&&st.s!=='run')return;
     if(st.s==='run'&&shown==='run'&&!force){tickEl();return;}
     shown=st.s==='run'?'run':sig;
@@ -5291,6 +5292,12 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   setInterval(function(){render(false);},1000);
   setTimeout(function(){render(true);},600);
   var _g3=goTo;goTo=function(id){_g3(id);if(id==='s-morning')setTimeout(function(){render(true);},50);};
+})();
+
+/* v69 sleep satisfied field replaced by the first task */
+(function(){
+  var _sp=window.startPlan;
+  window.startPlan=function(){var r=_sp.apply(this,arguments);try{if(S.todayTask&&S.todayTask.text){S.todayWord=S.todayTask.text;save();var tw=document.getElementById('todayWord');if(tw)tw.value=S.todayTask.text;}}catch(e){}return r;};
 })();
 </script>
 <div id="ovTop"></div>
