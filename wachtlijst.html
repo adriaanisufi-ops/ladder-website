@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>LADDER Waitlist</title>
-<meta name="description" content="LADDER is a daily discipline app. Join the waitlist and hear first when it is ready.">
+<meta name="description" content="LADDER is where I keep my promises. Join the waitlist and be first in when it opens.">
 <meta name="theme-color" content="#0a0a0a">
 <meta property="og:title" content="LADDER Waitlist">
 <meta property="og:description" content="Do what you said you would do. Join the waitlist.">
@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400&display=swap" rel="stylesheet">
 <style>
-/* Layout: one hard column. A five rung ladder (the real daily loop) fills with lime as the page loads, then the form. */
+/* Layout: the first screen does the whole job (headline, a sphere that fills to 100, the form). Everything below is proof, in short lines. */
 :root{
   --lime:#d4f000;
   --bg:#0a0a0a;
@@ -26,36 +26,79 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box}
-html{background:var(--bg)}
+html{background:var(--bg);scroll-behavior:smooth}
 body{
   margin:0;background:var(--bg);color:var(--ink);
-  font-family:var(--sans);font-weight:300;font-size:1.05rem;line-height:1.6;
-  padding-block:calc(28px + env(safe-area-inset-top,0px)) calc(56px + env(safe-area-inset-bottom,0px));
+  font-family:var(--sans);font-weight:300;font-size:1.1rem;line-height:1.55;
+  padding-block:calc(24px + env(safe-area-inset-top,0px)) calc(56px + env(safe-area-inset-bottom,0px));
   padding-left:max(20px,env(safe-area-inset-left,0px));
   padding-right:max(20px,env(safe-area-inset-right,0px));
 }
-main{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:44px}
+main{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+.hero{display:flex;flex-direction:column;gap:22px}
 .top{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
-.word{font-family:var(--display);font-size:1.7rem;letter-spacing:.06em;line-height:1}
+.word{font-family:var(--display);font-size:1.6rem;letter-spacing:.06em;line-height:1}
 .word span{color:var(--lime)}
 .tag{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
 h1{
   font-family:var(--display);font-weight:400;
-  font-size:clamp(3.6rem,17vw,7.6rem);line-height:.9;letter-spacing:.005em;
+  font-size:clamp(3.2rem,15vw,6.4rem);line-height:.9;letter-spacing:.005em;
   margin:0;text-transform:uppercase;text-wrap:balance;
 }
 h1 em{font-style:normal;color:var(--lime)}
-.lede{margin:0;max-width:44ch;color:var(--ink)}
-.lede b{font-weight:400;color:var(--lime)}
+
+.orb{position:relative;margin:0;display:flex;justify-content:center}
+.orb canvas{width:100%;max-width:300px;aspect-ratio:1/1;display:block}
+.count{
+  position:absolute;left:0;bottom:2px;display:flex;align-items:baseline;gap:8px;
+  font-family:var(--display);line-height:.8;color:var(--lime);
+}
+.count b{font-weight:400;font-size:4.6rem;letter-spacing:.01em;font-variant-numeric:tabular-nums}
+.count span{font-family:var(--mono);font-size:.6rem;line-height:1.5;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);max-width:17ch}
+
+form{display:flex;flex-direction:column;gap:10px;font-size:1rem}
+label{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+input[type=email]{
+  flex:1 1 240px;min-width:0;min-height:58px;
+  font:400 1rem var(--mono);color:var(--ink);background:var(--card);
+  border:2px solid var(--ink);border-radius:0;padding:0 16px;
+}
+input[type=email]::placeholder{color:var(--dim)}
+button,.btnlink{
+  min-height:58px;padding:0 28px;border:2px solid var(--lime);border-radius:0;
+  background:var(--lime);color:#0a0a0a;cursor:pointer;
+  font-family:var(--display);font-size:1.6rem;letter-spacing:.06em;text-transform:uppercase;
+  display:inline-flex;align-items:center;justify-content:center;text-decoration:none;
+}
+button:hover:not(:disabled),.btnlink:hover{background:var(--ink);border-color:var(--ink)}
+button:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:3px solid var(--lime);outline-offset:3px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.status{min-height:1.4em;margin:0;font-family:var(--mono);font-size:.8rem}
+.status.ok{color:var(--lime)}
+.status.err{color:var(--ink)}
+.fine{margin:0;font-family:var(--mono);font-size:.66rem;letter-spacing:.04em;color:var(--dim)}
+.fine a{color:var(--ink)}
+
+.story{display:flex;flex-direction:column;gap:14px;max-width:34ch;font-size:1.25rem;line-height:1.45}
+.story p{margin:0}
+.story b{font-weight:400;color:var(--lime)}
+
+h2{font-family:var(--display);font-weight:400;font-size:clamp(2.2rem,9vw,3.2rem);line-height:.95;letter-spacing:.01em;text-transform:uppercase;margin:0}
+.rules{list-style:none;margin:20px 0 0;padding:0;border-top:2px solid var(--ink)}
+.rules li{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap;padding:14px 0;border-bottom:1px solid var(--rule)}
+.rules b{font-family:var(--display);font-weight:400;font-size:1.7rem;line-height:1;letter-spacing:.03em;text-transform:uppercase;color:var(--lime);min-width:0}
+.rules span{font-size:.98rem;min-width:0}
 
 .ladder{
-  list-style:none;margin:0;padding:0;
+  list-style:none;margin:20px 0 0;padding:0;
   border-left:2px solid var(--ink);border-right:2px solid var(--ink);
   display:flex;flex-direction:column-reverse;
 }
 .rung{
-  position:relative;display:grid;grid-template-columns:minmax(0,1fr);
-  padding:14px 18px;border-top:2px solid var(--ink);overflow:hidden;
+  position:relative;display:flex;justify-content:space-between;align-items:baseline;gap:6px 16px;flex-wrap:wrap;
+  padding:12px 18px;border-top:2px solid var(--ink);overflow:hidden;
 }
 .rung:first-child{border-bottom:2px solid var(--ink)}
 .rung::before{
@@ -64,106 +107,80 @@ h1 em{font-style:normal;color:var(--lime)}
   animation:fill .5s cubic-bezier(.2,.7,.2,1) forwards;
   animation-delay:calc(var(--i) * .22s + .2s);
 }
-.rung > *{position:relative}
-.rung .k{font-family:var(--mono);font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);transition:color .2s}
-.rung .h{font-family:var(--display);font-size:1.9rem;line-height:1;letter-spacing:.03em;color:var(--ink);text-transform:uppercase}
-.rung .p{font-size:.95rem;color:var(--ink);margin-top:2px;max-width:46ch}
+.rung > *{position:relative;color:var(--ink);animation:flip .01s linear forwards;animation-delay:calc(var(--i) * .22s + .45s)}
+.rung .h{font-family:var(--display);font-size:1.7rem;line-height:1;letter-spacing:.03em;text-transform:uppercase}
+.rung .p{font-size:.95rem;min-width:0}
 @keyframes fill{to{transform:scaleX(1)}}
-/* text flips to dark once its rung is lime */
-.rung .k,.rung .h,.rung .p{animation:flip .01s linear forwards;animation-delay:calc(var(--i) * .22s + .45s)}
 @keyframes flip{to{color:#0a0a0a}}
 
-form{display:flex;flex-direction:column;gap:12px}
-label{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
-.row{display:flex;gap:10px;flex-wrap:wrap}
-input[type=email]{
-  flex:1 1 250px;min-width:0;min-height:56px;
-  font:400 1rem var(--mono);color:var(--ink);background:var(--card);
-  border:2px solid var(--ink);border-radius:0;padding:0 16px;
-}
-input[type=email]::placeholder{color:var(--dim)}
-button{
-  min-height:56px;padding:0 28px;border:2px solid var(--lime);border-radius:0;
-  background:var(--lime);color:#0a0a0a;cursor:pointer;
-  font-family:var(--display);font-size:1.6rem;letter-spacing:.06em;text-transform:uppercase;
-}
-button:hover:not(:disabled){background:var(--ink);border-color:var(--ink)}
-button:disabled{opacity:.5;cursor:default}
-:focus-visible{outline:3px solid var(--lime);outline-offset:3px}
-.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
-.status{min-height:1.6em;margin:0;font-family:var(--mono);font-size:.8rem}
-.status.ok{color:var(--lime)}
-.status.err{color:var(--ink)}
-.fine{margin:0;font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;color:var(--dim)}
-.fine a{color:var(--ink)}
-.story{display:flex;flex-direction:column;gap:14px;max-width:34ch}
-.story p{margin:0}
-.story b{font-weight:400;color:var(--lime)}
 .bookbox{border-top:2px solid var(--ink);padding-top:22px;display:flex;flex-direction:column;gap:14px}
-.bookbox h2{font-family:var(--display);font-weight:400;font-size:clamp(3rem,13vw,5rem);line-height:.9;letter-spacing:.01em;text-transform:uppercase;margin:0;color:var(--lime)}
+.bookbox h2{font-size:clamp(3rem,13vw,5rem);line-height:.9;color:var(--lime)}
 .bookbox blockquote{margin:0;padding:0 0 0 18px;border-left:2px solid var(--lime);display:flex;flex-direction:column;gap:6px;font-size:1.15rem;line-height:1.4}
 .bookbox blockquote p{margin:0}
 .bookp{margin:0;max-width:44ch;font-size:1rem}
-.btnlink{align-self:flex-start;display:inline-flex;align-items:center;min-height:52px;padding:0 24px;border:2px solid var(--ink);color:var(--ink);text-decoration:none;font-family:var(--display);font-size:1.5rem;letter-spacing:.06em;text-transform:uppercase}
-.btnlink:hover{background:var(--ink);color:#0a0a0a}
 .btnlink[hidden]{display:none}
-.diff h2,.loop{font-family:var(--display);font-weight:400;font-size:clamp(2.2rem,9vw,3.2rem);line-height:.95;letter-spacing:.01em;text-transform:uppercase;margin:0}
-.diff ul{list-style:none;margin:20px 0 0;padding:0;border-top:2px solid var(--ink)}
-.diff li{display:grid;gap:4px;padding:16px 0;border-bottom:1px solid var(--rule)}
-.diff li b{font-family:var(--display);font-weight:400;font-size:1.7rem;line-height:1;letter-spacing:.03em;text-transform:uppercase;color:var(--lime)}
-.diff li span{font-size:1rem;max-width:46ch}
-.loop{margin-bottom:-20px}
-.orb{margin:0;display:flex;flex-direction:column;gap:10px;align-items:center}
-.orb canvas{width:100%;max-width:420px;aspect-ratio:1/1;display:block}
-.orb figcaption{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);text-align:center}
+.again{align-self:flex-start}
+
 @media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
   .rung::before{animation:none;transform:scaleX(1)}
-  .rung .k,.rung .h,.rung .p{animation:none;color:#0a0a0a}
+  .rung > *{animation:none;color:#0a0a0a}
 }
 </style>
 </head>
 <body>
 <main>
-  <div class="top">
-    <div class="word">LAD<span>DER</span></div>
-    <div class="tag">Daily discipline app</div>
-  </div>
+  <div class="hero">
+    <div class="top">
+      <div class="word">LAD<span>DER</span></div>
+      <div class="tag">Daily discipline app</div>
+    </div>
 
-  <h1>Do what you <em>said</em> you would do.</h1>
+    <h1>Do what you <em>said</em> you would do.</h1>
+
+    <figure class="orb">
+      <canvas id="orb" aria-label="A sphere of 100 lime points that fills up one point at a time"></canvas>
+      <div class="count" aria-hidden="true"><b id="count">100</b><span>Points. One every time you stay.</span></div>
+    </figure>
+
+    <form id="join" novalidate>
+      <label for="email">Be first in. Your email</label>
+      <div class="row">
+        <input id="email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@email.com" required>
+        <button id="go" type="submit">Join the waitlist</button>
+      </div>
+      <div class="hp" aria-hidden="true"><label for="website">Leave this empty</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+      <p class="fine">One email the day the app opens. Nothing else. See the <a href="/privacy.html">privacy page</a>.</p>
+    </form>
+  </div>
 
   <div class="story">
     <p>I grew up thinking I was unlucky with the cards I was dealt. That was a ridiculous take.</p>
-    <p>I like to portray myself as hardworking. But when it is due, I hesitate.</p>
     <p>Time feels fast. Not because it moves fast. <b>Because my expectations outran my actions.</b></p>
     <p>So today, I do one thing. Kept. That is the whole promise. <b>LADDER is where I keep it.</b></p>
   </div>
 
-  <figure class="orb">
-    <canvas id="orb" aria-label="A sphere of 100 lime points that fills up one point at a time"></canvas>
-    <figcaption>100 points. One every time you stay.</figcaption>
-  </figure>
-
-  
-
-
-  <section class="diff" aria-labelledby="diffh">
-    <h2 id="diffh">How it works</h2>
-    <ul>
-      <li><b>Say it with a number.</b><span>A goal without a number is a mood. Write what will exist, and by when.</span></li>
-      <li><b>Break your word. Pay for it.</b><span>Set your own rules. When you break one, it costs you something real.</span></li>
-      <li><b>Stay when you want to leave.</b><span>One tap walks you through the urge before you give in.</span></li>
-      <li><b>Nobody is watching.</b><span>No account. Your data stays on your phone.</span></li>
+  <section aria-labelledby="rulesh">
+    <h2 id="rulesh">Four rules</h2>
+    <ul class="rules">
+      <li><b>Say it with a number.</b><span>A goal without a number is a mood.</span></li>
+      <li><b>Break your word. Pay.</b><span>Your own rules, a real cost.</span></li>
+      <li><b>Stay.</b><span>One tap when you want to leave.</span></li>
+      <li><b>Nobody is watching.</b><span>No account. Your phone only.</span></li>
     </ul>
   </section>
 
-  <h2 class="loop">One loop. Every day.</h2>
-  <ol class="ladder" aria-label="The daily loop">
-    <li class="rung" style="--i:0"><span class="k">Rung 1</span><span class="h">Morning</span><span class="p">Say your line. Choose what you will do today, and when.</span></li>
-    <li class="rung" style="--i:1"><span class="k">Rung 2</span><span class="h">Goals</span><span class="p">Where you are going, with a date. Then deliverables: things that must exist, each with a number.</span></li>
-    <li class="rung" style="--i:2"><span class="k">Rung 3</span><span class="h">Stillness</span><span class="p">A few minutes with no phone. Every time you stay adds one point to your shape.</span></li>
-    <li class="rung" style="--i:3"><span class="k">Rung 4</span><span class="h">Evening</span><span class="p">Close the day honestly. Write one thing it taught you.</span></li>
-    <li class="rung" style="--i:4"><span class="k">Rung 5</span><span class="h">Score</span><span class="p">Your streak and your record. The score does not lie.</span></li>
-  </ol>
+  <section aria-labelledby="loopt">
+    <h2 id="loopt">One loop. Every day.</h2>
+    <ol class="ladder" aria-label="The daily loop">
+      <li class="rung" style="--i:0"><span class="h">Morning</span><span class="p">Say your line. Choose what you do today.</span></li>
+      <li class="rung" style="--i:1"><span class="h">Goals</span><span class="p">A date, and deliverables with a number.</span></li>
+      <li class="rung" style="--i:2"><span class="h">Stillness</span><span class="p">A few minutes, no phone.</span></li>
+      <li class="rung" style="--i:3"><span class="h">Evening</span><span class="p">Close the day. One thing it taught you.</span></li>
+      <li class="rung" style="--i:4"><span class="h">Score</span><span class="p">Your streak. It does not lie.</span></li>
+    </ol>
+  </section>
 
   <section class="bookbox" aria-labelledby="bookh">
     <div class="tag">Before the app, the book</div>
@@ -172,25 +189,17 @@ button:disabled{opacity:.5;cursor:default}
       <p>I was blinded by my ego.</p>
       <p>I do not want to get ahead. I want to move forward.</p>
     </blockquote>
-    <p class="bookp">It is not advice. It is a confession. LADDER came out of it. Read the book, or start with the app. It is the same promise.</p>
+    <p class="bookp">LADDER came out of it. Read the book, or start with the app. It is the same promise.</p>
     <a id="booklink" class="btnlink" href="#" target="_blank" rel="noopener" hidden>Read Relentless</a>
   </section>
 
-  <form id="join" novalidate>
-    <label for="email">Be first in. Your email</label>
-    <div class="row">
-      <input id="email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@email.com" required>
-      <button id="go" type="submit">Join the waitlist</button>
-    </div>
-    <div class="hp" aria-hidden="true"><label for="website">Leave this empty</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
-    <p id="status" class="status" role="status" aria-live="polite"></p>
-    <p class="fine">You get one email the day the app opens, and you can try it before anyone else. Nothing before that, nothing else after. See the <a href="/privacy.html">privacy page</a>.</p>
-  </form>
+  <a class="btnlink again" href="#email">Join the waitlist</a>
 </main>
 
 <script>
 (function(){
   var cv=document.getElementById('orb');
+  var num=document.getElementById('count');
   if(!cv||!cv.getContext)return;
   var ctx=cv.getContext('2d');
   var N=100,pts=[],i;
@@ -230,13 +239,15 @@ button:disabled{opacity:.5;cursor:default}
   function still(){size();draw(N,FINAL);}
   window.addEventListener('resize',still);
   size();
-  if(reduce){draw(N,FINAL);return;}
+  if(reduce){draw(N,FINAL);if(num)num.textContent='100';return;}
   var DUR=3400,t0=null;
   function frame(ts){
     if(t0===null)t0=ts;
     var u=Math.min((ts-t0)/DUR,1),e=1-Math.pow(1-u,3);
-    draw(Math.max(1,Math.round(e*N)),FINAL-(1-e)*2.4);
-    if(u<1)requestAnimationFrame(frame);else draw(N,FINAL);
+    var c=Math.max(1,Math.round(e*N));
+    draw(c,FINAL-(1-e)*2.4);
+    if(num)num.textContent=String(c);
+    if(u<1)requestAnimationFrame(frame);else{draw(N,FINAL);if(num)num.textContent='100';}
   }
   requestAnimationFrame(frame);
 })();
@@ -276,7 +287,7 @@ button:disabled{opacity:.5;cursor:default}
       return r.json().catch(function(){return {};}).then(function(j){return {ok:r.ok,body:j};});
     }).then(function(res){
       if(res.ok){
-        say('You are on the list. Do what you said you would do.','ok');
+        say('You are on the list. Today, do one thing.','ok');
         email.value='';
       }else if(res.body&&res.body.error==='invalid_email'){
         say('That email does not look right. Check it and try again.','err');
