@@ -1313,6 +1313,24 @@ body.wp-on #wpMoreBtn{display:block}
   localStorage.setItem('ladder_goals_archived_v84','1');
 }catch(e){}})();
 
+// ── v86: restore Freedom of action as the only goal ──
+(function(){try{
+  if(localStorage.getItem('ladder_freedom_v86'))return;
+  var cur=JSON.parse(localStorage.getItem('ladder_goals')||'[]');
+  if(cur.some(function(g){return /freedom/i.test(g.name||'');})){localStorage.setItem('ladder_freedom_v86','1');return;}
+  var arch=[];try{arch=JSON.parse(localStorage.getItem('ladder_goals_archive')||'[]');}catch(e){}
+  var g=arch.filter(function(x){return /freedom|10\.?000|saldo|balance/i.test((x.name||'')+' '+(x.outcome||''));})[0];
+  var t=Date.now();
+  var texts=g&&g.actions&&g.actions.length?g.actions.map(function(a){return a.text;}):['Outreach to strangers: calling, emailing, LinkedIn, TikTok','Book and site: get Relentless and LADDER sold'];
+  var goal={id:'g_'+t,name:(g&&g.name)||'Freedom of action',outcome:(g&&g.outcome)||'€10.000 balance by 16 feb 2027',deadline:(g&&g.deadline)||'16 feb 2027',
+    actions:texts.map(function(x,i){return {id:'a_'+t+'_'+i,text:x,type:'check',minutes:0,target:0,unit:''};}),
+    adjust:(g&&g.adjust)||'If a milestone date passes without a result, change the approach on the next Sunday. Never move the deadline.',
+    milestones:(g&&g.milestones)||[],checkinFields:(g&&g.checkinFields)||[],featured:true};
+  cur.push(goal);localStorage.setItem('ladder_goals',JSON.stringify(cur));
+  localStorage.setItem('ladder_freedom_v86','1');
+}catch(e){}})();
+
+
 
 var API_BASE=(location.protocol.indexOf('http')===0&&location.hostname.indexOf('localhost')===-1)?'':'https://ladder-website-xi.vercel.app';
 var KEY='ladder_v5', TODAY=new Date().toDateString();
