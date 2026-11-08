@@ -717,7 +717,6 @@ body:has(.ovl.on) #tmStrip{display:none!important}
 #wpHist .fs-h{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;line-height:1;color:#fff;margin:28px 0 18px}
 #oldWord{display:none!important}
 #oldFirst{display:none!important}
-body.wp-run #complainCard{display:none}
 #wpMoreBtn{display:none;position:absolute;right:0;top:0}
 body.wp-on #wpMoreBtn{display:none!important}
 #planRun{position:relative}
@@ -5359,11 +5358,11 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
       host.innerHTML='<div class="cp-card"><div class="cp-k">Window closed</div><div class="cp-done">You said it. No more complaining today. Now turn it into one move.</div><button class="cp-btn" style="margin-top:14px" onclick="wpGo(\'q\')">NEXT: THREE QUESTIONS</button><div class="cp-links"><button onclick="complainEdit()">Edit complaints</button><button onclick="wpReset()">'+(rArmed?'Tap again: new 5 minutes':'Start over')+'</button><button onclick="wpHistOpen()">Past days</button></div></div>';
     }else if(w.step==='q'){
       var Q=['What exactly is bothering me?','What do I actually want?','What am I avoiding?'],QX=['For example: I keep scrolling and I feel behind on my thesis.','For example: one real chapter done and a calm evening.','For example: emailing the company. I keep saying later.'];
-      host.innerHTML='<div class="cp-card run">'+top('Step 1 of 2',w.edit?'wpCancel()':'complainEdit()')+'<div class="cp-q">Three questions. Honest, not neat.</div><div class="cp-why">Why: what bothers you, what you want and what you avoid are usually the same story. Seeing it written shows you what to do next. A few words each is enough.</div>'+Q.map(function(q,i){return '<div class="cp-lab">'+q+'</div><textarea class="cp-ta s" id="wq'+i+'" placeholder="'+QX[i]+'" oninput="wpAns('+i+',this.value)">'+E((w.a||[])[i]||'')+'</textarea>';}).join('')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpToAction()">'+(w.edit?'SAVE':'NEXT')+'</button></div>';
+      host.innerHTML='<div class="cp-card run">'+top('Three questions',w.edit?'wpCancel()':'complainEdit()')+'<div class="cp-q">Three questions. Honest, not neat.</div><div class="cp-why">Why: what bothers you, what you want and what you avoid are usually the same story. Seeing it written shows you what to do next. A few words each is enough.</div>'+Q.map(function(q,i){return '<div class="cp-lab">'+q+'</div><textarea class="cp-ta s" id="wq'+i+'" placeholder="'+QX[i]+'" oninput="wpAns('+i+',this.value)">'+E((w.a||[])[i]||'')+'</textarea>';}).join('')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpToAction()">'+(w.edit?'SAVE':'NEXT')+'</button></div>';
     }else if(w.step==='a'){
       host.innerHTML='<div class="cp-card run">'+top('Step 2 of 2',w.edit?'wpCancel()':'wpGo(\'q\')')+'<div class="cp-q">Pick the one thing. It is the first thing you do today. Write it, or ask for ideas.</div><textarea class="cp-ta s" id="wHard" placeholder="The one thing" oninput="wpHard(this.value)">'+E(w.hard||'')+'</textarea><button class="cp-btn ghost lime" id="cpIdeaBtn" onclick="wpAsk()">'+(opts.length?'MORE IDEAS':'GIVE ME IDEAS')+'</button>'+(opts.length?chips(opts,'wpIdeaH'):'')+'<div class="cp-err" id="cpErr">'+E(msg)+'</div><button class="cp-btn" onclick="wpToMore()">'+(w.edit?'SAVE':'THIS IS MY ONE THING')+'</button></div>';
     }else{
-      host.innerHTML='<div class="cp-card held"><div class="cp-top"><span class="cp-k">Complaints and questions saved</span><button class="cp-more" onclick="wpMenu()">More</button></div><div class="cp-one" style="font-size:1.1rem;color:#aaa;cursor:default"><span>Now go to your goals.</span></div></div>';
+      host.innerHTML='<div class="cp-card held"><div class="cp-top"><span class="cp-k">Complaints and questions saved</span><button class="cp-more" onclick="wpMenu()">More</button></div><div class="cp-one" style="font-size:1.1rem;color:#aaa;cursor:default"><span>Saved. Now work through your deliverables.</span></div></div>';
     }
   }
   function top(label,back){return '<div class="cp-top"><button class="cp-back" onclick="'+back+'">&lsaquo; Back</button><span class="cp-k">'+label+'</span></div>';}
@@ -5501,7 +5500,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   function lload(){try{return JSON.parse(localStorage.getItem('ladder_dlv_last')||'{}');}catch(e){return {};}}
   function lput(k,w){var o=lload();o[k]=w;try{localStorage.setItem('ladder_dlv_last',JSON.stringify(o));}catch(e){}}
   var E=function(t){return (window.esc?window.esc(String(t)):String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}));};
-  var openKey='',pickOther=false,msg='',draft=null,aiBusy=false,aiAdvice='',aiOpts=[];
+  var editKey='',rmArmed=false,openKey='',pickOther=false,msg='',draft=null,aiBusy=false,aiAdvice='',aiOpts=[];
   function goalItems(){var out=[];try{loadGoals().forEach(function(g){(g.actions||[]).forEach(function(a){if(a&&a.text)out.push({a:a,g:g});});});}catch(e){}return out;}
   function running(){var t=S.todayTask;return !!(t&&t.startedAt&&!t.doneAt);}
   function planKey(){return running()?(S.todayTask.aid||''):'';}
@@ -5530,6 +5529,13 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
       +(pickOther?'<div class="cp-pick"><input type="time" id="dayTime" value="'+defTime()+'"><button class="cp-btn" onclick="dayStartAt()">START</button></div>':'')
       +'<div class="cp-err">'+E(msg)+'</div><button class="cp-btn ghost" onclick="dayClose()">Cancel</button></div>';
   }
+  function editForm(key,area){
+    return '<div style="margin:0 0 14px 44px"><div class="cp-lab" style="margin-top:0">Change this deliverable</div>'
+      +'<textarea class="cp-ta s" id="dayEditTxt">'+E(area)+'</textarea>'
+      +'<button class="cp-btn" style="margin-top:8px" onclick="daySaveEdit()">SAVE</button>'
+      +'<button class="cp-btn ghost" style="margin-top:8px" onclick="dayRemove()">'+(rmArmed?'Tap again to remove':'Remove')+'</button>'
+      +'<button class="cp-btn ghost" style="margin-top:8px" onclick="dayEditClose()">Cancel</button></div>';
+  }
   function render(){
     var gi=goalItems(),ex=xload(),V=vload(),total=gi.length+ex.length,done=0,h='',pk=planKey(),run=running();
     function row(key,area,on,tick){
@@ -5543,7 +5549,8 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
       r+='<div class="wk-sub" style="margin:0 0 8px 44px;color:'+col+'">'+sub+'</div>';
       if(!on&&pk!==key){
         if(openKey===key)r+=rowForm(key,area);
-        else if(!run)r+='<button class="wk-pick" style="margin:0 0 14px 44px;width:auto;display:inline-block;padding:7px 12px" onclick="dayOpen(\''+key+'\')">'+(v&&v.w?'Set a new time':'Set deliverable and time')+'</button>';
+        else if(editKey===key)r+=editForm(key,area);
+        else if(!run)r+='<div style="margin:0 0 14px 44px;display:flex;gap:8px;flex-wrap:wrap"><button class="wk-pick" style="width:auto;padding:7px 12px" onclick="dayOpen(\''+key+'\')">'+(v&&v.w?'Set a new time':'Set deliverable and time')+'</button><button class="wk-pick" style="width:auto;padding:7px 12px;opacity:.75" onclick="dayEdit(\''+key+'\')">Edit</button></div>';
       }
       return r+'</div>';
     }
@@ -5561,7 +5568,18 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   window.dayX=function(i){var l=xload();if(!l[i])return;l[i].d=!l[i].d;xput(l);render();if(window.hap)hap('medium');};
   /* adding opens the time form right away: no time, no item */
   window.dayAdd=function(){var el=document.getElementById('dayNew');if(!el)return;var v=el.value.trim();if(v.length<2)return;var l=xload();l.push({t:v,d:false});xput(l);openKey=running()?'':'x'+(l.length-1);pickOther=false;msg='';render();};
-  window.dayOpen=function(k){openKey=k;pickOther=false;msg='';draft=null;aiAdvice='';aiOpts=[];render();var w=document.getElementById('dayWhat');if(w){try{w.focus();}catch(e){}}};
+  window.dayOpen=function(k){editKey='';openKey=k;pickOther=false;msg='';draft=null;aiAdvice='';aiOpts=[];render();var w=document.getElementById('dayWhat');if(w){try{w.focus();}catch(e){}}};
+  window.dayEdit=function(k){editKey=k;openKey='';rmArmed=false;render();var t=document.getElementById('dayEditTxt');if(t){try{t.focus();}catch(e){}}};
+  window.dayEditClose=function(){editKey='';rmArmed=false;render();};
+  function afterGoalChange(){try{if(window.buildGoalsList)buildGoalsList();}catch(e){}}
+  window.daySaveEdit=function(){var t=document.getElementById('dayEditTxt'),v=t?t.value.trim():'';if(v.length<2)return;var k=editKey;
+    if(k.charAt(0)==='x'){var l=xload(),i=parseInt(k.slice(1));if(l[i]){l[i].t=v;xput(l);}}
+    else{try{var G=loadGoals();G.forEach(function(g){(g.actions||[]).forEach(function(a){if(a.id===k)a.text=v;});});saveGoals(G);afterGoalChange();}catch(e){}}
+    editKey='';rmArmed=false;render();if(window.hap)hap('light');};
+  window.dayRemove=function(){if(!rmArmed){rmArmed=true;render();setTimeout(function(){if(rmArmed){rmArmed=false;render();}},3000);return;}var k=editKey;
+    if(k.charAt(0)==='x'){var l=xload(),i=parseInt(k.slice(1));l.splice(i,1);xput(l);}
+    else{try{var G=loadGoals();G.forEach(function(g){g.actions=(g.actions||[]).filter(function(a){return a.id!==k;});});saveGoals(G);afterGoalChange();}catch(e){}}
+    editKey='';rmArmed=false;render();if(window.hap)hap('medium');};
   window.dayClose=function(){openKey='';pickOther=false;msg='';draft=null;aiAdvice='';aiOpts=[];render();};
   window.dayOther=function(){pickOther=!pickOther;var w=document.getElementById('dayWhat');if(w)draft=w.value;render();};
   window.dayUseOpt=function(i){draft=aiOpts[i]||'';render();if(window.hap)hap('light');};
