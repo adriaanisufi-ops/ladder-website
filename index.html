@@ -5442,7 +5442,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
 })();
 
 (function(){var rp=window.renderPlan;window.renderPlan=function(){var r=rp.apply(this,arguments);try{var pr=document.getElementById('planRun');if(pr&&S.todayTask&&S.todayTask.doneAt)pr.style.display='none';}catch(e){}return r;};})();
-/* ===== day module v87: deliverables to tick, each with a time it must exist by ===== */
+/* ===== day module v88: every row is a deliverable with a time it must exist by ===== */
 (function(){
   var host=document.getElementById('wkHost'); if(!host)return;
   function pad(n){return (n<10?'0':'')+n;}
@@ -5450,56 +5450,86 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   function xkey(){return 'ladder_extra_'+dkey();}
   function xload(){try{return JSON.parse(localStorage.getItem(xkey())||'[]');}catch(e){return [];}}
   function xput(l){try{localStorage.setItem(xkey(),JSON.stringify(l));}catch(e){}}
-  var E=function(t){return (window.esc?window.esc(t):String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}));};
+  /* today's deliverable per row: {w: what will exist, by: 'HH:MM'} */
+  function vkey(){return 'ladder_dlv_'+dkey();}
+  function vload(){try{return JSON.parse(localStorage.getItem(vkey())||'{}');}catch(e){return {};}}
+  function vput(o){try{localStorage.setItem(vkey(),JSON.stringify(o));}catch(e){}}
+  /* last deliverable used per row, so a daily one is one tap */
+  function lload(){try{return JSON.parse(localStorage.getItem('ladder_dlv_last')||'{}');}catch(e){return {};}}
+  function lput(k,w){var o=lload();o[k]=w;try{localStorage.setItem('ladder_dlv_last',JSON.stringify(o));}catch(e){}}
+  var E=function(t){return (window.esc?window.esc(String(t)):String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}));};
   var openKey='',pickOther=false,msg='';
   function goalItems(){var out=[];try{loadGoals().forEach(function(g){(g.actions||[]).forEach(function(a){if(a&&a.text)out.push({a:a,g:g});});});}catch(e){}return out;}
   function running(){var t=S.todayTask;return !!(t&&t.startedAt&&!t.doneAt);}
   function planKey(){return running()?(S.todayTask.aid||''):'';}
   function defTime(){var d=new Date(Date.now()+90*60000);return pad(d.getHours())+':'+pad(d.getMinutes());}
-  function rowForm(key,label){
-    return '<div style="margin:0 0 14px 44px"><div class="cp-lab" style="margin-top:0">What will exist when time is up?</div>'
-      +'<div class="cp-why" style="margin:0 0 8px">Be specific. The timer only works if you know what done looks like. For example: 10 messages sent, not working on outreach.</div>'
-      +'<textarea class="cp-ta s" id="dayWhat">'+E(label)+'</textarea>'
+  function pastBy(by){if(!by)return false;var p=by.split(':'),d=new Date();d.setHours(+p[0],+p[1],0,0);return Date.now()>d.getTime();}
+  function leftTxt(){try{var t=S.todayTask,m=Math.ceil((planDeadline(t.by,t.startedAt)-Date.now())/60000);if(m<0)return 'Past '+t.by+'.';return Math.floor(m/60)+'h '+pad(m%60)+'m left.';}catch(e){return '';}}
+  function hasNum(t){return /\d|\b(one|two|three|four|five|six|seven|eight|nine|ten|twenty|fifty|hundred)\b/i.test(t);}
+  function prefill(key){
+    var v=vload()[key];if(v&&v.w)return v.w;
+    var l=lload()[key];if(l)return l;
+    if(key.charAt(0)==='x'){var x=xload()[parseInt(key.slice(1))];return x?x.t:'';}
+    var g=goalItems().filter(function(o){return o.a.id===key;})[0];
+    if(g&&g.a.type==='count'&&g.a.target)return (g.a.target+' '+(g.a.unit||'')).trim();
+    return '';
+  }
+  function rowForm(key,area){
+    return '<div style="margin:0 0 14px 44px">'
+      +'<div class="cp-lab" style="margin-top:0">What will exist when time is up?</div>'
+      +'<div class="cp-why" style="margin:0 0 8px">A number and a thing. 10 messages sent. 1 offer page written. Not "working on '+E(area.toLowerCase())+'".</div>'
+      +'<textarea class="cp-ta s" id="dayWhat" placeholder="10 messages sent">'+E(prefill(key))+'</textarea>'
       +'<div class="cp-lab">Must exist within</div>'
       +'<div class="cp-kinds"><button class="cp-kind" onclick="dayStart(30)">30 min</button><button class="cp-kind" onclick="dayStart(60)">1 hour</button><button class="cp-kind" onclick="dayStart(120)">2 hours</button><button class="cp-kind'+(pickOther?' on':'')+'" onclick="dayOther()">Other</button></div>'
       +(pickOther?'<div class="cp-pick"><input type="time" id="dayTime" value="'+defTime()+'"><button class="cp-btn" onclick="dayStartAt()">START</button></div>':'')
       +'<div class="cp-err">'+E(msg)+'</div><button class="cp-btn ghost" onclick="dayClose()">Cancel</button></div>';
   }
   function render(){
-    var gi=goalItems(),ex=xload(),total=gi.length+ex.length,done=0,h='',pk=planKey();
-    function row(key,label,on,tick,sub){
-      var r='<div class="cp-one'+(on?' on':'')+'" style="font-size:1.15rem;padding:6px 0 8px" onclick="'+tick+'"><i></i><span>'+E(label)+'</span></div>';
-      if(!on){
-        if(pk===key)r+='<div class="wk-sub" style="margin:-4px 0 12px 44px;color:var(--lime)">Timer running. See the clock below.</div>';
-        else if(openKey===key)r+=rowForm(key,label);
-        else if(!running())r+='<button class="wk-pick" style="margin:-2px 0 12px 44px;width:auto;display:inline-block;padding:7px 12px" onclick="dayOpen(\''+key+'\')">Set a time</button>';
+    var gi=goalItems(),ex=xload(),V=vload(),total=gi.length+ex.length,done=0,h='',pk=planKey(),run=running();
+    function row(key,area,on,tick){
+      var v=V[key],main=v&&v.w?v.w:area,focus=run&&pk!==key;
+      var r='<div style="'+(focus?'opacity:.3;':'')+'">';
+      r+='<div class="cp-one'+(on?' on':'')+'" style="font-size:1.15rem;padding:6px 0 4px" onclick="'+tick+'"><i></i><span>'+E(main)+'</span></div>';
+      var sub=v&&v.w?E(area)+(v.by?'. By '+E(v.by):''):'No deliverable yet';
+      var col='#8c8c8c';
+      if(!on&&pk===key){sub=E(area)+'. Must exist by '+E(S.todayTask.by)+'. '+E(leftTxt());col='var(--lime)';}
+      else if(!on&&v&&v.by&&pastBy(v.by)){sub=E(area)+'. Missed '+E(v.by)+'.';col='var(--red)';}
+      r+='<div class="wk-sub" style="margin:0 0 8px 44px;color:'+col+'">'+sub+'</div>';
+      if(!on&&pk!==key){
+        if(openKey===key)r+=rowForm(key,area);
+        else if(!run)r+='<button class="wk-pick" style="margin:0 0 14px 44px;width:auto;display:inline-block;padding:7px 12px" onclick="dayOpen(\''+key+'\')">'+(v&&v.w?'Set a new time':'Set deliverable and time')+'</button>';
       }
-      return r;
+      return r+'</div>';
     }
-    gi.forEach(function(o){var on=false;try{on=isActionDone(o.a);}catch(e){}if(on)done++;h+=row(o.a.id,window.actLabel?window.actLabel(o.a):o.a.text,on,"dayTick('"+o.a.id+"')");});
+    gi.forEach(function(o){var on=false;try{on=isActionDone(o.a);}catch(e){}if(on)done++;h+=row(o.a.id,o.a.text,on,"dayTick('"+o.a.id+"')");});
     ex.forEach(function(x,i){if(x.d)done++;h+=row('x'+i,x.t,!!x.d,'dayX('+i+')');});
     var head=total?'Today: '+done+' of '+total:'Today';
+    if(run)head+='. Only this one now';
     var tail=total&&done===total?'<div class="cp-why" style="margin:6px 0 10px;color:var(--lime)">All done. Check your reward on Ladder.</div>':'';
     if(!total)h='<div class="cp-why">Nothing here yet. Add what must exist each day under Goals, or add something for today below.</div><button class="cp-btn ghost" onclick="goTo(\'s-goals\')">Go to goals</button>';
     host.innerHTML='<div class="cp-card'+(total&&done===total?' held':' run')+'"><div class="cp-top"><span class="cp-k">'+head+'</span></div>'+h+tail
-      +'<div class="wk-add" style="margin:8px 0 0"><input class="wk-in" id="dayNew" placeholder="Add something for today" onkeydown="if(event.key===\'Enter\')dayAdd()"><button class="cp-btn" onclick="dayAdd()">ADD</button></div></div>';
+      +'<div class="wk-add" style="margin:8px 0 0"><input class="wk-in" id="dayNew" placeholder="Add a deliverable, e.g. 3 pitches sent" onkeydown="if(event.key===\'Enter\')dayAdd()"><button class="cp-btn" onclick="dayAdd()">ADD</button></div></div>';
   }
   function tickKey(k){if(!k)return;if(k.charAt(0)==='x'){var l=xload(),i=parseInt(k.slice(1));if(l[i]){l[i].d=true;xput(l);}}else{try{if(!S.goalActions)S.goalActions={};if(!S.goalActions[TODAY])S.goalActions[TODAY]={};S.goalActions[TODAY][k]=true;save();}catch(e){}}}
   window.dayTick=function(id){try{toggleGoalAction(id);}catch(e){}render();if(window.hap)hap('medium');};
   window.dayX=function(i){var l=xload();if(!l[i])return;l[i].d=!l[i].d;xput(l);render();if(window.hap)hap('medium');};
-  window.dayAdd=function(){var el=document.getElementById('dayNew');if(!el)return;var v=el.value.trim();if(v.length<2)return;var l=xload();l.push({t:v,d:false});xput(l);render();};
-  window.dayOpen=function(k){openKey=k;pickOther=false;msg='';render();};
+  /* adding opens the time form right away: no time, no item */
+  window.dayAdd=function(){var el=document.getElementById('dayNew');if(!el)return;var v=el.value.trim();if(v.length<2)return;var l=xload();l.push({t:v,d:false});xput(l);openKey=running()?'':'x'+(l.length-1);pickOther=false;msg='';render();};
+  window.dayOpen=function(k){openKey=k;pickOther=false;msg='';render();var w=document.getElementById('dayWhat');if(w){try{w.focus();}catch(e){}}};
   window.dayClose=function(){openKey='';pickOther=false;msg='';render();};
   window.dayOther=function(){pickOther=!pickOther;var w=document.getElementById('dayWhat');var v=w?w.value:'';render();var n=document.getElementById('dayWhat');if(n)n.value=v;};
-  function go(by){var w=document.getElementById('dayWhat'),txt=w?w.value.trim():'';if(txt.length<4){msg='Write what will exist. Be specific.';render();return;}
+  function go(by){var w=document.getElementById('dayWhat'),txt=w?w.value.trim():'';
+    if(txt.length<4||!hasNum(txt)){msg='Put a number in it. What exactly will exist? 10 messages sent, not outreach.';render();var n=document.getElementById('dayWhat');if(n)n.value=txt;return;}
     var t=document.getElementById('todayTask'),b=document.getElementById('todayBy');if(t)t.value=txt;
     if(typeof by==='number')byIn(by);else if(b)b.value=by;
-    startPlan();if(S.todayTask&&S.todayTask.startedAt){S.todayTask.aid=openKey;save();}
+    startPlan();
+    if(S.todayTask&&S.todayTask.startedAt){S.todayTask.aid=openKey;save();var V=vload();V[openKey]={w:txt,by:S.todayTask.by};vput(V);lput(openKey,txt);}
     openKey='';pickOther=false;msg='';render();if(window.hap)hap('heavy');}
   window.dayStart=function(min){go(min);};
   window.dayStartAt=function(){var v=(document.getElementById('dayTime')||{}).value;if(!v)return;go(v);};
   var _dp=window.donePlan;window.donePlan=function(){var t=S.todayTask,k=t&&t.aid;var r=_dp.apply(this,arguments);if(k)tickKey(k);render();return r;};
   var _g=window.goTo;window.goTo=function(id){var r=_g.apply(this,arguments);if(id==='s-morning')render();return r;};
+  setInterval(function(){if(running()&&curScreen==='s-morning'&&!openKey)render();},30000);
   window.weekRender=render;render();setTimeout(render,700);
 })();
 </script>
