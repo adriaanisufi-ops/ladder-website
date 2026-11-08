@@ -777,12 +777,13 @@ body.wp-on #wpMoreBtn{display:block}
     <div class="big-q" id="mGreet">Good morning.<br>Are you <em>ready?</em></div>
     <div class="ybar" id="yBar">Loading...</div>
 
+    <div id="wkHost" style="margin-bottom:26px"></div>
+
     <div class="lbl" style="margin-bottom:10px">Today I am</div>
     <div class="idstmt" id="idStmt">Someone who does<br>what he <span class="acc">says.</span></div>
 
     <div class="aff" data-set="am"></div>
     <div id="complainCard"></div>
-    <div id="wkHost"></div>
 
     <div id="oldWord">
     <div class="lbl" style="margin-bottom:8px">What do you need to do today to go home satisfied?
@@ -5376,107 +5377,54 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   setTimeout(cancel,2500);
 })();
 
-/* ===== week module v78: bet, deliverables, 2 things a day, evening line ===== */
+/* ===== day module v81: what must exist today, from goal tasks, plus one evening line ===== */
 (function(){
   var host=document.getElementById('wkHost'); if(!host)return;
   function pad(n){return (n<10?'0':'')+n;}
   function dkey(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
-  function monday(d){var x=new Date(d.getFullYear(),d.getMonth(),d.getDate());var w=(x.getDay()+6)%7;x.setDate(x.getDate()-w);return x;}
-  function effMon(){var n=new Date();if(n.getDay()===0)n=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1);return monday(n);}
-  function wkKey(m){return 'ladder_wk_'+dkey(m);}
-  function load(m){try{return JSON.parse(localStorage.getItem(wkKey(m))||'null');}catch(e){return null;}}
-  function put(m,w){try{localStorage.setItem(wkKey(m),JSON.stringify(w));}catch(e){}}
+  function key(d){return 'ladder_day_'+dkey(d||new Date());}
+  function load(d){try{return JSON.parse(localStorage.getItem(key(d))||'null');}catch(e){return null;}}
+  function put(o){try{localStorage.setItem(key(),JSON.stringify(o));}catch(e){}}
   var E=function(t){return (window.esc?window.esc(t):String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}));};
-  var mode='',draft=null,msg='',lineEdit=false;
-  function today(){return dkey(new Date());}
-  function review(m){
-    var pm=new Date(m.getFullYear(),m.getMonth(),m.getDate()-7),p=load(pm);if(!p)return '';
-    var dn=p.items.filter(function(x){return x.d;}).length,ls=Object.keys(p.lines||{}).sort().map(function(k){return p.lines[k];}).filter(Boolean);
-    return '<div class="wk-rev"><b>Last week: '+dn+' of '+p.items.length+' done.</b>'+(p.bet?'<br>The bet was: '+E(p.bet):'')+(ls.length?'<br>What you learned:<br>'+ls.map(function(l){return '&bull; '+E(l);}).join('<br>'):'<br>No evening lines. That is the research you skipped.')+'</div>';
+  var sel=[],edit=false,msg='',lineEdit=false;
+  function goalActs(){var out=[];try{loadGoals().forEach(function(g){(g.actions||[]).forEach(function(a){if(a&&a.text&&!out.some(function(o){return o.t===a.text;}))out.push({t:a.text,a:a});});});}catch(e){}return out;}
+  function isDone(x){if(x.d)return true;try{var g=goalActs().filter(function(o){return o.t===x.t;})[0];return !!(g&&isActionDone(g.a));}catch(e){return false;}}
+  function weekLines(){var out=[];for(var i=1;i<=7;i++){var d=new Date();d.setDate(d.getDate()-i);var o=load(d);if(o&&o.line)out.push(o.line);}return out;}
+  function pickHtml(){
+    var ga=goalActs(),extra=sel.filter(function(t){return !ga.some(function(o){return o.t===t;});});
+    var all=ga.map(function(o){return o.t;}).concat(extra);
+    return '<div class="cp-card run"><div class="cp-top"><span class="cp-k">Today</span></div>'
+      +'<div class="cp-q">What must exist today?</div>'
+      +'<div class="cp-why">Pick 1 to 3 finished things. A rough pick is fine. Not sure? Pick the one you are avoiding.</div>'
+      +all.map(function(t,i){var on=sel.indexOf(t)>=0;return '<button class="wk-pick" style="'+(on?'background:var(--lime);color:#000;border:1px solid var(--lime)':'')+'" onclick="dayPick('+i+')">'+(on?'&#10003; ':'+ ')+E(t)+'</button>';}).join('')
+      +(all.length?'':'<div class="cp-why">You have no goal tasks yet. Type what must exist today.</div>')
+      +'<div class="wk-add" style="margin-top:8px"><input class="wk-in" id="dayNew" placeholder="Something else" onkeydown="if(event.key===\'Enter\')dayAdd()"><button class="cp-btn" onclick="dayAdd()">ADD</button></div>'
+      +'<div class="cp-err" id="dayErr">'+E(msg)+'</div><button class="cp-btn" onclick="dayGo()">THIS IS TODAY</button></div>';
   }
-  var BETS=['Which video opening gets more views: a question or a statement?','Does posting twice a day beat posting once?','Which sound fits my videos best?','Do book lines or questions get more comments?'];
-  var EXS=['7 videos posted','3 sounds tested','10 comments replied','1 app change finished','1 outreach message sent'];
-  var step=1;
-  function chipsHtml(list,fn,used){return list.map(function(t,i){return used&&used.indexOf(t)>=0?'':'<button class="wk-pick" style="padding:9px 12px" onclick="'+fn+'('+i+')">+ '+E(t)+'</button>';}).join('');}
-  function setupHtml(m){
-    var n=draft.items.length;
-    if(step===1){
-      return '<div class="cp-card run"><div class="cp-top"><span class="cp-k">Step 1 of 2</span></div>'
-      +'<div class="cp-q">What do you want to find out this week?</div>'
-      +'<div class="cp-why">Thinking clearly about your own work is a skill. Most people find it hard at first, and that is normal. Your first questions will be too big or too vague. You do not have to get it right. You get better by doing this every week.</div>'
-      +'<div class="wk-rev"><b>What makes a good question</b><br>You can answer it with numbers after one week. Too big: "How do I get famous?" Answerable: "Do videos that open with a question get more views than statements?"</div>'
-      +'<div class="wk-rev"><b>Ask yourself</b><br>&bull; What did I assume last week without checking?<br>&bull; What surprised me?<br>&bull; If I could learn only one thing this week, what would help most?</div>'
-      +review(m)
-      +'<textarea class="cp-ta s" id="wkBet" placeholder="Write your question. A rough one is fine." oninput="wkBet(this.value)">'+E(draft.bet)+'</textarea>'
-      
-      +'<div class="cp-err" id="wkErr">'+E(msg)+'</div><button class="cp-btn" onclick="wkNext()">NEXT</button>'
-      +(load(effMon())?'<button class="cp-btn ghost" onclick="wkCancel()">Cancel</button>':'')+'</div>';
-    }
-    return '<div class="cp-card run"><div class="cp-top"><button class="cp-back" onclick="wkBack()">&lsaquo; Back</button><span class="cp-k">Step 2 of 2</span></div>'
-      +'<div class="cp-q">What will exist by Saturday?</div>'
-      +'<div class="cp-why">Now break the question into things you can finish. It is fine if this feels hard. You will misjudge it a bit, and next Sunday you will see how, and judge better.</div>'
-      +'<div class="wk-rev"><b>Ask yourself</b><br>&bull; What has to exist for me to know the answer?<br>&bull; How many do I need to see a real difference?<br>&bull; When it is done, can I point at it?<br><br>Think of it like testing two recipes. You need to cook each one several times before you know which is better. So the list says how many times, not "cook more".</div>'
-      +'<div class="wk-rev">Your question: '+E(draft.bet)+'</div>'
-      +draft.items.map(function(t,i){return '<div class="wk-item"><span>'+E(t)+'</span><b onclick="wkRm('+i+')">&times;</b></div>';}).join('')
-      +(n<7?'<div class="wk-add"><input class="wk-in" id="wkNew" placeholder="One finished thing" onkeydown="if(event.key===\'Enter\')wkAdd()"><button class="cp-btn" onclick="wkAdd()">ADD</button></div>':'')
-      
-      +'<div class="cp-err" id="wkErr">'+E(msg)+'</div><button class="cp-btn" onclick="wkStart()">START THE WEEK</button></div>';
-  }
+  var cache=[];
   function render(){
-    var m=effMon(),w=load(m),sun=new Date().getDay()===0;
-    if(!w||mode==='setup'||mode==='edit'){
-      if(!draft)draft=w?{bet:w.bet||'',items:w.items.map(function(x){return x.t;})}:{bet:'',items:[]};
-      if(!w&&mode===''){mode='intro';}
-      if(mode==='intro'){
-        host.innerHTML='<div class="cp-card"><div class="cp-k">'+(sun?'Plan next week':'Plan your week')+'</div><div class="cp-q">Two quick questions. Takes 2 minutes.</div><div class="cp-why">You do not need to know how to do this yet. Nobody does the first time. Thinking this way is a skill, and it grows with practice. Your first week will be a rough guess and parts of it will be wrong. Every Sunday you do it, you get sharper.</div><div class="wk-rev"><b>1. What do I want to find out?</b><br>Example: which video opening gets more views.<br><b>2. What will exist by Saturday?</b><br>Example: 7 videos posted, 3 sounds tested.<br>Then each day you pick 2 of those and finish them.</div>'+review(m)+'<button class="cp-btn" onclick="wkSetup()">LET US DO IT</button></div>';
-        return;
-      }
-      host.innerHTML=setupHtml(m);return;
+    var d=load();
+    if(!d||!d.items||!d.items.length||edit){if(edit&&d&&!sel.length)sel=d.items.map(function(x){return x.t;});host.innerHTML=pickHtml();
+      var ga=goalActs();cache=ga.map(function(o){return o.t;}).concat(sel.filter(function(t){return !ga.some(function(o){return o.t===t;});}));return;}
+    var items=d.items,dn=items.filter(isDone).length,all=dn===items.length;
+    var h='<div class="cp-card'+(all&&d.line?' held':' run')+'"><div class="cp-top"><span class="cp-k">Must exist today: '+dn+' of '+items.length+'</span><button class="cp-more" onclick="dayEdit()">Edit</button></div>';
+    items.forEach(function(x,i){var on=isDone(x);h+='<div class="cp-one'+(on?' on':'')+'" style="font-size:1.15rem;padding:6px 0 10px" onclick="dayTick('+i+')"><i></i><span>'+E(x.t)+'</span></div>';});
+    if(all){
+      if(d.line&&!lineEdit)h+='<div class="cp-lab">Evening line</div><div class="wk-bet" onclick="dayLineEdit()">'+E(d.line)+'</div><div class="cp-why">Today is done. Tap the line to change it.</div>';
+      else h+='<div class="cp-lab">One line. What did you learn today?</div><div class="cp-why">Any honest line works. For example what went easy, what was hard, or what you will do differently.</div><textarea class="cp-ta s" id="dayLine" placeholder="Write one line">'+E(d.line||'')+'</textarea><div class="cp-err" id="dayErr">'+E(msg)+'</div><button class="cp-btn" onclick="dayLine()">SAVE THE LINE</button>';
     }
-    var items=w.items,dk=today(),picks=(w.today&&w.today[dk])||[],dn=items.filter(function(x){return x.d;}).length;
-    var avail=items.map(function(x,i){return i;}).filter(function(i){return !items[i].d&&picks.indexOf(i)<0;});
-    var need=Math.min(2,picks.length+avail.length),pd=picks.filter(function(i){return items[i].d;}).length;
-    var allDone=picks.length>=need&&pd===picks.length&&picks.length>0;
-    var h='<div class="cp-card'+(allDone&&w.lines&&w.lines[dk]?' held':' run')+'"><div class="cp-top"><span class="cp-k">Week: '+dn+' of '+items.length+' done</span><button class="cp-more" onclick="wkEdit()">Edit</button></div>'
-      +'<div class="wk-bar"><i style="width:'+Math.round(100*dn/Math.max(1,items.length))+'%"></i></div>'
-      +(w.bet?'<div class="wk-bet">Bet: '+E(w.bet)+'</div>':'')
-      +'<div class="cp-lab">What must exist today</div>';
-    if(!picks.length&&!avail.length)h+='<div class="cp-why">The whole list exists. Add more under Edit or rest.</div>';
-    picks.forEach(function(i){var x=items[i];h+='<div class="cp-one'+(x.d?' on':'')+'" style="font-size:1.1rem;padding:6px 0 10px" onclick="wkTick('+i+')"><i></i><span>'+E(x.t)+'</span>'+(x.d?'':'<em class="wk-x" onclick="event.stopPropagation();wkUnpick('+i+')">remove</em>')+'</div>';});
-    if(picks.length<2&&avail.length){h+='<div class="cp-why" style="margin:6px 0">Pick '+(2-picks.length)+' more. Tap to choose.</div>'+avail.map(function(i){return '<button class="wk-pick" onclick="wkPick('+i+')">+ '+E(items[i].t)+'</button>';}).join('');}
-    if(allDone){
-      var ln=(w.lines&&w.lines[dk])||'';
-      if(ln&&!lineEdit)h+='<div class="cp-lab">Evening line</div><div class="wk-bet" onclick="wkLineEdit()">'+E(ln)+'</div><div class="cp-why">Today is done. Tap the line to change it.</div>';
-      else h+='<div class="cp-lab">One line. What did you learn today?</div><textarea class="cp-ta s" id="wkLine" placeholder="For example: the question opening got more comments than the statement.">'+E(ln)+'</textarea><div class="cp-err" id="wkErr">'+E(msg)+'</div><button class="cp-btn" onclick="wkLine()">SAVE THE LINE</button>';
-    }
+    var wl=new Date().getDay()===0?weekLines():[];
+    if(wl.length)h+='<div class="wk-rev" style="margin-top:14px"><b>This week you learned</b><br>'+wl.map(function(l){return '&bull; '+E(l);}).join('<br>')+'</div>';
     host.innerHTML=h+'</div>';
   }
-  function cur(){var m=effMon();return {m:m,w:load(m)};}
-  function mut(f){var c=cur();if(!c.w)return;f(c.w);put(c.m,c.w);}
-  window.wkSetup=function(){mode='setup';draft=null;msg='';step=1;render();};
-  window.wkNext=function(){var b=document.getElementById('wkBet');if(b)draft.bet=b.value;if((draft.bet||'').trim().length<4){msg='Write your question first. A rough one is fine.';render();return;}msg='';step=2;render();window.scrollTo&&0;};
-  window.wkBack=function(){step=1;msg='';render();};
-  window.wkBetPick=function(i){draft.bet=BETS[i];msg='';render();};
-  window.wkExAdd=function(i){if(draft.items.length>=7)return;if(draft.items.indexOf(EXS[i])<0)draft.items.push(EXS[i]);msg='';render();};
-  window.wkEdit=function(){mode='edit';draft=null;msg='';step=1;render();};
-  window.wkCancel=function(){mode='';draft=null;msg='';render();};
-  window.wkBet=function(v){if(draft)draft.bet=v;};
-  window.wkAdd=function(){var el=document.getElementById('wkNew');if(!el||!draft)return;var v=el.value.trim();if(v.length<2||draft.items.length>=7)return;draft.items.push(v);msg='';render();var n=document.getElementById('wkNew');if(n)n.focus();};
-  window.wkRm=function(i){if(!draft)return;draft.items.splice(i,1);render();};
-  window.wkStart=function(){
-    if(!draft)return;if((draft.bet||'').trim().length<4){step=1;msg='Write or tap a question first.';render();return;}
-    if(draft.items.length<3){msg='Add at least 3 finished things. A rough list is fine.';render();return;}
-    var c=cur(),old=c.w,items=draft.items.map(function(t){var o=old&&old.items.filter(function(x){return x.t===t;})[0];return o||{t:t,d:false};});
-    var w=old||{today:{},lines:{}};w.bet=draft.bet.trim();w.items=items;w.today=w.today||{};w.lines=w.lines||{};
-    Object.keys(w.today).forEach(function(k){w.today[k]=w.today[k].filter(function(i){return i<items.length;});});
-    put(c.m,w);mode='';draft=null;msg='';render();if(window.hap)hap('heavy');
-  };
-  window.wkPick=function(i){mut(function(w){var dk=today();w.today=w.today||{};var p=w.today[dk]||[];if(p.length<2&&p.indexOf(i)<0)p.push(i);w.today[dk]=p;});render();if(window.hap)hap('light');};
-  window.wkUnpick=function(i){mut(function(w){var dk=today();w.today[dk]=(w.today[dk]||[]).filter(function(x){return x!==i;});});render();};
-  window.wkTick=function(i){mut(function(w){var x=w.items[i];x.d=!x.d;x.day=x.d?today():null;});render();if(window.hap)hap('medium');};
-  window.wkLineEdit=function(){lineEdit=true;render();};
-  window.wkLine=function(){var el=document.getElementById('wkLine'),v=el?el.value.trim():'';if(v.length<3){msg='One honest line. Short is fine.';render();return;}msg='';lineEdit=false;mut(function(w){w.lines=w.lines||{};w.lines[today()]=v;});render();if(window.hap)hap('heavy');};
-  var _g=window.goTo;window.goTo=function(id){var r=_g.apply(this,arguments);if(id==='s-morning'){mode=mode==='setup'||mode==='edit'?mode:'';render();}return r;};
+  window.dayPick=function(i){var t=cache[i];if(t==null)return;var k=sel.indexOf(t);msg='';if(k>=0)sel.splice(k,1);else if(sel.length<3)sel.push(t);else msg='Three is the maximum. Remove one first.';render();if(window.hap)hap('light');};
+  window.dayAdd=function(){var el=document.getElementById('dayNew');if(!el)return;var v=el.value.trim();if(v.length<2)return;if(sel.length>=3){msg='Three is the maximum. Remove one first.';render();return;}if(sel.indexOf(v)<0)sel.push(v);msg='';render();};
+  window.dayGo=function(){if(!sel.length){msg='Pick at least one. A rough pick is fine.';render();return;}var old=load();var items=sel.map(function(t){var o=old&&old.items&&old.items.filter(function(x){return x.t===t;})[0];return o||{t:t,d:false};});var o=old||{};o.items=items;put(o);sel=[];edit=false;msg='';render();if(window.hap)hap('heavy');};
+  window.dayEdit=function(){edit=true;sel=[];msg='';render();};
+  window.dayTick=function(i){var d=load();if(!d)return;var x=d.items[i];if(isDone(x)&&!x.d)return;x.d=!x.d;put(d);render();if(window.hap)hap('medium');};
+  window.dayLineEdit=function(){lineEdit=true;render();};
+  window.dayLine=function(){var el=document.getElementById('dayLine'),v=el?el.value.trim():'';if(v.length<3){msg='One honest line. Short is fine.';render();return;}var d=load();if(!d)return;d.line=v;put(d);msg='';lineEdit=false;render();if(window.hap)hap('heavy');};
+  var _g=window.goTo;window.goTo=function(id){var r=_g.apply(this,arguments);if(id==='s-morning')render();return r;};
   window.weekRender=render;render();setTimeout(render,700);
 })();
 </script>
