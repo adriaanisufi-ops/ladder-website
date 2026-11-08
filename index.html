@@ -1202,11 +1202,11 @@ body.wp-on #wpMoreBtn{display:none!important}
             <input id="gDeadline" class="li" placeholder="e.g. 16 feb 2027">
           </div>
           <div>
-            <div class="lbl" style="margin-bottom:8px">What you tick off each day
+            <div class="lbl" style="margin-bottom:8px">Deliverables
               <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t4')">i</span><div class="tip-box" id="t4">The things you do every day that move you toward this goal. Add as many as you need. Most goals need just one, some need two or three separate blocks of work.<br><br>If an action has a time attached, like "1 hour of calling" or "3 hours on the book", choose <strong style="color:var(--lime)">Timer</strong> and actually time it. A checkbox can't tell you if you did 10 minutes or the full hour. If it's a count or task with no fixed length, like "call 5 organisations" or "make the bed", use <strong style="color:var(--lime)">Check off</strong>.<br><br>Example: a money goal might have two actions: "1 hour calling, emailing, LinkedIn" (Timer, 60 min) and "3 hours on the book and site" (Timer, 180 min).</div></span>
             </div>
-            <div style="font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:rgba(244,240,232,.5);line-height:1.4;margin-bottom:8px">One per line. Keep it small and concrete. For example: 10 outreach messages sent.</div>
-            <textarea id="gItems" style="width:100%;background:none;border:none;border-bottom:1px solid var(--dim);color:var(--white);font-family:'IBM Plex Sans',sans-serif;font-size:1rem;resize:none;min-height:96px;outline:none;padding:6px 0" placeholder="One thing per line"></textarea>
+            <div style="font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:rgba(244,240,232,.5);line-height:1.4;margin-bottom:8px">What must exist. Specific and finishable, with a number. One per line. For example: 10 outreach messages sent.</div>
+            <textarea id="gItems" style="width:100%;background:none;border:none;border-bottom:1px solid var(--dim);color:var(--white);font-family:'IBM Plex Sans',sans-serif;font-size:1rem;resize:none;min-height:96px;outline:none;padding:6px 0" placeholder="One deliverable per line"></textarea>
             <div id="actionRows" style="display:none"></div>
             <button type="button" style="display:none" onclick="addActionRow()" style="background:none;border:1px dashed var(--dim);color:rgba(244,240,232,0.35);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;padding:12px;cursor:pointer;width:100%;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--lime)';this.style.color='var(--lime)'" onmouseout="this.style.borderColor='var(--dim)';this.style.color='rgba(244,240,232,0.35)'">+ Add action</button>
           </div>
@@ -3644,6 +3644,7 @@ function loadGoals(){
   if(migrated) saveGoals(goals);
   return goals;
 }
+function addDeliverable(gid){var el=document.getElementById('dAdd_'+gid);if(!el)return;var v=el.value.trim();if(v.length<2)return;var goals=loadGoals(),g=goals.filter(function(x){return x.id===gid;})[0];if(!g)return;g.actions=g.actions||[];g.actions.push({id:'a_'+Date.now(),text:v,type:'check',minutes:0,target:0,unit:''});saveGoals(goals);buildGoalsList();try{if(window.weekRender)weekRender();}catch(e){}if(window.hap)hap('light');}
 function saveGoals(goals){localStorage.setItem('ladder_goals',JSON.stringify(goals));}
 
 function escAttr(s){return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -3752,7 +3753,8 @@ function buildGoalsList(){
         +'</div>'
       +'</div>'
 
-      // Daily actions. one or more, each checkbox or timer
+      // Deliverables
+      +'<div class="wk-sub" style="margin:16px 0 6px">Deliverables</div>'
       +((g.actions&&g.actions.length)?g.actions.map(function(a){
         if(a.type==='timer'&&a.minutes>0) return renderGoalTimerHTML(a);
         var done=isActionDone(a);
@@ -3761,7 +3763,8 @@ function buildGoalsList(){
           +'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.78rem;color:'+(done?'rgba(244,240,232,0.35)':'var(--white)')+';'+(done?'text-decoration:line-through;':'')+'">'+esc(actLabel(a))+'</span>'
           +(done?'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;color:var(--lime);margin-left:auto;">done</span>':'')
         +'</div>';
-      }).join(''):'')
+      }).join(''):'<div style="font-family:\'IBM Plex Sans\',sans-serif;font-size:.9rem;color:rgba(244,240,232,.5);line-height:1.4;padding:4px 0 8px">No deliverables yet. A deliverable is something that must exist, specific and finishable, with a number.</div>')
+      +'<div class="wk-add" style="margin:10px 0 4px"><input class="wk-in" id="dAdd_'+g.id+'" placeholder="e.g. 10 outreach messages sent" onkeydown="if(event.key===\'Enter\')addDeliverable(\''+g.id+'\')"><button class="cp-btn" onclick="addDeliverable(\''+g.id+'\')">ADD</button></div>'
 
       +((g.rules&&g.rules.length)||g.reward||g.punish?'<div style="margin:12px 0 4px;font-family:\'IBM Plex Sans\',sans-serif;font-size:.88rem;line-height:1.5;color:rgba(244,240,232,.7)">'
         +(g.rules&&g.rules.length?'<div class="wk-sub" style="margin-bottom:4px">Unbreakable rules</div>'+g.rules.map(function(r){return '<div>&bull; '+esc(r)+'</div>';}).join(''):'')
