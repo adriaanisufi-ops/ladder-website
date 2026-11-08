@@ -5403,20 +5403,23 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     if(step===1){
       return '<div class="cp-card run"><div class="cp-top"><span class="cp-k">Step 1 of 2</span></div>'
       +'<div class="cp-q">What do you want to find out this week?</div>'
-      +'<div class="cp-why">Pick one question. You learn the answer by doing the work, not by thinking about it. Not sure what to pick? Tap one below. It is only a first guess and you can change it any time.</div>'
+      +'<div class="cp-why">Thinking clearly about your own work is a skill. Most people find it hard at first, and that is normal. Your first questions will be too big or too vague. You do not have to get it right. You get better by doing this every week.</div>'
+      +'<div class="wk-rev"><b>What makes a good question</b><br>You can answer it with numbers after one week. Too big: "How do I get famous?" Answerable: "Do videos that open with a question get more views than statements?"</div>'
+      +'<div class="wk-rev"><b>Ask yourself</b><br>&bull; What did I assume last week without checking?<br>&bull; What surprised me?<br>&bull; If I could learn only one thing this week, what would help most?</div>'
       +review(m)
-      +'<textarea class="cp-ta s" id="wkBet" placeholder="Type your own, or tap an example" oninput="wkBet(this.value)">'+E(draft.bet)+'</textarea>'
-      +'<div class="cp-lab">Examples. Tap one.</div>'+chipsHtml(BETS,'wkBetPick')
+      +'<textarea class="cp-ta s" id="wkBet" placeholder="Write your question. A rough one is fine." oninput="wkBet(this.value)">'+E(draft.bet)+'</textarea>'
+      
       +'<div class="cp-err" id="wkErr">'+E(msg)+'</div><button class="cp-btn" onclick="wkNext()">NEXT</button>'
       +(load(effMon())?'<button class="cp-btn ghost" onclick="wkCancel()">Cancel</button>':'')+'</div>';
     }
     return '<div class="cp-card run"><div class="cp-top"><button class="cp-back" onclick="wkBack()">&lsaquo; Back</button><span class="cp-k">Step 2 of 2</span></div>'
       +'<div class="cp-q">What will exist by Saturday?</div>'
-      +'<div class="cp-why">Think of finished things you could show someone, each with a number. That is how you know you did it. Start with 3. More is not better. Too many? Remove some. Too few? Add one on Wednesday.</div>'
+      +'<div class="cp-why">Now break the question into things you can finish. It is fine if this feels hard. You will misjudge it a bit, and next Sunday you will see how, and judge better.</div>'
+      +'<div class="wk-rev"><b>Ask yourself</b><br>&bull; What has to exist for me to know the answer?<br>&bull; How many do I need to see a real difference?<br>&bull; When it is done, can I point at it?<br><br>Think of it like testing two recipes. You need to cook each one several times before you know which is better. So the list says how many times, not "cook more".</div>'
       +'<div class="wk-rev">Your question: '+E(draft.bet)+'</div>'
       +draft.items.map(function(t,i){return '<div class="wk-item"><span>'+E(t)+'</span><b onclick="wkRm('+i+')">&times;</b></div>';}).join('')
-      +(n<7?'<div class="wk-add"><input class="wk-in" id="wkNew" placeholder="Type your own" onkeydown="if(event.key===\'Enter\')wkAdd()"><button class="cp-btn" onclick="wkAdd()">ADD</button></div>':'')
-      +(n<7?'<div class="cp-lab">Examples. Tap to add.</div>'+chipsHtml(EXS,'wkExAdd',draft.items):'')
+      +(n<7?'<div class="wk-add"><input class="wk-in" id="wkNew" placeholder="One finished thing" onkeydown="if(event.key===\'Enter\')wkAdd()"><button class="cp-btn" onclick="wkAdd()">ADD</button></div>':'')
+      
       +'<div class="cp-err" id="wkErr">'+E(msg)+'</div><button class="cp-btn" onclick="wkStart()">START THE WEEK</button></div>';
   }
   function render(){
@@ -5425,7 +5428,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
       if(!draft)draft=w?{bet:w.bet||'',items:w.items.map(function(x){return x.t;})}:{bet:'',items:[]};
       if(!w&&mode===''){mode='intro';}
       if(mode==='intro'){
-        host.innerHTML='<div class="cp-card"><div class="cp-k">'+(sun?'Plan next week':'Plan your week')+'</div><div class="cp-q">Two quick questions. Takes 2 minutes.</div><div class="cp-why">You do not need to know how to do this yet. Nobody does the first time. Your first week is a guess, and you will fix it as you go. That is the whole point.</div><div class="wk-rev"><b>1. What do I want to find out?</b><br>Example: which video opening gets more views.<br><b>2. What will exist by Saturday?</b><br>Example: 7 videos posted, 3 sounds tested.<br>Then each day you pick 2 of those and finish them.</div>'+review(m)+'<button class="cp-btn" onclick="wkSetup()">LET US DO IT</button></div>';
+        host.innerHTML='<div class="cp-card"><div class="cp-k">'+(sun?'Plan next week':'Plan your week')+'</div><div class="cp-q">Two quick questions. Takes 2 minutes.</div><div class="cp-why">You do not need to know how to do this yet. Nobody does the first time. Thinking this way is a skill, and it grows with practice. Your first week will be a rough guess and parts of it will be wrong. Every Sunday you do it, you get sharper.</div><div class="wk-rev"><b>1. What do I want to find out?</b><br>Example: which video opening gets more views.<br><b>2. What will exist by Saturday?</b><br>Example: 7 videos posted, 3 sounds tested.<br>Then each day you pick 2 of those and finish them.</div>'+review(m)+'<button class="cp-btn" onclick="wkSetup()">LET US DO IT</button></div>';
         return;
       }
       host.innerHTML=setupHtml(m);return;
@@ -5451,7 +5454,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   function cur(){var m=effMon();return {m:m,w:load(m)};}
   function mut(f){var c=cur();if(!c.w)return;f(c.w);put(c.m,c.w);}
   window.wkSetup=function(){mode='setup';draft=null;msg='';step=1;render();};
-  window.wkNext=function(){var b=document.getElementById('wkBet');if(b)draft.bet=b.value;if((draft.bet||'').trim().length<4){msg='Write or tap a question first. A rough one is fine.';render();return;}msg='';step=2;render();window.scrollTo&&0;};
+  window.wkNext=function(){var b=document.getElementById('wkBet');if(b)draft.bet=b.value;if((draft.bet||'').trim().length<4){msg='Write your question first. A rough one is fine.';render();return;}msg='';step=2;render();window.scrollTo&&0;};
   window.wkBack=function(){step=1;msg='';render();};
   window.wkBetPick=function(i){draft.bet=BETS[i];msg='';render();};
   window.wkExAdd=function(i){if(draft.items.length>=7)return;if(draft.items.indexOf(EXS[i])<0)draft.items.push(EXS[i]);msg='';render();};
@@ -5462,7 +5465,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   window.wkRm=function(i){if(!draft)return;draft.items.splice(i,1);render();};
   window.wkStart=function(){
     if(!draft)return;if((draft.bet||'').trim().length<4){step=1;msg='Write or tap a question first.';render();return;}
-    if(draft.items.length<3){msg='Add at least 3 things. Tap the examples if you are stuck.';render();return;}
+    if(draft.items.length<3){msg='Add at least 3 finished things. A rough list is fine.';render();return;}
     var c=cur(),old=c.w,items=draft.items.map(function(t){var o=old&&old.items.filter(function(x){return x.t===t;})[0];return o||{t:t,d:false};});
     var w=old||{today:{},lines:{}};w.bet=draft.bet.trim();w.items=items;w.today=w.today||{};w.lines=w.lines||{};
     Object.keys(w.today).forEach(function(k){w.today[k]=w.today[k].filter(function(i){return i<items.length;});});
