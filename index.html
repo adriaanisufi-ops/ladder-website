@@ -1200,25 +1200,40 @@ body.wp-on #wpMoreBtn{display:block}
             <input id="gDeadline" class="li" placeholder="e.g. 16 feb 2027">
           </div>
           <div>
-            <div class="lbl" style="margin-bottom:8px">Daily actions
+            <div class="lbl" style="margin-bottom:8px">Deliverables, with a number
               <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t4')">i</span><div class="tip-box" id="t4">The things you do every day that move you toward this goal. Add as many as you need. Most goals need just one, some need two or three separate blocks of work.<br><br>If an action has a time attached, like "1 hour of calling" or "3 hours on the book", choose <strong style="color:var(--lime)">Timer</strong> and actually time it. A checkbox can't tell you if you did 10 minutes or the full hour. If it's a count or task with no fixed length, like "call 5 organisations" or "make the bed", use <strong style="color:var(--lime)">Check off</strong>.<br><br>Example: a money goal might have two actions: "1 hour calling, emailing, LinkedIn" (Timer, 60 min) and "3 hours on the book and site" (Timer, 180 min).</div></span>
             </div>
             <div id="actionRows"></div>
             <button type="button" onclick="addActionRow()" style="background:none;border:1px dashed var(--dim);color:rgba(244,240,232,0.35);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;padding:12px;cursor:pointer;width:100%;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--lime)';this.style.color='var(--lime)'" onmouseout="this.style.borderColor='var(--dim)';this.style.color='rgba(244,240,232,0.35)'">+ Add action</button>
           </div>
           <div>
+            <div class="lbl" style="margin-bottom:8px">Unbreakable rules</div>
+            <div style="font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:rgba(244,240,232,.5);line-height:1.4;margin-bottom:8px">Rules you never break, no negotiating. One per line. For example: no phone before the first deliverable is done.</div>
+            <textarea id="gRules" style="width:100%;background:none;border:none;border-bottom:1px solid var(--dim);color:var(--white);font-family:'IBM Plex Sans',sans-serif;font-size:1rem;resize:none;min-height:70px;outline:none;padding:6px 0" placeholder="One rule per line"></textarea>
+          </div>
+          <div>
+            <div class="lbl" style="margin-bottom:8px">Reward</div>
+            <div style="font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:rgba(244,240,232,.5);line-height:1.4;margin-bottom:8px">What you get when you hit every deliverable and keep every rule that day.</div>
+            <input id="gReward" class="li" placeholder="e.g. one episode, a good coffee, 30 min guilt free">
+          </div>
+          <div>
+            <div class="lbl" style="margin-bottom:8px">Punishment</div>
+            <div style="font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:rgba(244,240,232,.5);line-height:1.4;margin-bottom:8px">What you do when you miss a deliverable or break a rule. Pick something real that you will actually do.</div>
+            <input id="gPunish" class="li" placeholder="e.g. 3 km run tomorrow before breakfast">
+          </div>
+          <div style="display:none">
             <div class="lbl" style="margin-bottom:8px">Adjustment rule
               <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t6')">i</span><div class="tip-box" id="t6">What do you do if your daily actions are consistently done (green) but the outcome still isn't moving? This rule forces you to change your approach instead of repeating what doesn't work.<br><br>Examples:<br>• 2 weeks green but no movement → switch from email to calling, or try a different sector<br>• 2 weeks green but no sales → change price or target audience</div></span>
             </div>
             <input id="gAdjust" class="li" placeholder="e.g. 2 weeks green but no movement → change price, channel or audience">
           </div>
-          <div>
+          <div style="display:none">
             <div class="lbl" style="margin-bottom:8px">Milestones
               <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t7')">i</span><div class="tip-box" id="t7">Smaller checkpoints on the way to your big goal. One per line. You can tick them off when you hit them.<br><br>Format: what you want to achieve | by when<br><br>Examples:<br>• First paying client | 1 okt 2026<br>• First monthly user | 1 nov 2026<br>• €1.000 in the bank | 1 dec 2026</div></span>
             </div>
             <textarea id="gMilestones" style="width:100%;background:none;border:none;border-bottom:1px solid var(--dim);color:var(--white);font-family:'IBM Plex Mono',monospace;font-size:0.82rem;resize:none;height:90px;outline:none;padding:8px 0;caret-color:var(--lime);" placeholder="First paying client | 1 okt 2026&#10;First monthly user | 1 nov 2026"></textarea>
           </div>
-          <div>
+          <div style="display:none">
             <div class="lbl" style="margin-bottom:8px">Sunday check-in fields
               <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t8')">i</span><div class="tip-box" id="t8">This is how you measure progress. Every Sunday you fill these in, and the app keeps the history so you can see if the outcome is actually moving.<br><br>Write the things you want to track, separated by commas. Each becomes its own input box.<br><br>Examples:<br>• Balance, Sales this week, Active users<br>• Reactions received, Interviews planned<br>• Weight (kg), Workouts this week</div></span>
             </div>
@@ -1286,6 +1301,17 @@ body.wp-on #wpMoreBtn{display:block}
 </div>
 
 <script>
+// ── v84: archive old goals, start clean ──
+(function(){try{
+  if(localStorage.getItem('ladder_goals_archived_v84'))return;
+  var old=localStorage.getItem('ladder_goals');
+  if(old&&old!=='[]')localStorage.setItem('ladder_goals_archive',old);
+  localStorage.setItem('ladder_goals','[]');
+  localStorage.setItem('ladder_seed_goals_v2','1');
+  localStorage.setItem('ladder_goals_archived_v84','1');
+}catch(e){}})();
+
+
 var API_BASE=(location.protocol.indexOf('http')===0&&location.hostname.indexOf('localhost')===-1)?'':'https://ladder-website-xi.vercel.app';
 var KEY='ladder_v5', TODAY=new Date().toDateString();
 var DAYS=['SUN','MON','TUE','WED','THU','FRI','SAT'];
@@ -3601,7 +3627,7 @@ function escAttr(s){return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').
 
 var currentActions=[];
 function addActionRow(){
-  currentActions.push({id:'a_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),text:'',type:'check',minutes:0});
+  currentActions.push({id:'a_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),text:'',type:'count',minutes:0,target:0,unit:''});
   renderActionRows();
 }
 function removeActionRow(idx){
@@ -3713,6 +3739,12 @@ function buildGoalsList(){
         +'</div>';
       }).join(''):'')
 
+      +((g.rules&&g.rules.length)||g.reward||g.punish?'<div style="margin:12px 0 4px;font-family:\'IBM Plex Sans\',sans-serif;font-size:.88rem;line-height:1.5;color:rgba(244,240,232,.7)">'
+        +(g.rules&&g.rules.length?'<div class="wk-sub" style="margin-bottom:4px">Unbreakable rules</div>'+g.rules.map(function(r){return '<div>&bull; '+esc(r)+'</div>';}).join(''):'')
+        +(g.reward?'<div class="wk-sub" style="margin:8px 0 2px">Reward</div><div>'+esc(g.reward)+'</div>':'')
+        +(g.punish?'<div class="wk-sub" style="margin:8px 0 2px">Punishment</div><div>'+esc(g.punish)+'</div>':'')
+      +'</div>':'')
+
       // Milestones
       +(totalMilestones?'<div style="margin-top:14px;">'
         +(g.milestones||[]).map(function(m,mi){
@@ -3782,7 +3814,7 @@ function openAddGoal(){
   editingGoalId=null;
   document.getElementById('modalTitle').textContent='New goal';
   document.getElementById('deleteGoalBtn').style.display='none';
-  ['gName','gOutcome','gDeadline','gAdjust','gMilestones','gCheckinFields'].forEach(function(id){
+  ['gName','gOutcome','gDeadline','gAdjust','gMilestones','gCheckinFields','gRules','gReward','gPunish'].forEach(function(id){
     document.getElementById(id).value='';
   });
   currentActions=[];
@@ -3810,9 +3842,11 @@ function openEditGoal(goalId){
   document.getElementById('gAdjust').value=g.adjust||'';
   document.getElementById('gMilestones').value=(g.milestones||[]).map(function(m){return m.text+(m.date?' | '+m.date:'');}).join('\n');
   document.getElementById('gCheckinFields').value=(g.checkinFields||[]).join(', ');
+  document.getElementById('gRules').value=(g.rules||[]).join('\n');document.getElementById('gReward').value=g.reward||'';document.getElementById('gPunish').value=g.punish||'';
   document.getElementById('goalModal').style.display='block';
 }
 
+function RULES(){return document.getElementById('gRules').value.split('\n').map(function(x){return x.trim();}).filter(Boolean);}
 function saveGoal(){
   var name=document.getElementById('gName').value.trim();
   if(!name) return;
@@ -3834,10 +3868,10 @@ function saveGoal(){
       milestones=milestones.map(function(m,i){
         return {text:m.text,date:m.date,done:(existing.milestones&&existing.milestones[i])?existing.milestones[i].done:false};
       });
-      goals[idx]={id:editingGoalId,name:name,outcome:document.getElementById('gOutcome').value.trim(),deadline:document.getElementById('gDeadline').value.trim(),actions:actions,adjust:document.getElementById('gAdjust').value.trim(),milestones:milestones,checkinFields:checkinFields};
+      goals[idx]={id:editingGoalId,name:name,outcome:document.getElementById('gOutcome').value.trim(),deadline:document.getElementById('gDeadline').value.trim(),actions:actions,adjust:document.getElementById('gAdjust').value.trim(),milestones:milestones,checkinFields:checkinFields,rules:RULES(),reward:document.getElementById('gReward').value.trim(),punish:document.getElementById('gPunish').value.trim()};
     }
   } else {
-    goals.push({id:'g_'+Date.now(),name:name,outcome:document.getElementById('gOutcome').value.trim(),deadline:document.getElementById('gDeadline').value.trim(),actions:actions,adjust:document.getElementById('gAdjust').value.trim(),milestones:milestones,checkinFields:checkinFields});
+    goals.push({id:'g_'+Date.now(),name:name,outcome:document.getElementById('gOutcome').value.trim(),deadline:document.getElementById('gDeadline').value.trim(),actions:actions,adjust:document.getElementById('gAdjust').value.trim(),milestones:milestones,checkinFields:checkinFields,rules:RULES(),reward:document.getElementById('gReward').value.trim(),punish:document.getElementById('gPunish').value.trim()});
   }
   saveGoals(goals);
   closeGoalModal();
@@ -5396,13 +5430,26 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   var E=function(t){return (window.esc?window.esc(t):String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}));};
   var sel=[],edit=false,msg='',lineEdit=false,cache=[],own={};
   function lab(a){return window.actLabel?window.actLabel(a):a.text;}
-  function goalActs(){var out=[];try{loadGoals().forEach(function(g){(g.actions||[]).forEach(function(a){if(a&&a.text&&!out.some(function(o){return o.t===lab(a);}))out.push({t:lab(a),a:a});});});}catch(e){}return out;}
+  function goalActs(){var out=[];try{loadGoals().forEach(function(g){(g.actions||[]).forEach(function(a){if(a&&a.text&&!out.some(function(o){return o.t===lab(a);}))out.push({t:lab(a),a:a,gid:g.id});});});}catch(e){}return out;}
   function actOf(x){var g=goalActs().filter(function(o){return x.aid?o.a.id===x.aid:o.t===x.t;})[0];return g&&g.a;}
   function isDone(x){if(x.d)return true;try{var a=actOf(x);return !!(a&&isActionDone(a));}catch(e){return false;}}
   function target(x){if(x.tgt)return {id:null,text:x.what||x.t,target:x.tgt,unit:''};var a=actOf(x);return (a&&a.type==='count'&&a.target)?a:null;}
   function setFlag(a,v){if(!a||!a.id)return;try{if(!S.goalActions)S.goalActions={};if(!S.goalActions[TODAY])S.goalActions[TODAY]={};S.goalActions[TODAY][a.id]=v;save();}catch(e){}}
   function weekLines(){var out=[];for(var i=1;i<=7;i++){var d=new Date();d.setDate(d.getDate()-i);var o=load(d);if(o){if(o.line)out.push(o.line);(o.miss||[]).forEach(function(m){if(m.why)out.push(m.t+': '+m.why);});}}return out;}
   function missed(){var y=new Date();y.setDate(y.getDate()-1);var o=load(y);if(!o||!o.items)return null;var done=o.miss||[];for(var i=0;i<o.items.length;i++){var x=o.items[i];if(!x.d&&!done.some(function(m){return m.t===x.t;}))return {d:y,o:o,x:x};}return null;}
+  function allRules(){var out=[];try{loadGoals().forEach(function(g){(g.rules||[]).forEach(function(r){out.push({gid:g.id,gn:g.name,r:r});});});}catch(e){}return out;}
+  function settle(){var y=new Date();y.setDate(y.getDate()-1);var o=load(y);if(!o||!o.items)return null;o.settled=o.settled||{};var goals=[];try{goals=loadGoals();}catch(e){}var seen={};
+    for(var i=0;i<o.items.length;i++){var gid=o.items[i].gid;if(!gid||seen[gid]||o.settled[gid])continue;seen[gid]=1;
+      var g=goals.filter(function(z){return z.id===gid;})[0];if(!g){o.settled[gid]=1;putAt(y,o);continue;}
+      var mi=o.items.filter(function(x){return x.gid===gid&&!x.d;})[0],br=Object.keys(o.broke||{}).filter(function(k){return k.indexOf(gid+'|')===0;})[0];
+      if((mi||br)&&g.punish)return {d:y,o:o,gid:gid,kind:'punish',g:g,why:mi?mi.t+' was not done':'you broke: '+br.split('|')[1]};
+      if(!mi&&!br&&g.reward)return {d:y,o:o,gid:gid,kind:'reward',g:g};
+      o.settled[gid]=1;putAt(y,o);}
+    return null;}
+  function settleHtml(m){
+    if(m.kind==='punish')return '<div class="cp-card run" style="margin-bottom:14px;border-color:rgba(255,45,45,.5)"><div class="cp-top"><span class="cp-k" style="color:#ff6b6b">Punishment due</span></div><div class="cp-q">Yesterday, '+E(m.g.name)+': '+E(m.why)+'.</div><div class="cp-why">You set this yourself. Do it, then tap the button.</div><div class="wk-bet" style="color:#fff;font-size:1.1rem">'+E(m.g.punish)+'</div><button class="cp-btn" onclick="daySettle()">I DID IT</button></div>';
+    return '<div class="cp-card" style="margin-bottom:14px"><div class="cp-top"><span class="cp-k">Reward earned</span></div><div class="cp-q">Yesterday, '+E(m.g.name)+': everything done, every rule kept.</div><div class="wk-bet" style="color:var(--lime);font-size:1.1rem">'+E(m.g.reward)+'</div><button class="cp-btn" onclick="daySettle()">TAKEN</button></div>';
+  }
   function pickHtml(){
     var ga=goalActs(),extra=sel.filter(function(t){return !ga.some(function(o){return o.t===t;});});
     var all=ga.map(function(o){return o.t;}).concat(extra);cache=all;
@@ -5420,7 +5467,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     return '<div class="cp-card run" style="margin-bottom:14px"><div class="cp-top"><span class="cp-k">Yesterday</span></div><div class="cp-q">'+E(m.x.t)+' did not get done.</div><div class="cp-why">What got in the way? One honest sentence. This is how you find the real problem, not to blame yourself.</div><textarea class="cp-ta s" id="dayMiss" placeholder="For example: I started too late and ran out of energy."></textarea><div class="cp-err" id="dayErr">'+E(msg)+'</div><button class="cp-btn" onclick="dayMiss()">SAVE</button><button class="cp-btn ghost" onclick="dayMissSkip()">Skip</button></div>';
   }
   function render(){
-    var d=load(),mm=missed(),pre=mm?missHtml(mm):'';
+    var d=load(),st=settle(),mm=missed(),pre=st?settleHtml(st):(mm?missHtml(mm):'');
     if(!d||!d.items||!d.items.length||edit){if(edit&&d&&!sel.length)sel=d.items.map(function(x){if(x.tgt)own[x.t]={tgt:x.tgt,what:x.what};return x.t;});host.innerHTML=pre+pickHtml();return;}
     var items=d.items,ch=false;
     items.forEach(function(x){if(!x.d&&isDone(x)){x.d=true;ch=true;}});if(ch)put(d);
@@ -5431,6 +5478,8 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
       if(a&&!on){var n=(x.n||0);h+='<div class="cp-one" style="font-size:1.1rem;padding:6px 0 12px;align-items:center;cursor:default"><span style="flex:1">'+E(a.text)+'<br><span class="wk-sub">'+n+' of '+a.target+' '+E(a.unit||'')+'</span></span><button class="wk-mini" onclick="dayCnt('+i+',-1)">&minus;</button><button class="wk-mini on" onclick="dayCnt('+i+',1)">+1</button></div>';}
       else h+='<div class="cp-one'+(on?' on':'')+'" style="font-size:1.15rem;padding:6px 0 10px" onclick="dayTick('+i+')"><i></i><span>'+E(x.t)+'</span></div>';
     });
+    var rl=allRules();
+    if(rl.length){h+='<div class="cp-lab">Unbreakable rules</div>'+rl.map(function(x,i){var k=x.gid+'|'+x.r,br=!!(d.broke&&d.broke[k]);return '<div class="wk-item" style="'+(br?'background:rgba(255,45,45,.12)':'')+'"><span>'+E(x.r)+'</span><b style="'+(br?'color:#ff6b6b':'')+'" onclick="dayBroke('+i+')">'+(br?'Broken':'Kept')+'</b></div>';}).join('');}
     if(all){
       if(d.line&&!lineEdit)h+='<div class="cp-lab">Evening line</div><div class="wk-bet" onclick="dayLineEdit()">'+E(d.line)+'</div><div class="cp-why">Today is done. Tap the line to change it.</div>';
       else h+='<div class="cp-lab">One line. What did you learn today?</div><div class="cp-why">Any honest line works. For example what went easy, what was hard, or what you will do differently.</div><textarea class="cp-ta s" id="dayLine" placeholder="Write one line">'+E(d.line||'')+'</textarea><div class="cp-err" id="dayErr">'+E(msg)+'</div><button class="cp-btn" onclick="dayLine()">SAVE THE LINE</button>';
@@ -5441,13 +5490,15 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   }
   window.dayPick=function(i){var t=cache[i];if(t==null)return;var k=sel.indexOf(t);msg='';if(k>=0)sel.splice(k,1);else if(sel.length<3)sel.push(t);else msg='Three is the maximum. Remove one first.';render();if(window.hap)hap('light');};
   window.dayAdd=function(){var el=document.getElementById('dayNew'),ne=document.getElementById('dayNum');if(!el)return;var v=el.value.trim(),n=parseInt(ne&&ne.value)||0;if(v.length<2){msg='Write what must exist.';render();return;}if(n<1){msg='Add a number. How many? That is what makes it measurable.';render();return;}if(sel.length>=3){msg='Three is the maximum. Remove one first.';render();return;}var t=n+' '+v;if(sel.indexOf(t)<0){sel.push(t);own[t]={tgt:n,what:v};}msg='';render();};
-  window.dayGo=function(){if(!sel.length){msg='Pick at least one. A rough pick is fine.';render();return;}var old=load();var ga=goalActs();var items=sel.map(function(t){var o=old&&old.items&&old.items.filter(function(x){return x.t===t;})[0];if(o)return o;var w=own[t];if(w)return {t:t,d:false,tgt:w.tgt,what:w.what,n:0};var g=ga.filter(function(z){return z.t===t;})[0];return {t:t,d:false,aid:g?g.a.id:null,n:0};});var o=old||{};o.items=items;put(o);sel=[];edit=false;msg='';render();if(window.hap)hap('heavy');};
+  window.dayGo=function(){if(!sel.length){msg='Pick at least one. A rough pick is fine.';render();return;}var old=load();var ga=goalActs();var items=sel.map(function(t){var o=old&&old.items&&old.items.filter(function(x){return x.t===t;})[0];if(o)return o;var w=own[t];if(w)return {t:t,d:false,tgt:w.tgt,what:w.what,n:0};var g=ga.filter(function(z){return z.t===t;})[0];return {t:t,d:false,aid:g?g.a.id:null,gid:g?g.gid:null,n:0};});var o=old||{};o.items=items;put(o);sel=[];edit=false;msg='';render();if(window.hap)hap('heavy');};
   window.dayEdit=function(){edit=true;sel=[];msg='';render();};
   window.dayTick=function(i){var d=load();if(!d)return;var x=d.items[i];x.d=!x.d;var a=actOf(x);if(a)setFlag(a,x.d);put(d);render();if(window.hap)hap('medium');};
   window.dayCnt=function(i,dl){var d=load();if(!d)return;var x=d.items[i],a=target(x);if(!a)return;x.n=Math.max(0,(x.n||0)+dl);if(x.n>=a.target){x.d=true;setFlag(a,true);if(window.hap)hap('heavy');}else if(window.hap)hap('light');put(d);render();};
   window.dayLineEdit=function(){lineEdit=true;render();};
   window.dayLine=function(){var el=document.getElementById('dayLine'),v=el?el.value.trim():'';if(v.length<3){msg='One honest line. Short is fine.';render();return;}var d=load();if(!d)return;d.line=v;put(d);msg='';lineEdit=false;render();if(window.hap)hap('heavy');};
   window.dayMiss=function(){var el=document.getElementById('dayMiss'),v=el?el.value.trim():'';if(v.length<3){msg='One honest sentence. Short is fine.';render();return;}var m=missed();if(!m)return;m.o.miss=m.o.miss||[];m.o.miss.push({t:m.x.t,why:v});putAt(m.d,m.o);msg='';render();if(window.hap)hap('medium');};
+  window.dayBroke=function(i){var x=allRules()[i],d=load();if(!x||!d)return;d.broke=d.broke||{};var k=x.gid+'|'+x.r;if(d.broke[k])delete d.broke[k];else d.broke[k]=true;put(d);render();if(window.hap)hap('medium');};
+  window.daySettle=function(){var m=settle();if(!m)return;m.o.settled[m.gid]=1;putAt(m.d,m.o);render();if(window.hap)hap('heavy');};
   window.dayMissSkip=function(){var m=missed();if(!m)return;m.o.miss=m.o.miss||[];m.o.miss.push({t:m.x.t,why:'',skipped:true});putAt(m.d,m.o);render();};
   var _g=window.goTo;window.goTo=function(id){var r=_g.apply(this,arguments);if(id==='s-morning')render();return r;};
   window.weekRender=render;render();setTimeout(render,700);
