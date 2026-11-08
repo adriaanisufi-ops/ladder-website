@@ -741,6 +741,21 @@ body.wp-on #wpMoreBtn{display:block}
 .cp-pick{display:flex;gap:10px;margin-top:10px}
 .cp-pick input{flex:1;min-width:0;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:1.25rem;letter-spacing:.04em;color-scheme:dark}
 .cp-pick .cp-btn{flex:1;width:auto}
+
+/* week module v78 */
+.wk-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;margin:8px 0 6px}
+.wk-bar i{display:block;height:100%;background:var(--lime);transition:width .4s}
+.wk-sub{font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.08em;color:#8c8c8c;text-transform:uppercase}
+.wk-bet{font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:.95rem;line-height:1.4;color:rgba(244,240,232,.75);margin:8px 0 4px}
+.wk-in{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;font-family:'IBM Plex Sans',sans-serif;font-size:1rem;padding:12px;box-sizing:border-box}
+.wk-add{display:flex;gap:8px;margin:0 0 10px}
+.wk-add .cp-btn{width:auto;padding:0 18px;margin:0}
+.wk-item{display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:6px;border-radius:12px;background:rgba(255,255,255,.04);font-family:'IBM Plex Sans',sans-serif;font-size:.95rem;color:#fff}
+.wk-item span{flex:1}
+.wk-item b{font-weight:400;color:#8c8c8c;padding:4px 8px;cursor:pointer}
+.wk-pick{display:block;width:100%;text-align:left;padding:12px 14px;margin-bottom:6px;border-radius:12px;background:rgba(212,240,0,.06);border:1px dashed rgba(212,240,0,.4);color:var(--lime);font-family:'IBM Plex Sans',sans-serif;font-size:.95rem}
+.wk-rev{font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:.85rem;line-height:1.5;color:rgba(244,240,232,.6);border-left:2px solid var(--lime);padding:2px 0 2px 12px;margin:0 0 14px}
+.wk-x{font-size:.6rem;color:#8c8c8c;margin-left:auto;cursor:pointer;padding:4px}
 </style>
 </head>
 <body>
@@ -767,6 +782,7 @@ body.wp-on #wpMoreBtn{display:block}
 
     <div class="aff" data-set="am"></div>
     <div id="complainCard"></div>
+    <div id="wkHost"></div>
 
     <div id="oldWord">
     <div class="lbl" style="margin-bottom:8px">What do you need to do today to go home satisfied?
@@ -5358,6 +5374,91 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   }
   document.addEventListener('visibilitychange',function(){if(document.hidden)arm();else cancel();});
   setTimeout(cancel,2500);
+})();
+
+/* ===== week module v78: bet, deliverables, 2 things a day, evening line ===== */
+(function(){
+  var host=document.getElementById('wkHost'); if(!host)return;
+  function pad(n){return (n<10?'0':'')+n;}
+  function dkey(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+  function monday(d){var x=new Date(d.getFullYear(),d.getMonth(),d.getDate());var w=(x.getDay()+6)%7;x.setDate(x.getDate()-w);return x;}
+  function effMon(){var n=new Date();if(n.getDay()===0)n=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1);return monday(n);}
+  function wkKey(m){return 'ladder_wk_'+dkey(m);}
+  function load(m){try{return JSON.parse(localStorage.getItem(wkKey(m))||'null');}catch(e){return null;}}
+  function put(m,w){try{localStorage.setItem(wkKey(m),JSON.stringify(w));}catch(e){}}
+  var E=function(t){return (window.esc?window.esc(t):String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}));};
+  var mode='',draft=null,msg='',lineEdit=false;
+  function today(){return dkey(new Date());}
+  function review(m){
+    var pm=new Date(m.getFullYear(),m.getMonth(),m.getDate()-7),p=load(pm);if(!p)return '';
+    var dn=p.items.filter(function(x){return x.d;}).length,ls=Object.keys(p.lines||{}).sort().map(function(k){return p.lines[k];}).filter(Boolean);
+    return '<div class="wk-rev"><b>Last week: '+dn+' of '+p.items.length+' done.</b>'+(p.bet?'<br>The bet was: '+E(p.bet):'')+(ls.length?'<br>What you learned:<br>'+ls.map(function(l){return '&bull; '+E(l);}).join('<br>'):'<br>No evening lines. That is the research you skipped.')+'</div>';
+  }
+  function setupHtml(m){
+    var n=draft.items.length;
+    return '<div class="cp-card run"><div class="cp-top"><span class="cp-k">Set the week</span></div>'
+      +review(m)
+      +'<div class="cp-lab">This week I find out if</div><textarea class="cp-ta s" id="wkBet" placeholder="For example: videos that open with a question get more views than statements." oninput="wkBet(this.value)">'+E(draft.bet)+'</textarea>'
+      +'<div class="cp-lab">What must exist by Saturday ('+n+' of 3 to 7)</div>'
+      +'<div class="cp-why">Things you can point at. A noun with a number, not a feeling.</div>'
+      +draft.items.map(function(t,i){return '<div class="wk-item"><span>'+E(t)+'</span><b onclick="wkRm('+i+')">&times;</b></div>';}).join('')
+      +(n<7?'<div class="wk-add"><input class="wk-in" id="wkNew" placeholder="e.g. 7 videos posted" onkeydown="if(event.key===\'Enter\')wkAdd()"><button class="cp-btn" onclick="wkAdd()">ADD</button></div>':'')
+      +'<div class="cp-err" id="wkErr">'+E(msg)+'</div><button class="cp-btn" onclick="wkStart()">START THE WEEK</button>'
+      +(load(effMon())&&mode==='edit'?'<button class="cp-btn ghost" onclick="wkCancel()">Cancel</button>':'')+'</div>';
+  }
+  function render(){
+    var m=effMon(),w=load(m),sun=new Date().getDay()===0;
+    if(!w||mode==='setup'||mode==='edit'){
+      if(!draft)draft=w?{bet:w.bet||'',items:w.items.map(function(x){return x.t;})}:{bet:'',items:[]};
+      if(!w&&mode===''){mode='intro';}
+      if(mode==='intro'){
+        host.innerHTML='<div class="cp-card"><div class="cp-k">'+(sun?'Plan next week':'This week')+'</div><div class="cp-q">What needs to exist by Saturday?</div><div class="cp-why">Why: a week with one bet and a short list of finished things tells you every day what to do. Without it, every day looks fine and nothing adds up.</div>'+review(m)+'<button class="cp-btn" onclick="wkSetup()">SET UP THE WEEK</button></div>';
+        return;
+      }
+      host.innerHTML=setupHtml(m);return;
+    }
+    var items=w.items,dk=today(),picks=(w.today&&w.today[dk])||[],dn=items.filter(function(x){return x.d;}).length;
+    var avail=items.map(function(x,i){return i;}).filter(function(i){return !items[i].d&&picks.indexOf(i)<0;});
+    var need=Math.min(2,picks.length+avail.length),pd=picks.filter(function(i){return items[i].d;}).length;
+    var allDone=picks.length>=need&&pd===picks.length&&picks.length>0;
+    var h='<div class="cp-card'+(allDone&&w.lines&&w.lines[dk]?' held':' run')+'"><div class="cp-top"><span class="cp-k">Week: '+dn+' of '+items.length+' done</span><button class="cp-more" onclick="wkEdit()">Edit</button></div>'
+      +'<div class="wk-bar"><i style="width:'+Math.round(100*dn/Math.max(1,items.length))+'%"></i></div>'
+      +(w.bet?'<div class="wk-bet">Bet: '+E(w.bet)+'</div>':'')
+      +'<div class="cp-lab">What must exist today</div>';
+    if(!picks.length&&!avail.length)h+='<div class="cp-why">The whole list exists. Add more under Edit or rest.</div>';
+    picks.forEach(function(i){var x=items[i];h+='<div class="cp-one'+(x.d?' on':'')+'" style="font-size:1.1rem;padding:6px 0 10px" onclick="wkTick('+i+')"><i></i><span>'+E(x.t)+'</span>'+(x.d?'':'<em class="wk-x" onclick="event.stopPropagation();wkUnpick('+i+')">remove</em>')+'</div>';});
+    if(picks.length<2&&avail.length){h+='<div class="cp-why" style="margin:6px 0">Pick '+(2-picks.length)+' more. Tap to choose.</div>'+avail.map(function(i){return '<button class="wk-pick" onclick="wkPick('+i+')">+ '+E(items[i].t)+'</button>';}).join('');}
+    if(allDone){
+      var ln=(w.lines&&w.lines[dk])||'';
+      if(ln&&!lineEdit)h+='<div class="cp-lab">Evening line</div><div class="wk-bet" onclick="wkLineEdit()">'+E(ln)+'</div><div class="cp-why">Today is done. Tap the line to change it.</div>';
+      else h+='<div class="cp-lab">One line. What did you learn today?</div><textarea class="cp-ta s" id="wkLine" placeholder="For example: the question opening got more comments than the statement.">'+E(ln)+'</textarea><div class="cp-err" id="wkErr">'+E(msg)+'</div><button class="cp-btn" onclick="wkLine()">SAVE THE LINE</button>';
+    }
+    host.innerHTML=h+'</div>';
+  }
+  function cur(){var m=effMon();return {m:m,w:load(m)};}
+  function mut(f){var c=cur();if(!c.w)return;f(c.w);put(c.m,c.w);}
+  window.wkSetup=function(){mode='setup';draft=null;msg='';render();};
+  window.wkEdit=function(){mode='edit';draft=null;msg='';render();};
+  window.wkCancel=function(){mode='';draft=null;msg='';render();};
+  window.wkBet=function(v){if(draft)draft.bet=v;};
+  window.wkAdd=function(){var el=document.getElementById('wkNew');if(!el||!draft)return;var v=el.value.trim();if(v.length<2||draft.items.length>=7)return;draft.items.push(v);msg='';render();var n=document.getElementById('wkNew');if(n)n.focus();};
+  window.wkRm=function(i){if(!draft)return;draft.items.splice(i,1);render();};
+  window.wkStart=function(){
+    if(!draft)return;var b=document.getElementById('wkBet');if(b)draft.bet=b.value;
+    if((draft.bet||'').trim().length<4){msg='Write the bet first. One sentence.';render();return;}
+    if(draft.items.length<3){msg='Add at least 3 things that must exist.';render();return;}
+    var c=cur(),old=c.w,items=draft.items.map(function(t){var o=old&&old.items.filter(function(x){return x.t===t;})[0];return o||{t:t,d:false};});
+    var w=old||{today:{},lines:{}};w.bet=draft.bet.trim();w.items=items;w.today=w.today||{};w.lines=w.lines||{};
+    Object.keys(w.today).forEach(function(k){w.today[k]=w.today[k].filter(function(i){return i<items.length;});});
+    put(c.m,w);mode='';draft=null;msg='';render();if(window.hap)hap('heavy');
+  };
+  window.wkPick=function(i){mut(function(w){var dk=today();w.today=w.today||{};var p=w.today[dk]||[];if(p.length<2&&p.indexOf(i)<0)p.push(i);w.today[dk]=p;});render();if(window.hap)hap('light');};
+  window.wkUnpick=function(i){mut(function(w){var dk=today();w.today[dk]=(w.today[dk]||[]).filter(function(x){return x!==i;});});render();};
+  window.wkTick=function(i){mut(function(w){var x=w.items[i];x.d=!x.d;x.day=x.d?today():null;});render();if(window.hap)hap('medium');};
+  window.wkLineEdit=function(){lineEdit=true;render();};
+  window.wkLine=function(){var el=document.getElementById('wkLine'),v=el?el.value.trim():'';if(v.length<3){msg='One honest line. Short is fine.';render();return;}msg='';lineEdit=false;mut(function(w){w.lines=w.lines||{};w.lines[today()]=v;});render();if(window.hap)hap('heavy');};
+  var _g=window.goTo;window.goTo=function(id){var r=_g.apply(this,arguments);if(id==='s-morning'){mode=mode==='setup'||mode==='edit'?mode:'';render();}return r;};
+  window.weekRender=render;render();setTimeout(render,700);
 })();
 </script>
 <div id="ovTop"></div>
