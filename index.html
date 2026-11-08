@@ -742,6 +742,19 @@ body.wp-on #wpMoreBtn{display:none!important}
 .cp-pick input{flex:1;min-width:0;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:1.25rem;letter-spacing:.04em;color-scheme:dark}
 .cp-pick .cp-btn{flex:1;width:auto}
 
+
+/* affirmation card v90 */
+.aff{background:radial-gradient(120% 90% at 0% 0%,rgba(212,240,0,.10) 0%,rgba(212,240,0,0) 55%),linear-gradient(160deg,#171b0b 0%,#0f0f0f 72%);padding:24px 22px 18px;box-shadow:inset 0 0 0 1px rgba(212,240,0,.22),0 18px 40px -24px rgba(212,240,0,.25)}
+.aff-text{font-size:1.6rem;line-height:1.28;min-height:4.4rem;letter-spacing:-.005em}
+.aff-text:before{content:"\201C";display:block;font-family:'Bebas Neue',sans-serif;font-size:3.2rem;line-height:.6;color:var(--lime);opacity:.55;margin-bottom:6px}
+.aff-say{margin-top:20px;min-height:58px;border-radius:18px;font-size:.78rem;letter-spacing:.2em;box-shadow:0 10px 24px -12px rgba(212,240,0,.55)}
+.aff-say.said{box-shadow:inset 0 0 0 1px rgba(212,240,0,.35)}
+.aff-pills{display:flex;gap:8px;margin-top:14px}
+.aff-pills button{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px 10px;border-radius:14px;background:rgba(244,240,232,.05);border:1px solid rgba(244,240,232,.12);color:rgba(244,240,232,.85);font-family:'IBM Plex Mono',monospace;font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;min-height:58px;cursor:pointer}
+.aff-pills button svg{color:var(--lime)}
+.aff-pills button:active{background:rgba(212,240,0,.12);transform:scale(.97)}
+.aff-rm{display:block;margin:10px auto 0;background:none;border:none;color:rgba(244,240,232,.4);font-family:'IBM Plex Mono',monospace;font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;padding:8px}
+
 /* week module v78 */
 .wk-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;margin:8px 0 6px}
 .wk-bar i{display:block;height:100%;background:var(--lime);transition:width .4s}
@@ -3726,7 +3739,7 @@ function buildGoalsList(){
       '<div style="border:1px solid var(--dim);padding:22px;margin-bottom:12px;">'
         +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--lime);margin-bottom:14px;">No goals yet</div>'
         +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.78rem;color:rgba(244,240,232,0.55);line-height:1.9;margin-bottom:16px;">'
-          +'A goal here has three parts: what you want <span style="color:rgba(244,240,232,0.8)">(outcome)</span>, what you do for it every day <span style="color:rgba(244,240,232,0.8)">(actions)</span>, and how you\'ll know it\'s working <span style="color:rgba(244,240,232,0.8)">(check-ins)</span>.'
+          +'A goal here has three parts: what you want <span style="color:rgba(244,240,232,0.8)">(outcome)</span>, what you do for it every day <span style="color:rgba(244,240,232,0.8)">(deliverables)</span>, and how you\'ll know it\'s working <span style="color:rgba(244,240,232,0.8)">(check-ins)</span>.'
         +'</div>'
         +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.78rem;color:rgba(244,240,232,0.4);line-height:1.9;">'
           +'Not sure how to structure yours? Describe it in your own words with <span style="color:var(--lime)">Build my goal with AI</span> below and it fills in the rest. You review before saving.'
@@ -4284,12 +4297,12 @@ setTimeout(function(){try{var t=S.todayTask;liveDiag('boot check task='+(t&&t.st
 // ---- tutorial ----
 var TOUR=[
  {ic:'s-ladder',k:'Welcome',h:'Do what you <em>said</em> you would do.',p:'LADDER is one daily loop: <b>morning, work, evening</b>. It takes a minute to learn. Tap Next.'},
- {ic:'s-morning',k:'1. Day',h:'Start the <em>day</em> here.',p:'Say your line out loud and <b>tap I said it</b>. Take your five minutes to complain, then stop. Set <b>one task with a deadline</b> and press start: the countdown follows you on your lock screen.'},
- {ic:'s-goals',k:'2. Goals',h:'Where you are <em>going.</em>',p:'Each goal has an outcome with a date and <b>daily actions</b>. Actions with a time have a <b>timer</b>. Start it and it counts down outside the app too. Check in every Sunday.'},
- {ic:'s-wiring',k:'3. Wiring',h:'Sit with <em>nothing.</em>',p:'Pick 3, 5 or 10 minutes and do nothing. No phone, no music. Your <b>unbreakable rules</b> and km debt live here as well. Break a rule, add km. Pay it back.'},
+ {ic:'s-morning',k:'1. Day',h:'Start the <em>day</em> here.',p:'Say your line out loud and <b>tap I said it</b>. Take your five minutes to complain, then stop. Then work through your <b>deliverables</b>: write what will exist, set a time and press start. The countdown follows you on your lock screen.'},
+ {ic:'s-goals',k:'2. Goals',h:'Where you are <em>going.</em>',p:'Each goal has an outcome with a date and <b>deliverables</b>. A deliverable is something that must exist, with a number. Add them here and tick them off on Day. Check in every Sunday.'},
+ {ic:'s-morning',k:'3. Sit with nothing',h:'Sit with <em>nothing.</em>',p:'At the bottom of Day, the <b>Sit with nothing</b> button opens a timer for 3, 5 or 10 minutes. No phone, no music.'},
  {ic:'fab',k:'Anytime',h:'The <em>I feel it</em> button.',p:'When you want to quit, scroll or chase the result, tap <b>I FEEL IT</b> at the bottom right. It walks you through the urge in under a minute. On the Goals screen, the <b>Art of detachment</b> chip does the same for outcome stress.'},
- {ic:'s-mirror',k:'4. Mirror',h:'Close the <em>day.</em>',p:'Every evening: read a line, answer the questions <b>honestly</b>, write one thing today taught you. Close the day to keep your streak.'},
- {ic:'s-ladder',k:'5. Ladder',h:'Your <em>score.</em>',p:'Streak, wins and km debt. The app lives on your phone only, so <b>back up</b> once a week with the Back up button. You can replay this tour from here.'}
+ {ic:'s-mirror',k:'4. Mirror',h:'Close the <em>day.</em>',p:'Every evening: look at what you did, write <b>one thing today taught you</b> and close the day to keep your streak.'},
+ {ic:'s-ladder',k:'5. Ladder',h:'Your <em>score.</em>',p:'Streak, wins, rules, rewards and km debt. Break a rule and the km add up. The app lives on your phone only, so <b>back up</b> once a week with the Back up button. You can replay this tour from here.'}
 ];
 var tourI=0;
 function tourIcon(k){
@@ -4586,11 +4599,11 @@ function closeLookBack(){var l=document.getElementById('lookBack');if(l)l.classL
   window.weekRender=weekRender;
   // 5. first use hints
   var HINTS={
-    's-morning':['Your day','Pick one task, set a deadline, start the clock. Finish it before the time runs out.'],
-    's-wiring':['Wiring','Choose 3, 5 or 10 minutes. Sit with nothing. No phone. Each session builds the picture.'],
-    's-goals':['Goals','Every goal has actions. Start the timer, do the work, check it off.'],
-    's-mirror':['Mirror','Close the day. Tap what fits, then say why in your own words. Then you are done.'],
-    's-ladder':['Ladder','Your streak, your wins and your debt. Skip a rule and the kilometers add up.']
+    's-morning':['Your day','Tick off your deliverables. Tap Set deliverable and time, write what will exist, pick how long you have and the clock starts.'],
+    's-wiring':['Wiring','Choose 3, 5 or 10 minutes and sit with nothing. No phone. Each session builds the picture.'],
+    's-goals':['Goals','Each goal has deliverables. A deliverable is something that must exist, with a number. Add them here and tick them off on Day.'],
+    's-mirror':['Mirror','Close the day. Look at what you did, write one line about what you learned and close the day.'],
+    's-ladder':['Ladder','Your streak, your wins and your debt. Break a rule and the kilometers add up.']
   };
   function hintShow(id){
     try{
@@ -4859,7 +4872,7 @@ function closeLookBack(){var l=document.getElementById('lookBack');if(l)l.classL
       var line=lib().filter(function(x){return norm(x.t)===norm(t);})[0]||{};
       var custom=!!line.custom;
       var lbl=set==='pm'?'Read it before you answer':'Say it out loud';
-      var hint=isSaid?'Said. That counts.':(set==='pm'?'Read it slowly. Then tap the button.':'Out loud, not in your head. Then tap the button.');
+      var hint=isSaid?'Said. That counts.':(set==='pm'?'Read it slowly, then tap the button.':'Out loud, not in your head. Then tap the button.');
       var st=0;try{st=affStreak();}catch(e){}
       var cnt=(n>=AFF_GOAL?'done for today':n+' of '+AFF_GOAL+' said today')+(st>0?' · '+st+' day streak':'');
       var openAdd=box.querySelector('.aff-add')&&box.querySelector('.aff-add').style.display==='flex';
@@ -4868,7 +4881,7 @@ function closeLookBack(){var l=document.getElementById('lookBack');if(l)l.classL
         +'<div class="aff-text'+(isSaid?' said':'')+'">'+esc(t)+'</div>'
         +'<button class="aff-say'+(isSaid?' said':'')+'" onclick="affSaid(\''+set+'\')">'+(isSaid?'✓ Said':'I said it')+'</button>'
         +'<div class="aff-hint">'+hint+(line.reps?' · said '+line.reps+' time'+(line.reps===1?'':'s'):'')+'</div>'
-        +'<div class="aff-tools"><button onclick="affRitual()">Full ritual ›</button><button onclick="affHub()">Library</button><button onclick="affNext(\''+set+'\')">Another ›</button>'+(custom?'<button onclick="affRemove(\''+set+'\')">Remove</button>':'')+'</div>'
+        +'<div class="aff-pills"><button onclick="affRitual()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5v14l11-7z"/></svg><span>Full ritual</span></button><button onclick="affHub()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h12a3 3 0 0 1 3 3v11H7a3 3 0 0 1-3-3z"/><path d="M8 9h7"/></svg><span>Library</span></button><button onclick="affNext(\''+set+'\')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 8a8 8 0 0 0-14-2L4 8"/><path d="M4 4v4h4"/><path d="M4 16a8 8 0 0 0 14 2l2-2"/><path d="M20 20v-4h-4"/></svg><span>Another line</span></button></div>'+(custom?'<button class="aff-rm" onclick="affRemove(\''+set+'\')">Remove this line</button>':'')
         +'<div class="aff-add" style="'+(openAdd?'display:flex':'')+'"><input class="li aff-in" placeholder="A line in your own words"><button class="aff-btn main" style="flex:0 0 90px" onclick="affSave(this,\''+set+'\')">Save</button></div>';
     });
   };
@@ -5461,7 +5474,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   function lload(){try{return JSON.parse(localStorage.getItem('ladder_dlv_last')||'{}');}catch(e){return {};}}
   function lput(k,w){var o=lload();o[k]=w;try{localStorage.setItem('ladder_dlv_last',JSON.stringify(o));}catch(e){}}
   var E=function(t){return (window.esc?window.esc(String(t)):String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}));};
-  var openKey='',pickOther=false,msg='';
+  var openKey='',pickOther=false,msg='',draft=null,aiBusy=false,aiAdvice='',aiOpts=[];
   function goalItems(){var out=[];try{loadGoals().forEach(function(g){(g.actions||[]).forEach(function(a){if(a&&a.text)out.push({a:a,g:g});});});}catch(e){}return out;}
   function running(){var t=S.todayTask;return !!(t&&t.startedAt&&!t.doneAt);}
   function planKey(){return running()?(S.todayTask.aid||''):'';}
@@ -5481,7 +5494,10 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     return '<div style="margin:0 0 14px 44px">'
       +'<div class="cp-lab" style="margin-top:0">What will exist when time is up?</div>'
       +'<div class="cp-why" style="margin:0 0 8px">A number and a thing. 10 messages sent. 1 offer page written. Not "working on '+E(area.toLowerCase())+'".</div>'
-      +'<textarea class="cp-ta s" id="dayWhat" placeholder="10 messages sent">'+E(prefill(key))+'</textarea>'
+      +'<textarea class="cp-ta s" id="dayWhat" placeholder="10 messages sent">'+E(draft!==null?draft:prefill(key))+'</textarea>'
+      +'<button class="cp-btn ghost lime" style="margin-top:8px" onclick="daySharpen()"'+(aiBusy?' disabled':'')+'>'+(aiBusy?'THINKING...':(aiAdvice?'ASK AGAIN':'HELP ME SHARPEN'))+'</button>'
+      +(aiAdvice?'<div class="wk-rev" style="margin:10px 0 8px">'+E(aiAdvice)+'</div>':'')
+      +aiOpts.map(function(o,i){return '<button class="wk-pick" style="margin-bottom:6px" onclick="dayUseOpt('+i+')">Use: '+E(o)+'</button>';}).join('')
       +'<div class="cp-lab">Must exist within</div>'
       +'<div class="cp-kinds"><button class="cp-kind" onclick="dayStart(30)">30 min</button><button class="cp-kind" onclick="dayStart(60)">1 hour</button><button class="cp-kind" onclick="dayStart(120)">2 hours</button><button class="cp-kind'+(pickOther?' on':'')+'" onclick="dayOther()">Other</button></div>'
       +(pickOther?'<div class="cp-pick"><input type="time" id="dayTime" value="'+defTime()+'"><button class="cp-btn" onclick="dayStartAt()">START</button></div>':'')
@@ -5518,16 +5534,30 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   window.dayX=function(i){var l=xload();if(!l[i])return;l[i].d=!l[i].d;xput(l);render();if(window.hap)hap('medium');};
   /* adding opens the time form right away: no time, no item */
   window.dayAdd=function(){var el=document.getElementById('dayNew');if(!el)return;var v=el.value.trim();if(v.length<2)return;var l=xload();l.push({t:v,d:false});xput(l);openKey=running()?'':'x'+(l.length-1);pickOther=false;msg='';render();};
-  window.dayOpen=function(k){openKey=k;pickOther=false;msg='';render();var w=document.getElementById('dayWhat');if(w){try{w.focus();}catch(e){}}};
-  window.dayClose=function(){openKey='';pickOther=false;msg='';render();};
-  window.dayOther=function(){pickOther=!pickOther;var w=document.getElementById('dayWhat');var v=w?w.value:'';render();var n=document.getElementById('dayWhat');if(n)n.value=v;};
+  window.dayOpen=function(k){openKey=k;pickOther=false;msg='';draft=null;aiAdvice='';aiOpts=[];render();var w=document.getElementById('dayWhat');if(w){try{w.focus();}catch(e){}}};
+  window.dayClose=function(){openKey='';pickOther=false;msg='';draft=null;aiAdvice='';aiOpts=[];render();};
+  window.dayOther=function(){pickOther=!pickOther;var w=document.getElementById('dayWhat');if(w)draft=w.value;render();};
+  window.dayUseOpt=function(i){draft=aiOpts[i]||'';render();if(window.hap)hap('light');};
+  window.daySharpen=async function(){
+    if(aiBusy)return;var w=document.getElementById('dayWhat');draft=w?w.value:'';aiBusy=true;msg='';render();
+    var area='',gl=[];try{loadGoals().forEach(function(g){var its=(g.actions||[]).map(function(x){return x.text;});gl.push({name:g.name,outcome:g.outcome,deadline:g.deadline,items:its});if((g.actions||[]).some(function(x){return x.id===openKey;}))area=(g.actions.filter(function(x){return x.id===openKey;})[0]||{}).text||area;});}catch(e){}
+    if(!area&&openKey.charAt(0)==='x'){var x=xload()[parseInt(openKey.slice(1))];area=x?x.t:'';}
+    try{
+      var ctl=new AbortController();var to=setTimeout(function(){ctl.abort();},15000);
+      var r=await fetch(API_BASE+'/api/sharpen',{method:'POST',headers:ladderHeaders(),signal:ctl.signal,body:JSON.stringify({area:area,draft:draft,goals:gl,hour:new Date().getHours()})});
+      clearTimeout(to);if(!r.ok)throw new Error('http '+r.status);
+      var d=await r.json();var txt=(d.content||[]).map(function(i){return i.type==='text'?i.text:'';}).join('').replace(/```json|```/g,'').trim();
+      var p=JSON.parse(txt);aiAdvice=String(p.advice||'').trim();aiOpts=(p.options||[]).filter(function(o){return typeof o==='string'&&o.trim();}).slice(0,3);
+      if(!aiAdvice&&!aiOpts.length)throw new Error('empty');
+    }catch(e){aiAdvice='You are offline or the coach is busy. A good rule: a number plus a thing you can point at, finished within your time.';aiOpts=[];}
+    aiBusy=false;render();};
   function go(by){var w=document.getElementById('dayWhat'),txt=w?w.value.trim():'';
-    if(txt.length<4||!hasNum(txt)){msg='Put a number in it. What exactly will exist? 10 messages sent, not outreach.';render();var n=document.getElementById('dayWhat');if(n)n.value=txt;return;}
+    if(txt.length<4||!hasNum(txt)){msg='Put a number in it. What exactly will exist? 10 messages sent, not outreach.';draft=txt;render();return;}
     var t=document.getElementById('todayTask'),b=document.getElementById('todayBy');if(t)t.value=txt;
     if(typeof by==='number')byIn(by);else if(b)b.value=by;
     startPlan();
     if(S.todayTask&&S.todayTask.startedAt){S.todayTask.aid=openKey;save();var V=vload();V[openKey]={w:txt,by:S.todayTask.by};vput(V);lput(openKey,txt);}
-    openKey='';pickOther=false;msg='';render();if(window.hap)hap('heavy');}
+    openKey='';pickOther=false;msg='';draft=null;aiAdvice='';aiOpts=[];render();if(window.hap)hap('heavy');}
   window.dayStart=function(min){go(min);};
   window.dayStartAt=function(){var v=(document.getElementById('dayTime')||{}).value;if(!v)return;go(v);};
   var _dp=window.donePlan;window.donePlan=function(){var t=S.todayTask,k=t&&t.aid;var r=_dp.apply(this,arguments);if(k)tickKey(k);render();return r;};
@@ -5535,6 +5565,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   setInterval(function(){if(running()&&curScreen==='s-morning'&&!openKey)render();},30000);
   window.weekRender=render;render();setTimeout(render,700);
 })();
+(function(){var _b=window.buildGoalsList;window.buildGoalsList=function(){var c=document.getElementById('goalsList'),sc=document.getElementById('s-goals'),h=c?c.offsetHeight:0,st=sc?sc.scrollTop:0;if(c&&h)c.style.minHeight=h+'px';var r=_b.apply(this,arguments);if(sc)sc.scrollTop=st;setTimeout(function(){if(c)c.style.minHeight='';},60);return r;};})();
 </script>
 <div id="ovTop"></div>
 </body>
