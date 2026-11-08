@@ -755,6 +755,31 @@ body.wp-on #wpMoreBtn{display:none!important}
 .aff-pills button:active{background:rgba(212,240,0,.12);transform:scale(.97)}
 .aff-rm{display:block;margin:10px auto 0;background:none;border:none;color:rgba(244,240,232,.4);font-family:'IBM Plex Mono',monospace;font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;padding:8px}
 
+
+/* wiring v91 */
+.wr-sub{font-family:'IBM Plex Mono',monospace;font-size:.68rem;line-height:1.7;color:rgba(244,240,232,.55);margin-bottom:18px}
+.wr-why{font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:rgba(244,240,232,.4);line-height:1.8;margin-bottom:28px}
+.wr-why summary{cursor:pointer;letter-spacing:.12em;text-transform:uppercase;padding:6px 0;color:rgba(244,240,232,.55)}
+.wr-why p{margin:6px 0 0}
+#wiringIdle{gap:10px!important;margin-bottom:14px!important}
+.wiring-dur{border-radius:16px!important;padding:18px 0!important;font-family:'Bebas Neue',sans-serif!important;font-size:1.5rem!important;letter-spacing:.06em!important;background:rgba(244,240,232,.04)!important;line-height:1}
+.wiring-dur small{display:block;font-family:'IBM Plex Mono',monospace;font-size:.5rem;letter-spacing:.16em;opacity:.6;margin-top:4px}
+.wiring-dur.on{background:rgba(212,240,0,.1)!important}
+#wiringStartBtn{border-radius:18px!important;padding:20px!important;font-size:.78rem!important;box-shadow:0 10px 24px -12px rgba(212,240,0,.55)}
+.wr-dots{display:flex;gap:8px;margin-bottom:22px}
+.wr-dots i{flex:1;height:34px;border-radius:10px;background:rgba(244,240,232,.05);border:1px solid rgba(244,240,232,.08);display:flex;align-items:center;justify-content:center;font-style:normal;font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(244,240,232,.35)}
+.wr-dots i.on{background:rgba(212,240,0,.14);border-color:rgba(212,240,0,.45);color:var(--lime)}
+#wrFocus{position:fixed;inset:0;z-index:997;background:radial-gradient(90% 60% at 50% 38%,#10140a 0%,#050505 70%);display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+#wrFocus.on{display:flex;animation:wrIn .6s ease both}
+@keyframes wrIn{from{opacity:0}to{opacity:1}}
+.wr-ringbox{position:relative;width:260px;height:260px;display:flex;align-items:center;justify-content:center}
+.wr-ringbox svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.wr-breath{position:absolute;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(212,240,0,.28),rgba(212,240,0,0) 70%);animation:wrBreath 8s ease-in-out infinite}
+@keyframes wrBreath{0%,100%{transform:scale(.7);opacity:.5}50%{transform:scale(1.25);opacity:1}}
+#wrTime{position:relative;font-family:'Bebas Neue',sans-serif;font-size:4.2rem;color:var(--white);letter-spacing:.03em}
+.wr-line{margin-top:34px;font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(244,240,232,.5);text-align:center;min-height:1.4em;transition:opacity .6s}
+.wr-give{margin-top:40px;background:none;border:1px solid rgba(244,240,232,.18);color:rgba(244,240,232,.5);border-radius:14px;font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;padding:14px 22px}
+
 /* week module v78 */
 .wk-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;margin:8px 0 6px}
 .wk-bar i{display:block;height:100%;background:var(--lime);transition:width .4s}
@@ -846,11 +871,11 @@ body.wp-on #wpMoreBtn{display:none!important}
 <div class="screen" id="s-wiring">
   <div class="inner">
     <div class="tbar" id="tW"></div>
-    <button class="bg" style="margin-bottom:14px" onclick="goTo('s-morning')">&larr; Day</button>
-    <div class="lbl" style="margin-bottom:12px">Wiring</div>
-    <div class="big-q" style="margin-bottom:24px">Sit with <em>nothing.</em></div>
+    <div class="lbl" style="margin-bottom:10px">Sit with nothing</div>
+    <div class="big-q" style="margin-bottom:10px">Stay when you want to <em>escape.</em></div>
+    <div class="wr-sub">No phone. No music. Just you and the timer. Every time you stay, one point is added to the shape below.</div>
 
-    <div id="wiringStatic" style="border:1px solid var(--dim);height:320px;position:relative;overflow:hidden;margin-bottom:14px;background:#050505;">
+    <div id="wiringStatic" style="border:1px solid var(--dim);height:240px;position:relative;overflow:hidden;margin-bottom:14px;background:#050505;border-radius:20px;">
       <div id="wiringCanvas" style="width:100%;height:100%;"></div>
       <div id="wiringEmpty" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:rgba(244,240,232,0.2);text-align:center;padding:0 30px;">Nothing built yet. Sit once, and the first point appears.</div>
     </div>
@@ -862,13 +887,14 @@ body.wp-on #wpMoreBtn{display:none!important}
       <div>NEXT THRESHOLD IN <span id="roNext" style="color:rgba(244,240,232,0.7);">n/a</span></div>
     </div>
 
+    <div class="wr-dots" id="wrDots"></div>
     <div id="wiringIdle" style="display:flex;gap:8px;margin-bottom:12px;">
-      <button class="wiring-dur on" data-min="3" onclick="setWiringDur(3,this)" style="flex:1;background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;padding:12px;cursor:pointer;">3 MIN</button>
-      <button class="wiring-dur" data-min="5" onclick="setWiringDur(5,this)" style="flex:1;background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;padding:12px;cursor:pointer;">5 MIN</button>
-      <button class="wiring-dur" data-min="10" onclick="setWiringDur(10,this)" style="flex:1;background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;padding:12px;cursor:pointer;">10 MIN</button>
+      <button class="wiring-dur on" data-min="3" onclick="setWiringDur(3,this)" style="flex:1;background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;padding:12px;cursor:pointer;">3<small>MIN</small></button>
+      <button class="wiring-dur" data-min="5" onclick="setWiringDur(5,this)" style="flex:1;background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;padding:12px;cursor:pointer;">5<small>MIN</small></button>
+      <button class="wiring-dur" data-min="10" onclick="setWiringDur(10,this)" style="flex:1;background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;padding:12px;cursor:pointer;">10<small>MIN</small></button>
     </div>
     <button id="wiringStartBtn" onclick="startWiring()" style="width:100%;background:var(--lime);border:none;color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:18px;cursor:pointer;margin-bottom:16px;">&#9654; Begin</button>
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:rgba(244,240,232,0.3);line-height:1.8;margin-bottom:32px;">Consistency requires withstanding boredom. Your mind panics without stimulus and reaches for an escape. This is where you train against that.<br><br>A walk suddenly feels urgent. A snack. A call you "need" to make. It's always a void you're trying to fill. Don't redirect it, don't fill it. No phone, no music. Sit with the silence until the timer ends.</div>
+    <details class="wr-why"><summary>Why this works</summary><p>Consistency needs you to handle boredom. Your mind reaches for an escape the moment it is quiet: a snack, a call, your phone. Do not redirect it and do not fill it. Sit until the timer ends. Each time you stay, you get better at staying.</p></details>
 
     <div id="wiringRunning" style="display:none;text-align:center;margin-bottom:32px;">
       <div id="wiringTimer" style="font-family:'Bebas Neue',sans-serif;font-size:3.2rem;color:var(--lime);letter-spacing:0.02em;">05:00</div>
@@ -876,6 +902,7 @@ body.wp-on #wpMoreBtn{display:none!important}
       <button onclick="stopWiring()" style="background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;padding:10px 20px;cursor:pointer;">stop</button>
     </div>
 
+    <div id="wrFocus"><div class="wr-ringbox"><svg viewBox="0 0 260 260" width="260" height="260"><circle cx="130" cy="130" r="120" fill="none" stroke="rgba(244,240,232,.08)" stroke-width="4"/><circle id="wrArc" cx="130" cy="130" r="120" fill="none" stroke="#D4F000" stroke-width="4" stroke-linecap="round" stroke-dasharray="754" stroke-dashoffset="0"/></svg><div class="wr-breath"></div><div id="wrTime">03:00</div></div><div class="wr-line" id="wrLine">Nothing to do. Just sit.</div><button class="wr-give" onclick="stopWiring()">I gave in</button></div>
     <div id="wiringReveal" style="display:none;position:fixed;inset:0;background:var(--black);z-index:998;flex-direction:column;align-items:center;justify-content:center;">
       <div id="wiringRevealCanvas" style="width:100%;height:65vh;"></div>
       <div id="wiringRevealMsg" style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:rgba(212,240,0,0.6);text-align:center;padding:0 30px;min-height:20px;margin-top:12px;"></div>
@@ -4600,7 +4627,7 @@ function closeLookBack(){var l=document.getElementById('lookBack');if(l)l.classL
   // 5. first use hints
   var HINTS={
     's-morning':['Your day','Tick off your deliverables. Tap Set deliverable and time, write what will exist, pick how long you have and the clock starts.'],
-    's-wiring':['Wiring','Choose 3, 5 or 10 minutes and sit with nothing. No phone. Each session builds the picture.'],
+    's-wiring':['Sit with nothing','Choose 3, 5 or 10 minutes and press Begin. Stay until the timer ends. Each time you stay adds one point to the shape.'],
     's-goals':['Goals','Each goal has deliverables. A deliverable is something that must exist, with a number. Add them here and tick them off on Day.'],
     's-mirror':['Mirror','Close the day. Look at what you did, write one line about what you learned and close the day.'],
     's-ladder':['Ladder','Your streak, your wins and your debt. Break a rule and the kilometers add up.']
@@ -5566,6 +5593,17 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   window.weekRender=render;render();setTimeout(render,700);
 })();
 (function(){var _b=window.buildGoalsList;window.buildGoalsList=function(){var c=document.getElementById('goalsList'),sc=document.getElementById('s-goals'),h=c?c.offsetHeight:0,st=sc?sc.scrollTop:0;if(c&&h)c.style.minHeight=h+'px';var r=_b.apply(this,arguments);if(sc)sc.scrollTop=st;setTimeout(function(){if(c)c.style.minHeight='';},60);return r;};})();
+
+(function(){
+  var lines=['Nothing to do. Just sit.','Let the urge pass.','You do not have to fix anything.','Stay. Even if it itches.','Breathe slowly.','This is the rep.'];
+  function dots(){var el=document.getElementById('wrDots');if(!el)return;var log=[];try{log=loadWiringLog();}catch(e){}var h='';for(var k=6;k>=0;k--){var d=new Date();d.setDate(d.getDate()-k);var a=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime(),b=a+864e5;var n=log.filter(function(x){return x.ts>=a&&x.ts<b;}).length;h+='<i class="'+(n?'on':'')+'">'+['S','M','T','W','T','F','S'][d.getDay()]+'</i>';}el.innerHTML=h;}
+  var _r=window.renderWiringStatic;window.renderWiringStatic=function(){var r=_r.apply(this,arguments);dots();return r;};
+  var _s=window.startWiring;window.startWiring=function(){_s.apply(this,arguments);var f=document.getElementById('wrFocus');if(f)f.classList.add('on');var l=document.getElementById('wrLine');if(l)l.textContent=lines[0];if(window.hap)hap('medium');};
+  var _t=window.tickWiringTimer;window.tickWiringTimer=function(){_t.apply(this,arguments);try{var tot=wiringDurMin*60,rem=Math.max(0,(wiringEndsAt-Date.now())/1000);var arc=document.getElementById('wrArc');if(arc)arc.style.strokeDashoffset=String(754*(1-rem/tot));var t=document.getElementById('wrTime'),w=document.getElementById('wiringTimer');if(t&&w)t.textContent=w.textContent;var l=document.getElementById('wrLine');var idx=Math.min(lines.length-1,Math.floor((tot-rem)/Math.max(20,tot/lines.length)));if(l&&l.textContent!==lines[idx])l.textContent=lines[idx];}catch(e){}};
+  function hide(){var f=document.getElementById('wrFocus');if(f)f.classList.remove('on');}
+  var _u=window.resetWiringIdleUI;window.resetWiringIdleUI=function(){_u.apply(this,arguments);hide();};
+  var _x=window.stopWiring;window.stopWiring=function(){_x.apply(this,arguments);hide();};
+})();
 </script>
 <div id="ovTop"></div>
 </body>
