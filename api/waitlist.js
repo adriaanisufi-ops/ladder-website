@@ -1,10 +1,21 @@
 // Waitlist signup. Stores the email in MailerLite so the list is yours from day one.
 // Vercel env vars: MAILERLITE_API_KEY (required), MAILERLITE_GROUP_ID (optional).
+const hits = new Map();
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'method_not_allowed' });
   }
+
+  // Best effort limit per IP: 8 signups per minute.
+  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+  const now = Date.now();
+  const recent = (hits.get(ip) || []).filter((t) => now - t < 60000);
+  if (recent.length >= 8) return res.status(429).json({ error: 'too_many_requests' });
+  recent.push(now);
+  hits.set(ip, recent);
+  if (hits.size > 5000) hits.clear();
 
   const body = req.body || {};
 
