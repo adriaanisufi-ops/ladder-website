@@ -4,15 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>LADDER Waitlist</title>
-<meta name="description" content="LADDER is where I keep my promises. Join the waitlist and be first in when it opens.">
+<meta name="description" content="LADDER is an app that holds you to your own word. Join the waitlist and get the day it opens.">
 <meta name="theme-color" content="#0a0a0a">
 <meta property="og:title" content="LADDER Waitlist">
 <meta property="og:description" content="Do what you said you would do. Join the waitlist.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-/* Layout: the first screen does the whole job (headline, a sphere that fills to 100, the form). Everything below is proof, in short lines. */
 :root{
   --lime:#d4f000;
   --bg:#0a0a0a;
@@ -30,170 +29,362 @@ html{background:var(--bg);scroll-behavior:smooth}
 body{
   margin:0;background:var(--bg);color:var(--ink);
   font-family:var(--sans);font-weight:300;font-size:1.1rem;line-height:1.55;
-  padding-block:calc(24px + env(safe-area-inset-top,0px)) calc(56px + env(safe-area-inset-bottom,0px));
+  padding-bottom:env(safe-area-inset-bottom,0px);overflow-x:hidden;
+}
+.wrap{
+  max-width:1080px;margin:0 auto;
   padding-left:max(20px,env(safe-area-inset-left,0px));
   padding-right:max(20px,env(safe-area-inset-right,0px));
 }
-main{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
-.hero{display:flex;flex-direction:column;gap:22px}
-.top{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
-.word{font-family:var(--display);font-size:1.6rem;letter-spacing:.06em;line-height:1}
+section{padding-block:56px}
+@media(min-width:900px){section{padding-block:80px}}
+.kick{font-family:var(--mono);font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin:0 0 14px}
+.kick b{color:var(--lime);font-weight:500}
+h1,h2,h3{font-family:var(--display);font-weight:400;text-transform:uppercase;margin:0;letter-spacing:.01em}
+h2{font-size:clamp(2.6rem,9vw,4.6rem);line-height:.92;text-wrap:balance}
+h2 em,h1 em{font-style:normal;color:var(--lime)}
+p{margin:0}
+
+/* top bar */
+.bar{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding-top:calc(22px + env(safe-area-inset-top,0px))}
+.word{font-family:var(--display);font-size:1.7rem;letter-spacing:.06em;line-height:1}
 .word span{color:var(--lime)}
 .tag{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
-h1{
-  font-family:var(--display);font-weight:400;
-  font-size:clamp(3.2rem,15vw,6.4rem);line-height:.9;letter-spacing:.005em;
-  margin:0;text-transform:uppercase;text-wrap:balance;
-}
-h1 em{font-style:normal;color:var(--lime)}
 
-.orb{position:relative;margin:0;display:flex;justify-content:center}
-.orb canvas{width:100%;max-width:300px;aspect-ratio:1/1;display:block}
-.count{
-  position:absolute;left:0;bottom:2px;display:flex;align-items:baseline;gap:8px;
-  font-family:var(--display);line-height:.8;color:var(--lime);
+/* hero */
+.hero{display:grid;gap:30px;padding-block:36px 64px;grid-template-areas:"head" "form" "orb"}
+.hhead{grid-area:head}
+.hero h1{font-size:clamp(3.4rem,16vw,8.2rem);line-height:.88;text-wrap:balance}
+.lede{margin-top:20px;max-width:34ch;font-size:1.2rem;line-height:1.5;color:var(--ink)}
+.hform{grid-area:form}
+.orb{grid-area:orb;margin:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+.orb canvas{width:100%;max-width:340px;aspect-ratio:1/1;display:block}
+.count{display:flex;align-items:baseline;gap:12px;font-family:var(--display);line-height:.8;color:var(--lime)}
+.count b{font-weight:400;font-size:5.2rem;letter-spacing:.01em;font-variant-numeric:tabular-nums;min-width:2.2ch;text-align:right}
+.count span{font-family:var(--mono);font-size:.62rem;line-height:1.5;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);max-width:16ch}
+@media(min-width:900px){
+  .hero{grid-template-columns:1.15fr .85fr;grid-template-areas:"head orb" "form orb";align-items:center;column-gap:56px;padding-block:56px 88px}
+  .orb{align-self:center}
 }
-.count b{font-weight:400;font-size:4.6rem;letter-spacing:.01em;font-variant-numeric:tabular-nums}
-.count span{font-family:var(--mono);font-size:.6rem;line-height:1.5;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);max-width:17ch}
 
-form{display:flex;flex-direction:column;gap:10px;font-size:1rem}
-label{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
+/* form */
+form.join{display:flex;flex-direction:column;gap:10px;font-size:1rem;max-width:560px}
+form.join label{font-family:var(--mono);font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
 .row{display:flex;gap:10px;flex-wrap:wrap}
 input[type=email]{
-  flex:1 1 240px;min-width:0;min-height:58px;
+  flex:1 1 240px;min-width:0;min-height:60px;
   font:400 1rem var(--mono);color:var(--ink);background:var(--card);
   border:2px solid var(--ink);border-radius:0;padding:0 16px;
 }
 input[type=email]::placeholder{color:var(--dim)}
 button,.btnlink{
-  min-height:58px;padding:0 28px;border:2px solid var(--lime);border-radius:0;
+  min-height:60px;padding:0 30px;border:2px solid var(--lime);border-radius:0;
   background:var(--lime);color:#0a0a0a;cursor:pointer;
-  font-family:var(--display);font-size:1.6rem;letter-spacing:.06em;text-transform:uppercase;
+  font-family:var(--display);font-size:1.7rem;letter-spacing:.06em;text-transform:uppercase;
   display:inline-flex;align-items:center;justify-content:center;text-decoration:none;
+  box-shadow:6px 6px 0 #3a4300;transition:transform .12s ease,box-shadow .12s ease,background .12s ease;
 }
-button:hover:not(:disabled),.btnlink:hover{background:var(--ink);border-color:var(--ink)}
+button:hover:not(:disabled),.btnlink:hover{background:var(--ink);border-color:var(--ink);transform:translate(2px,2px);box-shadow:4px 4px 0 #3a4300}
 button:disabled{opacity:.5;cursor:default}
 :focus-visible{outline:3px solid var(--lime);outline-offset:3px}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
-.status{min-height:1.4em;margin:0;font-family:var(--mono);font-size:.8rem}
+.status{min-height:1.4em;margin:0;font-family:var(--mono);font-size:.82rem}
 .status.ok{color:var(--lime)}
-.status.err{color:var(--ink)}
-.fine{margin:0;font-family:var(--mono);font-size:.66rem;letter-spacing:.04em;color:var(--dim)}
+.fine{margin:0;font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;color:var(--dim)}
 .fine a{color:var(--ink)}
 
-.story{display:flex;flex-direction:column;gap:14px;max-width:34ch;font-size:1.25rem;line-height:1.45}
-.story p{margin:0}
+/* marquee */
+.strip{background:var(--lime);color:#0a0a0a;overflow:hidden;border-block:2px solid var(--ink);white-space:nowrap}
+.strip div{display:inline-flex;animation:slide 28s linear infinite;will-change:transform}
+.strip span{font-family:var(--display);font-size:clamp(1.8rem,5vw,2.8rem);letter-spacing:.04em;padding:10px 0;line-height:1}
+.strip i{font-style:normal;display:inline-block;width:.5em;height:.5em;background:#0a0a0a;margin:0 .8em;align-self:center}
+@keyframes slide{to{transform:translateX(-50%)}}
+
+/* story */
+.story{display:flex;flex-direction:column;gap:22px;max-width:22ch;font-family:var(--display);text-transform:uppercase;font-size:clamp(2.2rem,8vw,3.8rem);line-height:1}
 .story b{font-weight:400;color:var(--lime)}
+@media(min-width:900px){.story{max-width:30ch}}
 
-h2{font-family:var(--display);font-weight:400;font-size:clamp(2.2rem,9vw,3.2rem);line-height:.95;letter-spacing:.01em;text-transform:uppercase;margin:0}
-.rules{list-style:none;margin:20px 0 0;padding:0;border-top:2px solid var(--ink)}
-.rules li{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap;padding:14px 0;border-bottom:1px solid var(--rule)}
-.rules b{font-family:var(--display);font-weight:400;font-size:1.7rem;line-height:1;letter-spacing:.03em;text-transform:uppercase;color:var(--lime);min-width:0}
-.rules span{font-size:.98rem;min-width:0}
+/* app */
+.lead{max-width:46ch;margin-top:18px;color:var(--ink)}
+.shots{display:grid;gap:36px;margin-top:44px}
+.shot{display:grid;grid-template-columns:132px 1fr;gap:20px;align-items:center}
+.phone{background:#050505;border:2px solid #3a3a3a;border-radius:30px;padding:6px;box-shadow:8px 8px 0 #1b1b1b}
+.phone img{display:block;width:100%;height:auto;border-radius:24px}
+.shot h3{font-size:2.3rem;line-height:.95;color:var(--lime);margin-bottom:8px}
+.shot p{font-size:1rem;line-height:1.5}
+.shot.mid .phone{border-color:var(--lime);box-shadow:8px 8px 0 #3a4300}
+@media(min-width:760px){
+  .shots{grid-template-columns:repeat(3,1fr);gap:40px}
+  .shot{grid-template-columns:1fr;gap:22px;align-items:start}
+  .shot .phone{max-width:270px}
+  .shot.mid{margin-top:44px}
+}
+.also{margin-top:48px;display:grid;gap:0;border-top:2px solid var(--ink)}
+.also div{display:grid;grid-template-columns:minmax(0,11rem) 1fr;gap:6px 22px;padding:16px 0;border-bottom:1px solid var(--rule);align-items:baseline}
+.also b{font-family:var(--display);font-weight:400;font-size:1.6rem;letter-spacing:.03em;text-transform:uppercase;line-height:1}
+.also span{font-size:1rem}
+@media(max-width:560px){.also div{grid-template-columns:1fr}}
 
-.ladder{
-  list-style:none;margin:20px 0 0;padding:0;
-  border-left:2px solid var(--ink);border-right:2px solid var(--ink);
-  display:flex;flex-direction:column-reverse;
+/* rules */
+.rules{list-style:none;margin:40px 0 0;padding:0;border-top:2px solid var(--ink);counter-reset:r}
+.rules li{counter-increment:r;display:grid;grid-template-columns:3.4rem 1fr;gap:6px 18px;padding:24px 0;border-bottom:1px solid var(--rule)}
+.rules li::before{content:"0" counter(r);font-family:var(--display);font-size:2.6rem;line-height:.9;color:var(--lime)}
+.rules h3{font-size:clamp(2rem,7vw,3rem);line-height:.95}
+.rules p{grid-column:2;max-width:52ch;font-size:1.02rem}
+@media(min-width:900px){
+  .rules li{grid-template-columns:5rem minmax(0,1fr) minmax(0,1.1fr);align-items:baseline}
+  .rules li::before{font-size:3.4rem}
+  .rules p{grid-column:3}
 }
-.rung{
-  position:relative;display:flex;justify-content:space-between;align-items:baseline;gap:6px 16px;flex-wrap:wrap;
-  padding:12px 18px;border-top:2px solid var(--ink);overflow:hidden;
-}
-.rung:first-child{border-bottom:2px solid var(--ink)}
-.rung::before{
-  content:"";position:absolute;inset:0;background:var(--lime);
-  transform-origin:left center;transform:scaleX(0);
-  animation:fill .5s cubic-bezier(.2,.7,.2,1) forwards;
-  animation-delay:calc(var(--i) * .22s + .2s);
-}
-.rung > *{position:relative;color:var(--ink);animation:flip .01s linear forwards;animation-delay:calc(var(--i) * .22s + .45s)}
-.rung .h{font-family:var(--display);font-size:1.7rem;line-height:1;letter-spacing:.03em;text-transform:uppercase}
-.rung .p{font-size:.95rem;min-width:0}
-@keyframes fill{to{transform:scaleX(1)}}
-@keyframes flip{to{color:#0a0a0a}}
 
-.bookbox{border-top:2px solid var(--ink);padding-top:22px;display:flex;flex-direction:column;gap:14px}
-.bookbox h2{font-size:clamp(3rem,13vw,5rem);line-height:.9;color:var(--lime)}
-.bookbox blockquote{margin:0;padding:0 0 0 18px;border-left:2px solid var(--lime);display:flex;flex-direction:column;gap:6px;font-size:1.15rem;line-height:1.4}
-.bookbox blockquote p{margin:0}
-.bookp{margin:0;max-width:44ch;font-size:1rem}
+/* day */
+.day{list-style:none;margin:40px 0 0;padding:0 0 0 34px;position:relative;counter-reset:d}
+.day::before{content:"";position:absolute;left:11px;top:6px;bottom:6px;width:2px;background:var(--rule)}
+.day li{position:relative;padding:0 0 30px;counter-increment:d}
+.day li:last-child{padding-bottom:0}
+.day li::before{content:"";position:absolute;left:-30px;top:6px;width:14px;height:14px;background:var(--bg);border:2px solid var(--lime)}
+.day li.on::before{background:var(--lime)}
+.day h3{font-size:2.2rem;line-height:1;margin-bottom:4px}
+.day p{max-width:50ch;font-size:1.02rem}
+
+@media(min-width:900px){
+  .daysec{display:grid;grid-template-columns:1fr 1fr;gap:0 72px;align-items:start}
+  .daysec .day{margin-top:8px}
+}
+
+/* fit */
+.fit{display:grid;gap:22px;margin-top:40px}
+.fit div{border:2px solid var(--ink);padding:26px 24px}
+.fit .yes{background:var(--lime);color:#0a0a0a;border-color:var(--lime)}
+.fit h3{font-size:2.4rem;line-height:1;margin-bottom:14px}
+.fit ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.fit li{padding-left:22px;position:relative;font-size:1.02rem;line-height:1.4}
+.fit li::before{content:"";position:absolute;left:0;top:.5em;width:9px;height:9px;background:currentColor}
+.fit .no li{color:var(--dim)}
+.fit .no h3{color:var(--ink)}
+@media(min-width:760px){.fit{grid-template-columns:1fr 1fr}}
+
+/* book */
+.book{display:grid;gap:36px;align-items:center}
+.cover{
+  position:relative;width:min(100%,300px);aspect-ratio:2/3;margin-inline:auto;
+  background:var(--lime);color:#0a0a0a;border:2px solid var(--ink);box-shadow:12px 12px 0 #2a3000;
+  display:flex;flex-direction:column;justify-content:space-between;padding:22px 20px;overflow:hidden;
+}
+.cover small{font-family:var(--mono);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase}
+.cover strong{font-family:var(--display);font-weight:400;font-size:clamp(3.4rem,15vw,4.8rem);line-height:.84;letter-spacing:.01em;text-transform:uppercase;word-break:break-all}
+.cover .rungs{position:absolute;right:20px;top:0;bottom:0;width:26px;border-left:2px solid #0a0a0a;border-right:2px solid #0a0a0a;
+  background:repeating-linear-gradient(to bottom,transparent 0 30px,#0a0a0a 30px 32px);opacity:.9}
+.book h2{color:var(--lime)}
+.book blockquote{margin:22px 0;padding:0 0 0 18px;border-left:2px solid var(--lime);display:grid;gap:8px;font-size:1.3rem;line-height:1.35;color:var(--ink)}
+.book blockquote p{margin:0}
+.book .copy{max-width:48ch;font-size:1.05rem;display:grid;gap:14px}
+.book .btnlink{margin-top:26px}
 .btnlink[hidden]{display:none}
-.again{align-self:flex-start}
+@media(min-width:860px){.book{grid-template-columns:.8fr 1.2fr;gap:72px}}
+
+/* end */
+.end{border-top:2px solid var(--ink);text-align:left}
+.end h2{font-size:clamp(3.4rem,14vw,8rem);line-height:.88;margin-bottom:32px}
+footer{padding:28px 0 40px;border-top:1px solid var(--rule);font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;color:var(--dim);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+footer a{color:var(--ink)}
+
+/* reveal */
+.js .rv{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
+.js .rv.in{opacity:1;transform:none}
 
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
-  .rung::before{animation:none;transform:scaleX(1)}
-  .rung > *{animation:none;color:#0a0a0a}
+  .strip div{animation:none}
+  .js .rv{opacity:1;transform:none;transition:none}
+  button,.btnlink{transition:none}
 }
 </style>
+<script>document.documentElement.className+=' js';</script>
 </head>
 <body>
-<main>
-  <div class="hero">
-    <div class="top">
-      <div class="word">LAD<span>DER</span></div>
-      <div class="tag">Daily discipline app</div>
+
+<div class="wrap">
+  <div class="bar">
+    <div class="word">LAD<span>DER</span></div>
+    <div class="tag">Daily discipline app</div>
+  </div>
+
+  <header class="hero">
+    <div class="hhead">
+      <h1>Do what you <em>said</em> you would do.</h1>
+      <p class="lede">LADDER is an app that holds you to your own word. You set a goal with a number and a date. Every day you do the work or you do not. It keeps score. It does not lie to you.</p>
     </div>
 
-    <h1>Do what you <em>said</em> you would do.</h1>
+    <form class="join hform" novalidate>
+      <label for="email1">Get the day it opens. Your email</label>
+      <div class="row">
+        <input id="email1" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@email.com" required>
+        <button type="submit">Join the waitlist</button>
+      </div>
+      <div class="hp" aria-hidden="true"><label for="website1">Leave this empty</label><input id="website1" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+      <p class="status" role="status" aria-live="polite"></p>
+      <p class="fine">The app is not finished. One email the day it opens. Nothing else. See the <a href="/privacy.html">privacy page</a>.</p>
+    </form>
 
     <figure class="orb">
       <canvas id="orb" aria-label="A sphere of 100 lime points that fills up one point at a time"></canvas>
       <div class="count" aria-hidden="true"><b id="count">100</b><span>Points. One every time you stay.</span></div>
     </figure>
+  </header>
+</div>
 
-    <form id="join" novalidate>
-      <label for="email">Be first in. Your email</label>
-      <div class="row">
-        <input id="email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@email.com" required>
-        <button id="go" type="submit">Join the waitlist</button>
-      </div>
-      <div class="hp" aria-hidden="true"><label for="website">Leave this empty</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
-      <p id="status" class="status" role="status" aria-live="polite"></p>
-      <p class="fine">One email the day the app opens. Nothing else. See the <a href="/privacy.html">privacy page</a>.</p>
-    </form>
+<div class="strip" aria-hidden="true">
+  <div>
+    <span>Do what you said you would do</span><i></i><span>Do what you said you would do</span><i></i><span>Do what you said you would do</span><i></i><span>Do what you said you would do</span><i></i>
+    <span>Do what you said you would do</span><i></i><span>Do what you said you would do</span><i></i><span>Do what you said you would do</span><i></i><span>Do what you said you would do</span><i></i>
   </div>
+</div>
 
-  <div class="story">
-    <p>I grew up thinking I was unlucky with the cards I was dealt. That was a ridiculous take.</p>
-    <p>Time feels fast. Not because it moves fast. <b>Because my expectations outran my actions.</b></p>
-    <p>So today, I do one thing. Kept. That is the whole promise. <b>LADDER is where I keep it.</b></p>
-  </div>
+<main class="wrap">
 
-  <section aria-labelledby="rulesh">
-    <h2 id="rulesh">Four rules</h2>
-    <ul class="rules">
-      <li><b>Say it with a number.</b><span>A goal without a number is a mood.</span></li>
-      <li><b>Break your word. Pay.</b><span>Your own rules, a real cost.</span></li>
-      <li><b>Stay.</b><span>One tap when you want to leave.</span></li>
-      <li><b>Nobody is watching.</b><span>No account. Your phone only.</span></li>
-    </ul>
+  <section class="rv">
+    <p class="kick"><b>01</b> / Why it exists</p>
+    <div class="story">
+      <p>I grew up thinking I was unlucky with the cards I was dealt. That was a ridiculous take.</p>
+      <p>Time feels fast. Not because it moves fast. <b>Because my expectations outran my actions.</b></p>
+      <p>So today, I do one thing. Kept. That is the whole promise. <b>LADDER is where I keep it.</b></p>
+    </div>
   </section>
 
-  <section aria-labelledby="loopt">
-    <h2 id="loopt">One loop. Every day.</h2>
-    <ol class="ladder" aria-label="The daily loop">
-      <li class="rung" style="--i:0"><span class="h">Morning</span><span class="p">Say your line. Choose what you do today.</span></li>
-      <li class="rung" style="--i:1"><span class="h">Goals</span><span class="p">A date, and deliverables with a number.</span></li>
-      <li class="rung" style="--i:2"><span class="h">Stillness</span><span class="p">A few minutes, no phone.</span></li>
-      <li class="rung" style="--i:3"><span class="h">Evening</span><span class="p">Close the day. One thing it taught you.</span></li>
-      <li class="rung" style="--i:4"><span class="h">Score</span><span class="p">Your streak. It does not lie.</span></li>
+  <section aria-labelledby="apph">
+    <div class="rv">
+      <p class="kick"><b>02</b> / The app</p>
+      <h2 id="apph">What you <em>get</em>.</h2>
+      <p class="lead">Four screens. A day, your goals, an evening check, and your score. Real screens from the app below.</p>
+    </div>
+    <div class="shots">
+      <article class="shot rv">
+        <div class="phone"><img src="img/app-day.webp" width="780" height="1520" alt="The Day screen of LADDER with one deliverable, a time, and a countdown" loading="lazy"></div>
+        <div>
+          <h3>Day</h3>
+          <p>Pick what must exist today. Give it a time. A countdown runs. It exists by then or it does not.</p>
+        </div>
+      </article>
+      <article class="shot mid rv">
+        <div class="phone"><img src="img/app-goals.webp" width="780" height="1520" alt="The Goals screen of LADDER with a goal, a date and deliverables" loading="lazy"></div>
+        <div>
+          <h3>Goals</h3>
+          <p>A goal with a number and a date. The deliverables that get you there. Not a wish list.</p>
+        </div>
+      </article>
+      <article class="shot rv">
+        <div class="phone"><img src="img/app-ladder.webp" width="780" height="1520" alt="The Ladder screen of LADDER with streak, wins, km debt and days left" loading="lazy"></div>
+        <div>
+          <h3>Ladder</h3>
+          <p>Your streak, your wins, your debt, and the days left to your goal. The count does not round up.</p>
+        </div>
+      </article>
+    </div>
+
+    <div class="also rv">
+      <div><b>I feel it</b><span>One button for the moment you want to quit, scroll, or chase the result. It walks you through the urge in under a minute.</span></div>
+      <div><b>Sit with nothing</b><span>A few minutes, no phone. Every sit you finish adds a point to your shape.</span></div>
+      <div><b>Evening mirror</b><span>Close the day. What you did. One thing it taught you.</span></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="rulesh">
+    <div class="rv">
+      <p class="kick"><b>03</b> / The rules</p>
+      <h2 id="rulesh">Four rules. <em>No exceptions.</em></h2>
+    </div>
+    <ol class="rules">
+      <li class="rv"><h3>Say it with a number</h3><p>A goal without a number is a mood. Get fit is not a goal. Run 10 km by 20 December is.</p></li>
+      <li class="rv"><h3>Break your word. Pay.</h3><p>You write your own rules and what breaking them costs. Skip the run and you owe the km.</p></li>
+      <li class="rv"><h3>Stay</h3><p>When you want to leave, you tap once and stay. That is the skill. Everything else is admin.</p></li>
+      <li class="rv"><h3>Nobody is watching</h3><p>No account. No feed. No one to impress. Your data stays on your phone.</p></li>
     </ol>
   </section>
 
-  <section class="bookbox" aria-labelledby="bookh">
-    <div class="tag">Before the app, the book</div>
-    <h2 id="bookh">Relentless</h2>
-    <blockquote>
-      <p>I was blinded by my ego.</p>
-      <p>I do not want to get ahead. I want to move forward.</p>
-    </blockquote>
-    <p class="bookp">LADDER came out of it. Read the book, or start with the app. It is the same promise.</p>
-    <a id="booklink" class="btnlink" href="#" target="_blank" rel="noopener" hidden>Read Relentless</a>
+  <section class="daysec" aria-labelledby="dayh">
+    <div class="rv">
+      <p class="kick"><b>04</b> / One day</p>
+      <h2 id="dayh">The same loop. <em>Every day.</em></h2>
+    </div>
+    <ol class="day">
+      <li class="rv"><h3>Morning</h3><p>Say your line. Choose what you do today. Set a deliverable and a time.</p></li>
+      <li class="rv"><h3>Work</h3><p>Do the deliverable. The clock is on your screen the whole time.</p></li>
+      <li class="rv"><h3>Stillness</h3><p>A few minutes with nothing. No phone. You stay, you earn a point.</p></li>
+      <li class="rv"><h3>Evening</h3><p>Close the day. What you did, what you did not, one thing it taught you.</p></li>
+      <li class="rv on"><h3>Score</h3><p>Your streak goes up or it does not. You read the number. You start again tomorrow, same standard.</p></li>
+    </ol>
   </section>
 
-  <a class="btnlink again" href="#email">Join the waitlist</a>
+  <section aria-labelledby="fith">
+    <div class="rv">
+      <p class="kick"><b>05</b> / Who it is for</p>
+      <h2 id="fith">Be honest. <em>Is this you?</em></h2>
+    </div>
+    <div class="fit">
+      <div class="yes rv">
+        <h3>It is for you if</h3>
+        <ul>
+          <li>You say you will, and then you do not.</li>
+          <li>Your goals have no date and no number.</li>
+          <li>You scroll when you should be working.</li>
+          <li>You want a standard, not a cheerleader.</li>
+        </ul>
+      </div>
+      <div class="no rv">
+        <h3>It is not for you if</h3>
+        <ul>
+          <li>You want motivation quotes.</li>
+          <li>You want it to be easy.</li>
+          <li>You want followers and a feed.</li>
+          <li>You want to hide from the numbers.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="book" aria-labelledby="bookh">
+    <div class="cover rv" aria-hidden="true">
+      <small>The book</small>
+      <span class="rungs"></span>
+      <strong>Relent<br>less</strong>
+    </div>
+    <div class="rv">
+      <p class="kick"><b>06</b> / Before the app, the book</p>
+      <h2 id="bookh">Relentless</h2>
+      <blockquote>
+        <p>I was blinded by my ego.</p>
+        <p>I do not want to get ahead. I want to move forward.</p>
+      </blockquote>
+      <div class="copy">
+        <p>LADDER came out of this book. The book is the story. The app is the daily practice. It is the same promise.</p>
+        <p>Read the book, or start with the app.</p>
+      </div>
+      <a id="booklink" class="btnlink" href="#" target="_blank" rel="noopener" hidden>Read Relentless</a>
+    </div>
+  </section>
+
+  <section class="end" aria-labelledby="endh">
+    <div class="rv">
+      <h2 id="endh">Today, do <em>one thing.</em></h2>
+      <form class="join" novalidate>
+        <label for="email2">Get the day LADDER opens. Your email</label>
+        <div class="row">
+          <input id="email2" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@email.com" required>
+          <button type="submit">Join the waitlist</button>
+        </div>
+        <div class="hp" aria-hidden="true"><label for="website2">Leave this empty</label><input id="website2" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+        <p class="status" role="status" aria-live="polite"></p>
+        <p class="fine">One email the day the app opens. Nothing else.</p>
+      </form>
+    </div>
+  </section>
+
+  <footer>
+    <span>LADDER. Do what you said you would do.</span>
+    <a href="/privacy.html">Privacy</a>
+  </footer>
 </main>
 
 <script>
@@ -217,7 +408,7 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(2.2rem,9vw,3.2rem)
   }
   function draw(count,ang){
     ctx.clearRect(0,0,W,H);
-    var R=Math.min(W,H)*.40,cx=W/2,cy=H/2,ca=Math.cos(ang),sa=Math.sin(ang),tilt=.35,ct=Math.cos(tilt),st=Math.sin(tilt);
+    var R=Math.min(W,H)*.42,cx=W/2,cy=H/2,ca=Math.cos(ang),sa=Math.sin(ang),tilt=.35,ct=Math.cos(tilt),st=Math.sin(tilt);
     var proj=[],k;
     for(k=0;k<count;k++){
       var p=pts[k];
@@ -261,42 +452,54 @@ h2{font-family:var(--display);font-weight:400;font-size:clamp(2.2rem,9vw,3.2rem)
 </script>
 <script>
 (function(){
-  var form=document.getElementById('join');
-  var email=document.getElementById('email');
-  var hp=document.getElementById('website');
-  var go=document.getElementById('go');
-  var status=document.getElementById('status');
-
-  function say(msg,kind){status.textContent=msg;status.className='status'+(kind?' '+kind:'');}
-
-  form.addEventListener('submit',function(ev){
-    ev.preventDefault();
-    var value=email.value.trim();
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)){
-      say('That email does not look right. Check it and try again.','err');
-      email.focus();
-      return;
-    }
-    go.disabled=true;
-    say('Saving...','');
-    fetch('/api/waitlist',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({email:value,website:hp.value})
-    }).then(function(r){
-      return r.json().catch(function(){return {};}).then(function(j){return {ok:r.ok,body:j};});
-    }).then(function(res){
-      if(res.ok){
-        say('You are on the list. Today, do one thing.','ok');
-        email.value='';
-      }else if(res.body&&res.body.error==='invalid_email'){
+  var els=document.querySelectorAll('.rv');
+  if(!('IntersectionObserver' in window)){for(var i=0;i<els.length;i++)els[i].classList.add('in');return;}
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+  },{threshold:.12,rootMargin:'0px 0px -6% 0px'});
+  for(var i=0;i<els.length;i++)io.observe(els[i]);
+  // safety: never leave content hidden
+  setTimeout(function(){for(var i=0;i<els.length;i++)els[i].classList.add('in');},6000);
+})();
+</script>
+<script>
+(function(){
+  var forms=document.querySelectorAll('form.join');
+  Array.prototype.forEach.call(forms,function(form){
+    var email=form.querySelector('input[type=email]');
+    var hp=form.querySelector('input[name=website]');
+    var go=form.querySelector('button');
+    var status=form.querySelector('.status');
+    function say(msg,kind){status.textContent=msg;status.className='status'+(kind?' '+kind:'');}
+    form.addEventListener('submit',function(ev){
+      ev.preventDefault();
+      var value=email.value.trim();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)){
         say('That email does not look right. Check it and try again.','err');
-      }else{
-        say('Could not save your email. Try again in a minute.','err');
+        email.focus();
+        return;
       }
-    }).catch(function(){
-      say('No connection. Try again.','err');
-    }).then(function(){go.disabled=false;});
+      go.disabled=true;
+      say('Saving...','');
+      fetch('/api/waitlist',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:value,website:hp.value})
+      }).then(function(r){
+        return r.json().catch(function(){return {};}).then(function(j){return {ok:r.ok,body:j};});
+      }).then(function(res){
+        if(res.ok){
+          say('You are on the list. Today, do one thing.','ok');
+          email.value='';
+        }else if(res.body&&res.body.error==='invalid_email'){
+          say('That email does not look right. Check it and try again.','err');
+        }else{
+          say('Could not save your email. Try again in a minute.','err');
+        }
+      }).catch(function(){
+        say('No connection. Try again.','err');
+      }).then(function(){go.disabled=false;});
+    });
   });
 })();
 </script>
