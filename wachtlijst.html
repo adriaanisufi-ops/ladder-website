@@ -96,6 +96,12 @@ button:disabled{opacity:.5;cursor:default}
 .status.err{color:var(--ink)}
 .fine{margin:0;font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;color:var(--dim)}
 .fine a{color:var(--ink)}
+.diff h2,.loop{font-family:var(--display);font-weight:400;font-size:clamp(2.2rem,9vw,3.2rem);line-height:.95;letter-spacing:.01em;text-transform:uppercase;margin:0}
+.diff ul{list-style:none;margin:20px 0 0;padding:0;border-top:2px solid var(--ink)}
+.diff li{display:grid;gap:4px;padding:16px 0;border-bottom:1px solid var(--rule)}
+.diff li b{font-family:var(--display);font-weight:400;font-size:1.7rem;line-height:1;letter-spacing:.03em;text-transform:uppercase;color:var(--lime)}
+.diff li span{font-size:1rem;max-width:46ch}
+.loop{margin-bottom:-20px}
 .orb{margin:0;display:flex;flex-direction:column;gap:10px;align-items:center}
 .orb canvas{width:100%;max-width:420px;aspect-ratio:1/1;display:block}
 .orb figcaption{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);text-align:center}
@@ -114,13 +120,27 @@ button:disabled{opacity:.5;cursor:default}
 
   <h1>Do what you <em>said</em> you would do.</h1>
 
+  <p class="lede">Time feels fast. Not because it moves fast. <b>Because your expectations outran your actions.</b> You do not need more motivation. You need a score you cannot argue with.</p>
+
   <figure class="orb">
     <canvas id="orb" aria-label="A sphere of 100 lime points that fills up one point at a time"></canvas>
     <figcaption>100 points. One every time you stay.</figcaption>
   </figure>
 
-  <p class="lede">Every day you either do what you said, or you do not. LADDER keeps the score. <b>Morning, work, evening.</b> When you want to quit, one button walks you through the urge. No account, no cloud, only your phone. Leave your email and you are first in when it opens.</p>
+  
 
+
+  <section class="diff" aria-labelledby="diffh">
+    <h2 id="diffh">Not another habit tracker</h2>
+    <ul>
+      <li><b>Deliverables, not wishes.</b><span>Every goal has to name what will exist, with a number and a time. "Work out more" does not fit.</span></li>
+      <li><b>A price for breaking your word.</b><span>Set rules you cannot break. Break one and you owe kilometers. The debt stays in red until you pay it.</span></li>
+      <li><b>A button for the moment you want to quit.</b><span>One tap on I feel it walks you through the urge in under a minute. Scrolling, quitting, chasing the result.</span></li>
+      <li><b>No account. No cloud.</b><span>Your tasks and reflections stay on your phone. Nobody else can read them, and neither can I.</span></li>
+    </ul>
+  </section>
+
+  <h2 class="loop">One loop. Five screens.</h2>
   <ol class="ladder" aria-label="The daily loop">
     <li class="rung" style="--i:0"><span class="k">Rung 1</span><span class="h">Day</span><span class="p">Say your line out loud. Five minutes to complain, then stop. Write what will exist today, set a time and press start.</span></li>
     <li class="rung" style="--i:1"><span class="k">Rung 2</span><span class="h">Goals</span><span class="p">An outcome with a date. Deliverables with a number. If it cannot be counted, it does not count.</span></li>
@@ -130,14 +150,14 @@ button:disabled{opacity:.5;cursor:default}
   </ol>
 
   <form id="join" novalidate>
-    <label for="email">Your email</label>
+    <label for="email">Be first in. Your email</label>
     <div class="row">
       <input id="email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@email.com" required>
       <button id="go" type="submit">Join the waitlist</button>
     </div>
     <div class="hp" aria-hidden="true"><label for="website">Leave this empty</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
     <p id="status" class="status" role="status" aria-live="polite"></p>
-    <p class="fine">One email when the app is ready. Nothing else. See the <a href="/privacy.html">privacy page</a>.</p>
+    <p class="fine">You get one email the day the app opens, and you can try it before anyone else. Nothing before that, nothing else after. See the <a href="/privacy.html">privacy page</a>.</p>
   </form>
 </main>
 
