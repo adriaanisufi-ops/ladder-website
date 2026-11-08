@@ -5394,24 +5394,26 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   function put(o){try{localStorage.setItem(key(),JSON.stringify(o));}catch(e){}}
   function putAt(d,o){try{localStorage.setItem(key(d),JSON.stringify(o));}catch(e){}}
   var E=function(t){return (window.esc?window.esc(t):String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}));};
-  var sel=[],edit=false,msg='',lineEdit=false,cache=[];
+  var sel=[],edit=false,msg='',lineEdit=false,cache=[],own={};
   function lab(a){return window.actLabel?window.actLabel(a):a.text;}
   function goalActs(){var out=[];try{loadGoals().forEach(function(g){(g.actions||[]).forEach(function(a){if(a&&a.text&&!out.some(function(o){return o.t===lab(a);}))out.push({t:lab(a),a:a});});});}catch(e){}return out;}
   function actOf(x){var g=goalActs().filter(function(o){return x.aid?o.a.id===x.aid:o.t===x.t;})[0];return g&&g.a;}
   function isDone(x){if(x.d)return true;try{var a=actOf(x);return !!(a&&isActionDone(a));}catch(e){return false;}}
-  function target(x){var a=actOf(x);return (a&&a.type==='count'&&a.target)?a:null;}
-  function setFlag(a,v){try{if(!S.goalActions)S.goalActions={};if(!S.goalActions[TODAY])S.goalActions[TODAY]={};S.goalActions[TODAY][a.id]=v;save();}catch(e){}}
+  function target(x){if(x.tgt)return {id:null,text:x.what||x.t,target:x.tgt,unit:''};var a=actOf(x);return (a&&a.type==='count'&&a.target)?a:null;}
+  function setFlag(a,v){if(!a||!a.id)return;try{if(!S.goalActions)S.goalActions={};if(!S.goalActions[TODAY])S.goalActions[TODAY]={};S.goalActions[TODAY][a.id]=v;save();}catch(e){}}
   function weekLines(){var out=[];for(var i=1;i<=7;i++){var d=new Date();d.setDate(d.getDate()-i);var o=load(d);if(o){if(o.line)out.push(o.line);(o.miss||[]).forEach(function(m){if(m.why)out.push(m.t+': '+m.why);});}}return out;}
   function missed(){var y=new Date();y.setDate(y.getDate()-1);var o=load(y);if(!o||!o.items)return null;var done=o.miss||[];for(var i=0;i<o.items.length;i++){var x=o.items[i];if(!x.d&&!done.some(function(m){return m.t===x.t;}))return {d:y,o:o,x:x};}return null;}
   function pickHtml(){
     var ga=goalActs(),extra=sel.filter(function(t){return !ga.some(function(o){return o.t===t;});});
     var all=ga.map(function(o){return o.t;}).concat(extra);cache=all;
+    var chosen=sel.map(function(t){var i=all.indexOf(t);return '<button class="wk-pick" style="background:var(--lime);color:#000;border:1px solid var(--lime)" onclick="dayPick('+i+')">&#10003; '+E(t)+'</button>';}).join('');
+    var rest=all.map(function(t,i){return sel.indexOf(t)>=0?'':'<button class="wk-pick" onclick="dayPick('+i+')">+ '+E(t)+'</button>';}).join('');
     return '<div class="cp-card run"><div class="cp-top"><span class="cp-k">Today</span></div>'
       +'<div class="cp-q">What must exist today?</div>'
-      +'<div class="cp-why">Pick 1 to 3 finished things. A rough pick is fine. Not sure? Pick the one you are avoiding.</div>'
-      +all.map(function(t,i){var on=sel.indexOf(t)>=0;return '<button class="wk-pick" style="'+(on?'background:var(--lime);color:#000;border:1px solid var(--lime)':'')+'" onclick="dayPick('+i+')">'+(on?'&#10003; ':'+ ')+E(t)+'</button>';}).join('')
-      +(all.length?'':'<div class="cp-why">You have no goal tasks yet. Type what must exist today.</div>')
-      +'<div class="wk-add" style="margin-top:8px"><input class="wk-in" id="dayNew" placeholder="Something else" onkeydown="if(event.key===\'Enter\')dayAdd()"><button class="cp-btn" onclick="dayAdd()">ADD</button></div>'
+      +'<div class="cp-why">Say how many of what. A number is what makes it measurable, so you can check it tonight. A rough number is fine. Pick 1 to 3.</div>'
+      +chosen
+      +'<div class="wk-add"><input class="wk-in" id="dayNum" type="number" inputmode="numeric" placeholder="How many" style="width:112px;flex:none"><input class="wk-in" id="dayNew" placeholder="of what? e.g. outreach messages sent" onkeydown="if(event.key===\'Enter\')dayAdd()"></div><button class="cp-btn ghost" onclick="dayAdd()">ADD</button>'
+      +(rest?'<div class="cp-lab">Or pick from your goals</div>'+rest:'')
       +'<div class="cp-err" id="dayErr">'+E(msg)+'</div><button class="cp-btn" onclick="dayGo()">THIS IS TODAY</button></div>';
   }
   function missHtml(m){
@@ -5419,7 +5421,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   }
   function render(){
     var d=load(),mm=missed(),pre=mm?missHtml(mm):'';
-    if(!d||!d.items||!d.items.length||edit){if(edit&&d&&!sel.length)sel=d.items.map(function(x){return x.t;});host.innerHTML=pre+pickHtml();return;}
+    if(!d||!d.items||!d.items.length||edit){if(edit&&d&&!sel.length)sel=d.items.map(function(x){if(x.tgt)own[x.t]={tgt:x.tgt,what:x.what};return x.t;});host.innerHTML=pre+pickHtml();return;}
     var items=d.items,ch=false;
     items.forEach(function(x){if(!x.d&&isDone(x)){x.d=true;ch=true;}});if(ch)put(d);
     var dn=items.filter(function(x){return x.d;}).length,all=dn===items.length;
@@ -5438,8 +5440,8 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     host.innerHTML=h+'</div>';
   }
   window.dayPick=function(i){var t=cache[i];if(t==null)return;var k=sel.indexOf(t);msg='';if(k>=0)sel.splice(k,1);else if(sel.length<3)sel.push(t);else msg='Three is the maximum. Remove one first.';render();if(window.hap)hap('light');};
-  window.dayAdd=function(){var el=document.getElementById('dayNew');if(!el)return;var v=el.value.trim();if(v.length<2)return;if(sel.length>=3){msg='Three is the maximum. Remove one first.';render();return;}if(sel.indexOf(v)<0)sel.push(v);msg='';render();};
-  window.dayGo=function(){if(!sel.length){msg='Pick at least one. A rough pick is fine.';render();return;}var old=load();var ga=goalActs();var items=sel.map(function(t){var o=old&&old.items&&old.items.filter(function(x){return x.t===t;})[0];if(o)return o;var g=ga.filter(function(z){return z.t===t;})[0];return {t:t,d:false,aid:g?g.a.id:null,n:0};});var o=old||{};o.items=items;put(o);sel=[];edit=false;msg='';render();if(window.hap)hap('heavy');};
+  window.dayAdd=function(){var el=document.getElementById('dayNew'),ne=document.getElementById('dayNum');if(!el)return;var v=el.value.trim(),n=parseInt(ne&&ne.value)||0;if(v.length<2){msg='Write what must exist.';render();return;}if(n<1){msg='Add a number. How many? That is what makes it measurable.';render();return;}if(sel.length>=3){msg='Three is the maximum. Remove one first.';render();return;}var t=n+' '+v;if(sel.indexOf(t)<0){sel.push(t);own[t]={tgt:n,what:v};}msg='';render();};
+  window.dayGo=function(){if(!sel.length){msg='Pick at least one. A rough pick is fine.';render();return;}var old=load();var ga=goalActs();var items=sel.map(function(t){var o=old&&old.items&&old.items.filter(function(x){return x.t===t;})[0];if(o)return o;var w=own[t];if(w)return {t:t,d:false,tgt:w.tgt,what:w.what,n:0};var g=ga.filter(function(z){return z.t===t;})[0];return {t:t,d:false,aid:g?g.a.id:null,n:0};});var o=old||{};o.items=items;put(o);sel=[];edit=false;msg='';render();if(window.hap)hap('heavy');};
   window.dayEdit=function(){edit=true;sel=[];msg='';render();};
   window.dayTick=function(i){var d=load();if(!d)return;var x=d.items[i];x.d=!x.d;var a=actOf(x);if(a)setFlag(a,x.d);put(d);render();if(window.hap)hap('medium');};
   window.dayCnt=function(i,dl){var d=load();if(!d)return;var x=d.items[i],a=target(x);if(!a)return;x.n=Math.max(0,(x.n||0)+dl);if(x.n>=a.target){x.d=true;setFlag(a,true);if(window.hap)hap('heavy');}else if(window.hap)hap('light');put(d);render();};
