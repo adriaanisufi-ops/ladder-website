@@ -791,6 +791,26 @@ body.wp-on #wpMoreBtn{display:none!important}
 .sh-link{display:block;margin-top:14px;font-family:'IBM Plex Sans',sans-serif;font-size:.9rem;color:var(--lime);text-decoration:underline}
 .bk-b{display:inline-block;border:1px solid var(--lime);color:var(--lime);border-radius:14px;padding:12px 18px;font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;text-decoration:none}
 
+
+/* buddy v95 */
+#buddyCard{margin-bottom:12px}
+.bd-code{font-family:'Bebas Neue',sans-serif;font-size:2.4rem;letter-spacing:.14em;color:var(--lime);margin:4px 0 10px}
+.bd-in{width:100%;box-sizing:border-box;background:rgba(244,240,232,.05);border:1px solid rgba(244,240,232,.14);border-radius:12px;padding:13px;color:#fff;font-family:'IBM Plex Sans',sans-serif;font-size:1rem;margin-bottom:8px}
+.bd-row{display:flex;gap:8px;margin-bottom:10px}
+.bd-row .bd-in{margin:0;flex:1;text-transform:uppercase}
+.bd-btn{background:var(--lime);color:#000;border:none;border-radius:12px;padding:13px 16px;font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+.bd-btn.g{background:transparent;color:var(--lime);border:1px solid var(--lime)}
+.bd-btn.s{padding:9px 12px}
+.bd-btn.q{background:none;color:rgba(244,240,232,.45);border:1px solid rgba(244,240,232,.15)}
+.bd-p{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid rgba(244,240,232,.08)}
+.bd-p b{display:block;font-family:'IBM Plex Sans',sans-serif;font-size:1.05rem;color:#fff;font-weight:500}
+.bd-p span{display:block;font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:rgba(244,240,232,.5);margin-top:3px}
+.bd-p div.bd-main{flex:1}
+.bd-sn{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--lime);line-height:1;text-align:center}
+.bd-sn small{display:block;font-family:'IBM Plex Mono',monospace;font-size:.45rem;letter-spacing:.14em;color:rgba(244,240,232,.4)}
+.bd-nudge{border:1px solid var(--lime);background:rgba(212,240,0,.1);border-radius:14px;padding:14px 16px;margin-bottom:16px;font-family:'IBM Plex Sans',sans-serif;color:#fff;font-size:1rem}
+.bd-nudge button{display:block;margin-top:10px}
+
 /* week module v78 */
 .wk-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;margin:8px 0 6px}
 .wk-bar i{display:block;height:100%;background:var(--lime);transition:width .4s}
@@ -828,6 +848,7 @@ body.wp-on #wpMoreBtn{display:none!important}
     <div class="big-q" id="mGreet">Good morning.<br>Are you <em>ready?</em></div>
     <div class="ybar" id="yBar">Loading...</div>
 
+    <div id="buddyNudge" class="bd-nudge" style="display:none"></div>
     <div id="wkHost" style="margin-bottom:26px"></div>
     <div id="planRun" style="display:none;border-left:2px solid var(--lime);padding:4px 0 4px 14px;">
       <button id="wpMoreBtn" class="cp-more" onclick="wpMenu()">More</button>
@@ -1021,6 +1042,8 @@ body.wp-on #wpMoreBtn{display:none!important}
     <div class="brow"><button class="bg" onclick="openLookBack()">Open look back</button></div>
 
     <div class="sdiv"></div>
+    <div id="buddyCard" class="bk-card"></div>
+
     <div id="coachCard" class="bk-card cc-card" style="display:none">
       <div class="lbl" style="margin-bottom:8px">Coaching</div>
       <div class="bk-t">Want someone to keep you honest?</div>
@@ -5681,6 +5704,66 @@ var COACH_URL='';
   };
   function book(){var c=document.getElementById('bookCard'),a=document.getElementById('bookLink');if(c&&a){if(BOOK_URL){a.href=BOOK_URL;c.style.display='block';}else c.style.display='none';}var cc=document.getElementById('coachCard'),ca=document.getElementById('coachLink'),c2=document.getElementById('coachLink2');if(cc&&ca){if(COACH_URL){ca.href=COACH_URL;cc.style.display='block';}else cc.style.display='none';}if(c2){if(COACH_URL){c2.href=COACH_URL;c2.style.display='block';}else c2.style.display='none';}}
   var _g=window.goTo;window.goTo=function(id){var r=_g.apply(this,arguments);if(id==='s-ladder'||id==='s-mirror')book();return r;};book();
+})();
+
+/* ===== accountability partner v95 ===== */
+(function(){
+  var KEY='ladder_buddy',AL='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  function pad(n){return (n<10?'0':'')+n;}
+  function dk(){var d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+  function jget(k,f){try{var v=JSON.parse(localStorage.getItem(k)||'');return v==null?f:v;}catch(e){return f;}}
+  function st(){return jget(KEY,{on:false,name:'',code:'',partners:[]});}
+  function put(o){try{localStorage.setItem(KEY,JSON.stringify(o));}catch(e){}}
+  function E(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function newCode(){var a=new Uint8Array(8),c='';(window.crypto||{getRandomValues:function(x){for(var i=0;i<x.length;i++)x[i]=Math.random()*256;}}).getRandomValues(a);for(var i=0;i<8;i++)c+=AL[a[i]%AL.length];return c;}
+  function post(body){return fetch(API_BASE+'/api/buddy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){return {ok:r.ok,status:r.status,j:j};});});}
+  function counts(){var V=jget('ladder_dlv_'+dk(),{}),d=0,t=0;
+    try{loadGoals().forEach(function(g){(g.actions||[]).forEach(function(a){if(!a||!a.text)return;t++;try{if(isActionDone(a))d++;}catch(e){}});});}catch(e){}
+    jget('ladder_extra_'+dk(),[]).forEach(function(x){t++;if(x.d)d++;});
+    return {done:d,total:t};}
+  var cache={},busy='',msg='',lastPub=0;
+  async function publish(force){var s=st();if(!s.on||!s.code)return;if(!force&&Date.now()-lastPub<10000)return;lastPub=Date.now();
+    var c=counts(),sk=(document.getElementById('stStreak')||{}).textContent||'0';
+    try{var r=await post({action:'publish',code:s.code,name:s.name,streak:parseInt(sk,10)||0,done:c.done,total:c.total,day:dk()});
+      if(r.ok&&r.j.nudges>0)showNudge(r.j.nudgeFrom,r.j.nudges);}catch(e){}}
+  function showNudge(from,n){var el=document.getElementById('buddyNudge');if(!el)return;el.style.display='block';el.innerHTML=E(from||'Your partner')+' nudged you'+(n>1?' ('+n+' times)':'')+'. Time to do your deliverables.<button class="bd-btn s g" onclick="buddyAck()">Got it</button>';if(window.hap)hap('heavy');}
+  window.buddyAck=async function(){var s=st(),el=document.getElementById('buddyNudge');if(el)el.style.display='none';try{await post({action:'ack',code:s.code});}catch(e){}};
+  async function refresh(){var s=st();if(!s.on)return;await Promise.all((s.partners||[]).map(async function(p){try{var r=await post({action:'view',code:p.code});cache[p.code]=r.ok?r.j:{gone:true};}catch(e){}}));draw();}
+  function ago(ts){if(!ts)return '';var m=Math.round((Date.now()-ts)/60000);if(m<2)return 'just now';if(m<60)return m+' min ago';var h=Math.round(m/60);if(h<24)return h+' h ago';return Math.round(h/24)+' d ago';}
+  function draw(){var el=document.getElementById('buddyCard');if(!el)return;var s=st(),h='';
+    h+='<div class="lbl" style="margin-bottom:8px">Accountability partner</div>';
+    if(!s.on){
+      h+='<div class="bk-t">Let a friend see your streak.</div><div class="bk-s">Pick a name and get a code. Give the code to someone. They see your streak and how many of today\'s deliverables you finished, and you see theirs. Nothing else is shared.</div>';
+      h+='<input class="bd-in" id="bdName" maxlength="24" placeholder="Your first name" value="'+E(s.name)+'"><button class="bd-btn" onclick="buddyOn()">Turn on</button>';
+      if(msg)h+='<div class="bk-s" style="margin:10px 0 0;color:var(--red)">'+E(msg)+'</div>';
+    }else{
+      h+='<div class="bk-s" style="margin-bottom:0">Your code. Give it to your partner.</div><div class="bd-code">'+E(s.code)+'</div>';
+      h+='<div class="bd-row"><button class="bd-btn g" onclick="buddyInvite()">Send invite</button></div>';
+      h+='<div class="bd-row"><input class="bd-in" id="bdAdd" maxlength="8" placeholder="Partner code" autocapitalize="characters"><button class="bd-btn" onclick="buddyAdd()">Add</button></div>';
+      if(msg)h+='<div class="bk-s" style="color:var(--red)">'+E(msg)+'</div>';
+      (s.partners||[]).forEach(function(p){var c=cache[p.code];
+        if(!c){h+='<div class="bd-p"><div class="bd-main"><b>'+E(p.code)+'</b><span>Loading</span></div></div>';return;}
+        if(c.gone){h+='<div class="bd-p"><div class="bd-main"><b>'+E(p.name||p.code)+'</b><span>Not sharing right now</span></div><button class="bd-btn s q" onclick="buddyDrop(\''+p.code+'\')">Remove</button></div>';return;}
+        var today=c.day===dk();
+        h+='<div class="bd-p"><div class="bd-sn">'+(c.streak||0)+'<small>STREAK</small></div><div class="bd-main"><b>'+E(c.name)+'</b><span>'+(today?('Today '+c.done+' of '+c.total):'Nothing yet today')+'. '+E(ago(c.ts))+'</span></div><button class="bd-btn s g" onclick="buddyNudge(\''+p.code+'\')">Nudge</button></div>';});
+      h+='<div style="margin-top:14px"><button class="bd-btn s q" onclick="buddyOff()">'+(window.__bdArm?'Tap again to stop sharing':'Stop sharing')+'</button></div>';
+    }
+    el.innerHTML=h;}
+  window.buddyOn=async function(){var n=((document.getElementById('bdName')||{}).value||'').trim();if(n.length<1){msg='Fill in your first name.';draw();return;}msg='';var s=st();s.on=true;s.name=n;if(!s.code)s.code=newCode();if(!s.partners)s.partners=[];put(s);draw();await publish(true);refresh();if(window.hap)hap('success');};
+  window.buddyInvite=async function(){var s=st(),t='Join me on LADDER. We keep each other honest. Add my code: '+s.code;try{if(navigator.share){await navigator.share({text:t});return;}}catch(e){if(e&&e.name==='AbortError')return;}try{await navigator.clipboard.writeText(t);msg='';var b=document.querySelector('#buddyCard .bd-btn.g');if(b){b.textContent='Copied';setTimeout(draw,1800);}}catch(e){}};
+  window.buddyAdd=async function(){var s=st(),c=((document.getElementById('bdAdd')||{}).value||'').trim().toUpperCase();
+    if(c===s.code){msg='That is your own code.';draw();return;}
+    if((s.partners||[]).some(function(p){return p.code===c;})){msg='Already added.';draw();return;}
+    try{var r=await post({action:'view',code:c});if(!r.ok){msg='No one found with that code. Check it and try again.';draw();return;}
+      s.partners.push({code:c,name:r.j.name});put(s);cache[c]=r.j;msg='';draw();if(window.hap)hap('success');}catch(e){msg='Could not connect. Try again.';draw();}};
+  window.buddyDrop=function(c){var s=st();s.partners=(s.partners||[]).filter(function(p){return p.code!==c;});put(s);draw();};
+  window.buddyNudge=async function(c){var s=st();try{await post({action:'nudge',code:c,from:s.name});if(window.hap)hap('success');msg='Nudge sent.';draw();setTimeout(function(){msg='';draw();},2000);}catch(e){msg='Could not send.';draw();}};
+  window.buddyOff=async function(){if(!window.__bdArm){window.__bdArm=true;draw();setTimeout(function(){window.__bdArm=false;draw();},3000);return;}window.__bdArm=false;var s=st();try{await post({action:'remove',code:s.code});}catch(e){}put({on:false,name:s.name,code:'',partners:[]});cache={};draw();};
+  var _g=window.goTo;window.goTo=function(id){var r=_g.apply(this,arguments);if(id==='s-ladder'){draw();refresh();}if(id==='s-ladder'||id==='s-morning'||id==='s-mirror')publish(false);return r;};
+  ['dayTick','dayX'].forEach(function(n){var f=window[n];if(f)window[n]=function(){var r=f.apply(this,arguments);setTimeout(function(){publish(true);},400);return r;};});
+  var _d=window.donePlan;if(_d)window.donePlan=function(){var r=_d.apply(this,arguments);setTimeout(function(){publish(true);},400);return r;};
+  setInterval(function(){if(document.visibilityState==='visible')publish(false);},120000);
+  draw();setTimeout(function(){publish(true);},2500);
 })();
 </script>
 <div id="ovTop"></div>
