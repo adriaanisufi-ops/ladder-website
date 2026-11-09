@@ -786,6 +786,9 @@ body.wp-on #wpMoreBtn{display:none!important}
 .bk-card{border:1px solid rgba(244,240,232,.12);border-radius:18px;padding:18px;background:rgba(244,240,232,.03);margin-bottom:6px}
 .bk-t{font-family:'IBM Plex Sans',sans-serif;font-size:1.15rem;color:#fff;margin-bottom:6px}
 .bk-s{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:rgba(244,240,232,.5);line-height:1.7;margin-bottom:14px}
+.cc-card{border-color:rgba(212,240,0,.35);background:rgba(212,240,0,.05)}
+.cc-b{background:var(--lime);color:#000!important}
+.sh-link{display:block;margin-top:14px;font-family:'IBM Plex Sans',sans-serif;font-size:.9rem;color:var(--lime);text-decoration:underline}
 .bk-b{display:inline-block;border:1px solid var(--lime);color:var(--lime);border-radius:14px;padding:12px 18px;font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;text-decoration:none}
 
 /* week module v78 */
@@ -1018,6 +1021,13 @@ body.wp-on #wpMoreBtn{display:none!important}
     <div class="brow"><button class="bg" onclick="openLookBack()">Open look back</button></div>
 
     <div class="sdiv"></div>
+    <div id="coachCard" class="bk-card cc-card" style="display:none">
+      <div class="lbl" style="margin-bottom:8px">Coaching</div>
+      <div class="bk-t">Want someone to keep you honest?</div>
+      <div class="bk-s">Book a coaching call with a real person, or get an accountability partner who checks in on your day. You choose what you need.</div>
+      <a class="bk-b cc-b" id="coachLink" href="#" target="_blank" rel="noopener">Book a call</a>
+    </div>
+
     <div id="bookCard" class="bk-card" style="display:none">
       <div class="lbl" style="margin-bottom:8px">The book behind LADDER</div>
       <div class="bk-t">Want the full story behind this system?</div>
@@ -1078,6 +1088,7 @@ body.wp-on #wpMoreBtn{display:none!important}
         <div class="big-q" style="margin-bottom:22px">What you<br><em>did</em> today.</div>
         <div id="mSummary"></div>
         <button class="sh-btn" id="shareDayBtn" onclick="shareMyDay()">Share my day</button>
+        <a class="sh-link" id="coachLink2" href="#" target="_blank" rel="noopener" style="display:none">Want someone to go through your day with you? Book a call</a>
         <div class="sh-sub">Sends a short message with what you did today. Send it to your coach or a friend who keeps you honest.</div>
       </div>
 
@@ -5644,6 +5655,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
 
 /* ===== share my day + book link v93 ===== */
 var BOOK_URL='';
+var COACH_URL='';
 (function(){
   function pad(n){return (n<10?'0':'')+n;}
   function dk(){var d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
@@ -5667,8 +5679,8 @@ var BOOK_URL='';
     try{if(navigator.share){await navigator.share({text:text});if(window.hap)hap('success');return;}}catch(e){if(e&&e.name==='AbortError')return;}
     try{await navigator.clipboard.writeText(text);if(b){var o=b.textContent;b.textContent='Copied. Paste it in a message.';setTimeout(function(){b.textContent=o;},2500);}}catch(e){prompt('Copy this message',text);}
   };
-  function book(){var c=document.getElementById('bookCard'),a=document.getElementById('bookLink');if(!c||!a)return;if(BOOK_URL){a.href=BOOK_URL;c.style.display='block';}else c.style.display='none';}
-  var _g=window.goTo;window.goTo=function(id){var r=_g.apply(this,arguments);if(id==='s-ladder')book();return r;};book();
+  function book(){var c=document.getElementById('bookCard'),a=document.getElementById('bookLink');if(c&&a){if(BOOK_URL){a.href=BOOK_URL;c.style.display='block';}else c.style.display='none';}var cc=document.getElementById('coachCard'),ca=document.getElementById('coachLink'),c2=document.getElementById('coachLink2');if(cc&&ca){if(COACH_URL){ca.href=COACH_URL;cc.style.display='block';}else cc.style.display='none';}if(c2){if(COACH_URL){c2.href=COACH_URL;c2.style.display='block';}else c2.style.display='none';}}
+  var _g=window.goTo;window.goTo=function(id){var r=_g.apply(this,arguments);if(id==='s-ladder'||id==='s-mirror')book();return r;};book();
 })();
 </script>
 <div id="ovTop"></div>
