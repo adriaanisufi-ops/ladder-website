@@ -826,6 +826,28 @@ body.wp-on #wpMoreBtn{display:none!important}
 .sh-go{width:100%;background:var(--lime);color:#000;border:none;border-radius:14px;padding:16px;font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;cursor:pointer}
 .ss-cancel{width:100%;background:none;border:none;color:rgba(244,240,232,.5);padding:14px;font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
 
+
+/* panels and tiles v98 */
+.pg{display:none}
+#pnl .pg{display:block}
+.tiles{margin:6px 0 22px;border-radius:18px;overflow:hidden;border:1px solid rgba(244,240,232,.1);background:rgba(244,240,232,.03)}
+.tl{display:flex;align-items:center;gap:12px;width:100%;box-sizing:border-box;text-align:left;background:none;border:none;border-bottom:1px solid rgba(244,240,232,.08);padding:16px 16px;color:#fff;cursor:pointer;min-height:64px}
+.tl:last-child{border-bottom:none}
+.tl:active{background:rgba(212,240,0,.08)}
+.tl-m{flex:1;min-width:0}
+.tl-t{display:block;font-family:'IBM Plex Sans',sans-serif;font-size:1.08rem;font-weight:500;color:#fff}
+.tl-s{display:block;font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.04em;color:rgba(244,240,232,.5);margin-top:4px;line-height:1.5}
+.tl-s.ok{color:var(--lime)}
+.tl-c{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:rgba(244,240,232,.35);line-height:1}
+.tiles-h{font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(244,240,232,.45);margin:6px 0 10px}
+#pnl{position:fixed;inset:0;z-index:650;background:#080808;display:none;flex-direction:column}
+#pnl.on{display:flex;animation:pnlIn .28s ease both}
+@keyframes pnlIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+.pnl-top{display:flex;align-items:center;gap:14px;padding:calc(54px + env(safe-area-inset-top)) 18px 14px;border-bottom:1px solid rgba(244,240,232,.08)}
+.pnl-top button{background:none;border:1px solid rgba(244,240,232,.18);color:#fff;border-radius:12px;padding:10px 14px;font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+.pnl-top span{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:.03em;color:#fff}
+.pnl-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:22px 20px calc(40px + env(safe-area-inset-bottom))}
+
 /* week module v78 */
 .wk-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;margin:8px 0 6px}
 .wk-bar i{display:block;height:100%;background:var(--lime);transition:width .4s}
@@ -878,11 +900,13 @@ body.wp-on #wpMoreBtn{display:none!important}
     </div>
     <div style="height:22px"></div>
 
-    <div class="lbl" style="margin-bottom:10px">Today I am</div>
-    <div class="idstmt" id="idStmt">Someone who does<br>what he <span class="acc">says.</span></div>
-
-    <div class="aff" data-set="am"></div>
-    <div id="complainCard"></div>
+    <div id="dayTiles" class="tiles"></div>
+    <div class="pg" id="pg-words" data-title="Your words">
+      <div class="lbl" style="margin-bottom:10px">Today I am</div>
+      <div class="idstmt" id="idStmt">Someone who does<br>what he <span class="acc">says.</span></div>
+      <div class="aff" data-set="am"></div>
+    </div>
+    <div class="pg" id="pg-complain" data-title="Complain and think"><div id="complainCard"></div></div>
 
     <div id="oldWord">
     <div class="lbl" style="margin-bottom:8px">What do you need to do today to go home satisfied?
@@ -911,7 +935,7 @@ body.wp-on #wpMoreBtn{display:none!important}
       <button class="bp" onclick="goTo('s-goals')">Go to your goals &rarr;</button>
       <button class="bg" onclick="goTo('s-ladder')">Ladder</button>
     </div>
-    <button class="bg" style="width:100%;margin-top:10px" onclick="goTo('s-wiring')">Sit with nothing</button>
+    <button class="bg" id="oldSitBtn" style="display:none;width:100%;margin-top:10px" onclick="goTo('s-wiring')">Sit with nothing</button>
   </div>
 </div>
 
@@ -1000,12 +1024,14 @@ body.wp-on #wpMoreBtn{display:none!important}
         <button class="cundo" onclick="clearTodayMark()">undo</button>
       </div>
     </div>
-    <div class="sdiv"></div>
+    <div class="pg" id="pg-rules" data-title="Unbreakable rules">
     <div class="lbl" style="margin-bottom:8px">Unbreakable rules
       <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('tr1')">i</span><div class="tip-box" id="tr1">Your own rules. You set them, you hold them. Tap a rule to cycle: neutral → held → broke. Breaking a rule adds its consequence in km to your debt.<br><br>Examples:<br>• No porn. No masturbation. (10km)<br>• No social media until goal actions done (10km)<br>• No bed until the day is closed (5km)</div></span>
     </div>
     <div id="rulesList"></div>
     <button onclick="openAddRule()" style="background:none;border:1px solid var(--dim);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;padding:12px 20px;cursor:pointer;margin-top:10px;width:100%;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--lime)';this.style.color='var(--lime)'" onmouseout="this.style.borderColor='var(--dim)';this.style.color='var(--muted)'">+ Add rule</button>
+
+    </div>
 
     <!-- RULE MODAL -->
     <div id="ruleModal" style="display:none;position:fixed;inset:0;background:rgba(8,8,8,0.97);z-index:999;overflow-y:auto;padding:40px 28px;">
@@ -1029,7 +1055,7 @@ body.wp-on #wpMoreBtn{display:none!important}
       </div>
     </div>
 
-    <div class="sdiv"></div>
+    <div class="pg" id="pg-pen" data-title="Penalties">
     <div class="lbl" style="margin-bottom:14px">Penalties</div>
     <div class="pen-card">
       <div class="pen-row"><div class="pen-t">Skip the morning routine</div><div class="pen-v">+5 km</div></div>
@@ -1047,18 +1073,14 @@ body.wp-on #wpMoreBtn{display:none!important}
       </div>
       <div class="debt-add"><button onclick="addKm(5)">+ 5 km</button><button onclick="addKm(10)">+ 10 km</button><span>add a penalty</span></div>
     </div>
-    <div class="sdiv"></div>
+    </div>
+    <div class="pg" id="pg-rew" data-title="Rewards">
     <div class="lbl" style="margin-bottom:16px">Rewards: earned not given</div>
     <div id="rewardsList"></div>
 
-    <div class="sdiv"></div>
-    <div class="lbl" style="margin-bottom:12px">Look back</div>
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--muted);line-height:1.7;margin-bottom:12px;">Every lesson you kept, connected into a web. Patterns and the weekly count live here.</div>
-    <div class="brow"><button class="bg" onclick="openLookBack()">Open look back</button></div>
-
-    <div class="sdiv"></div>
-    <details class="ex-more"><summary>Partner, coaching and book</summary>
-    <div id="buddyCard" class="bk-card"></div>
+    </div>
+    <div class="pg" id="pg-partner" data-title="Accountability partner"><div id="buddyCard" class="bk-card"></div></div>
+    <div class="pg" id="pg-coach" data-title="Coaching">
 
     <div id="coachCard" class="bk-card cc-card" style="display:none">
       <div class="lbl" style="margin-bottom:8px">Coaching</div>
@@ -1067,15 +1089,15 @@ body.wp-on #wpMoreBtn{display:none!important}
       <a class="bk-b cc-b" id="coachLink" href="#" onclick="return openCoach(event)">Book a call</a>
     </div>
 
-    <div id="bookCard" class="bk-card" style="display:none">
+    </div>
+    <div class="pg" id="pg-book" data-title="The book"><div id="bookCard" class="bk-card" style="display:none">
       <div class="lbl" style="margin-bottom:8px">The book behind LADDER</div>
       <div class="bk-t">Want the full story behind this system?</div>
       <div class="bk-s">LADDER comes from the book. It explains why the rules work and what to do when you want to quit.</div>
       <a class="bk-b" id="bookLink" href="#" target="_blank" rel="noopener">Get the book</a>
-    </div>
-    </details>
+    </div></div>
 
-    <div class="sdiv"></div>
+    <div class="pg" id="pg-data" data-title="Your data">
     <div class="lbl" style="margin-bottom:12px">Your data</div>
   <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--muted);line-height:1.7;margin-bottom:12px;">Everything lives on this phone. Back it up so you never lose your streak.</div>
   <div id="backupAge" style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--lime);margin-bottom:12px;"></div>
@@ -1096,6 +1118,9 @@ body.wp-on #wpMoreBtn{display:none!important}
       <button class="bg" onclick="clearReminder()">Off</button>
     </div>
   </div>
+
+    </div>
+    <div id="ladTiles" class="tiles"></div>
 
     <div style="margin-top:40px;padding-top:20px;border-top:1px solid var(--dim2);">
       <button onclick="goToBoot()" style="background:none;border:none;font-family:'IBM Plex Mono',monospace,system-ui;font-size:0.55rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(244,240,232,0.15);cursor:pointer;padding:14px 4px;transition:color 0.2s;" onmouseover="this.style.color='rgba(244,240,232,0.4)'" onmouseout="this.style.color='rgba(244,240,232,0.15)'">&#8592; back to start</button>
@@ -4670,10 +4695,9 @@ function closeLookBack(){var l=document.getElementById('lookBack');if(l)l.classL
   function monday(){var d=new Date();d.setHours(0,0,0,0);var w=(d.getDay()+6)%7;d.setDate(d.getDate()-w);return d;}
   window.weekNoteSave=function(v){try{localStorage.setItem('ladder_week_'+monday().toDateString(),v);}catch(e){}};
   function weekRender(){
-    var host=document.querySelector('#s-ladder .pen-card');if(!host)return;
-    var lbl=host.previousElementSibling,div=lbl&&lbl.previousElementSibling;
+    var anchor=document.getElementById('ladTiles');if(!anchor)return;
     var card=document.getElementById('weekCard');
-    if(!card){card=document.createElement('div');card.id='weekCard';div.parentNode.insertBefore(card,div);}
+    if(!card){card=document.createElement('div');card.id='weekCard';anchor.parentNode.insertBefore(card,anchor);}
     var m=monday(),hist=S.history||[],log=affLogGet(),days=['M','T','W','T','F','S','S'],dots='',wins=0,closed=0,aff=0,todayIdx=(new Date().getDay()+6)%7;
     for(var i=0;i<7;i++){
       var d=new Date(m);d.setDate(m.getDate()+i);var k=d.toDateString();
@@ -5787,7 +5811,50 @@ var COACH_URL='';
   setInterval(function(){if(document.visibilityState==='visible')publish(false);},120000);
   draw();setTimeout(function(){publish(true);},2500);
 })();
+
+/* ===== panels and tiles v98 ===== */
+(function(){
+  var cur=null,ph=null;
+  function jget(k,f){try{var v=JSON.parse(localStorage.getItem(k)||'');return v==null?f:v;}catch(e){return f;}}
+  window.openPanel=function(id){var g=document.getElementById(id);if(!g||cur)return;cur=g;ph=document.createComment('pg');g.parentNode.insertBefore(ph,g);
+    document.getElementById('pnlT').textContent=g.getAttribute('data-title')||'';document.getElementById('pnlB').appendChild(g);
+    var p=document.getElementById('pnl');p.classList.add('on');document.getElementById('pnlB').scrollTop=0;
+    try{if(id==='pg-words'&&window.affRender)affRender();}catch(e){}
+    if(window.hap)hap('light');};
+  window.closePanel=function(){var p=document.getElementById('pnl');if(p)p.classList.remove('on');if(cur&&ph&&ph.parentNode){ph.parentNode.insertBefore(cur,ph);ph.parentNode.removeChild(ph);}cur=null;ph=null;tiles();if(window.hap)hap('light');};
+  function T(title,sub,fn,ok){return '<button class="tl" onclick="'+fn+'"><span class="tl-m"><span class="tl-t">'+title+'</span><span class="tl-s'+(ok?' ok':'')+'">'+sub+'</span></span><span class="tl-c">&rsaquo;</span></button>';}
+  function tiles(){
+    var d=document.getElementById('dayTiles');
+    if(d){var said=0;try{said=affToday().length;}catch(e){}
+      var cs={s:'idle'};try{cs=complainState();}catch(e){}var w=jget('ladder_wp_'+TODAY,null);
+      var cSub='5 minutes to say it all, then three questions',cOk=false;
+      if(cs.s==='run'){cSub='Window is open';}else if(cs.s==='closed'&&!w){cSub='Next: the three questions';}else if(cs.s==='closed'&&w){cSub='Done today';cOk=true;}
+      var sw=0;try{sw=loadWiringLog().length;}catch(e){}
+      d.innerHTML=T('Your words',said>=3?'Said '+said+' times today':'Say it out loud. '+said+' of 3 today',"openPanel('pg-words')",said>=3)
+        +T('Complain and think',cSub,"openPanel('pg-complain')",cOk)
+        +T('Sit with nothing','3, 5 or 10 minutes. '+sw+(sw===1?' session so far':' sessions so far'),"goTo('s-wiring')",false);}
+    var l=document.getElementById('ladTiles');
+    if(l){var nr=0;try{nr=loadRules().length;}catch(e){}
+      var km=(document.getElementById('stKm')||{}).textContent||'0km';var b=jget('ladder_buddy',{on:false,partners:[]});
+      var h='<div class="tiles-h" style="padding:0">More</div>';
+      h='<div class="tiles">'+T('Unbreakable rules',nr+(nr===1?' rule':' rules')+'. Hold them or run.',"openPanel('pg-rules')")
+        +T('Penalties','Km debt: '+km,"openPanel('pg-pen')")
+        +T('Rewards','Earned, not given',"openPanel('pg-rew')")
+        +T('Look back','Your lessons and patterns',"openLookBack()")
+        +T('Accountability partner',b.on?((b.partners||[]).length+(((b.partners||[]).length===1)?' partner':' partners')):'Let a friend see your streak',"openPanel('pg-partner')",!!b.on)
+        +(window.COACH_URL?T('Coaching call','Talk to a real person',"openPanel('pg-coach')"):'')
+        +(window.BOOK_URL?T('The book','Where LADDER comes from',"openPanel('pg-book')"):'')
+        +T('Your data','Back up, restore, reminder',"openPanel('pg-data')")+'</div>';
+      l.outerHTML='<div id="ladTiles">'+h+'</div>';}
+  }
+  window.refreshTiles=tiles;
+  var _g=window.goTo;window.goTo=function(id){if(cur&&id!==undefined)closePanelQuiet();var r=_g.apply(this,arguments);if(id==='s-morning'||id==='s-ladder')setTimeout(tiles,60);return r;};
+  function closePanelQuiet(){var p=document.getElementById('pnl');if(p)p.classList.remove('on');if(cur&&ph&&ph.parentNode){ph.parentNode.insertBefore(cur,ph);ph.parentNode.removeChild(ph);}cur=null;ph=null;}
+  setInterval(function(){if(!cur)tiles();},20000);
+  tiles();setTimeout(tiles,800);
+})();
 </script>
+<div id="pnl"><div class="pnl-top"><button onclick="closePanel()">&lsaquo; Back</button><span id="pnlT"></span></div><div class="pnl-body" id="pnlB"></div></div>
 <div id="sendSheet" class="ss-wrap"><div class="ss-card"><div class="lbl" id="ssTitle" style="margin-bottom:8px"></div><div class="ss-note" id="ssNote"></div><textarea class="ss-ta" id="ssText"></textarea><button class="sh-go" id="ssGo"></button><button class="ss-cancel" onclick="closeSheet()">Cancel</button></div></div>
 <div id="ovTop"></div>
 </body>
