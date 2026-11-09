@@ -830,10 +830,13 @@ body.wp-on #wpMoreBtn{display:none!important}
 /* panels and tiles v98 */
 .pg{display:none}
 #pnl .pg{display:block}
-.tiles{margin:6px 0 22px;border-radius:18px;overflow:hidden;border:1px solid rgba(244,240,232,.1);background:rgba(244,240,232,.03)}
-.tl{display:flex;align-items:center;gap:12px;width:100%;box-sizing:border-box;text-align:left;background:none;border:none;border-bottom:1px solid rgba(244,240,232,.08);padding:16px 16px;color:#fff;cursor:pointer;min-height:64px}
-.tl:last-child{border-bottom:none}
-.tl:active{background:rgba(212,240,0,.08)}
+.tiles{margin:6px 0 22px}
+.tl{display:flex;align-items:center;gap:14px;width:100%;box-sizing:border-box;text-align:left;background:linear-gradient(160deg,rgba(244,240,232,.06),rgba(244,240,232,.02));border:1px solid rgba(244,240,232,.1);border-radius:18px;margin-bottom:10px;padding:14px 16px;color:#fff;cursor:pointer;min-height:72px;transition:transform .15s,border-color .2s}
+.tl:active{transform:scale(.98);border-color:rgba(212,240,0,.5);background:rgba(212,240,0,.08)}
+.tl-i{flex:0 0 44px;width:44px;height:44px;border-radius:14px;background:rgba(212,240,0,.1);border:1px solid rgba(212,240,0,.25);display:flex;align-items:center;justify-content:center;color:var(--lime)}
+.tl-i svg{width:22px;height:22px}
+.tl.hot{border-color:rgba(212,240,0,.4);background:linear-gradient(160deg,rgba(212,240,0,.12),rgba(212,240,0,.03))}
+.tl-badge{font-family:'IBM Plex Mono',monospace;font-size:.5rem;letter-spacing:.14em;text-transform:uppercase;color:#000;background:var(--lime);border-radius:8px;padding:4px 7px;margin-right:2px}
 .tl-m{flex:1;min-width:0}
 .tl-t{display:block;font-family:'IBM Plex Sans',sans-serif;font-size:1.08rem;font-weight:500;color:#fff}
 .tl-s{display:block;font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.04em;color:rgba(244,240,232,.5);margin-top:4px;line-height:1.5}
@@ -845,7 +848,7 @@ body.wp-on #wpMoreBtn{display:none!important}
 @keyframes pnlIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
 .pnl-top{display:flex;align-items:center;gap:14px;padding:calc(54px + env(safe-area-inset-top)) 18px 14px;border-bottom:1px solid rgba(244,240,232,.08)}
 .pnl-top button{background:none;border:1px solid rgba(244,240,232,.18);color:#fff;border-radius:12px;padding:10px 14px;font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
-.pnl-top span{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:.03em;color:#fff}
+.pnl-top span{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:.03em;color:#fff}
 .pnl-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:22px 20px calc(40px + env(safe-area-inset-bottom))}
 
 /* week module v78 */
@@ -1087,6 +1090,7 @@ body.wp-on #wpMoreBtn{display:none!important}
       <div class="bk-t">Want someone to keep you honest?</div>
       <div class="bk-s">Book a coaching call with a real person, or get an accountability partner who checks in on your day. You choose what you need.</div>
       <a class="bk-b cc-b" id="coachLink" href="#" onclick="return openCoach(event)">Book a call</a>
+      <div class="bk-s" id="coachSoon" style="display:none;margin:0">Coaching calls open soon. When they do, you book a time here.</div>
     </div>
 
     </div>
@@ -5748,7 +5752,7 @@ var COACH_URL='';
     });};
   window.openCoach=function(ev){if(ev&&ev.preventDefault)ev.preventDefault();if(!COACH_URL)return false;
     openSheet('Book a coaching call','A coaching call is a real conversation with a person, in a booking page outside the app. You pick a time there. The app sends nothing: not your streak, not your goals, not your answers.',null,'Open the booking page',function(){closeSheet();window.open(COACH_URL,'_blank');});return false;};
-  function book(){var c=document.getElementById('bookCard'),a=document.getElementById('bookLink');if(c&&a){if(BOOK_URL){a.href=BOOK_URL;c.style.display='block';}else c.style.display='none';}var cc=document.getElementById('coachCard'),ca=document.getElementById('coachLink'),c2=document.getElementById('coachLink2');if(cc&&ca){if(COACH_URL){ca.href='#';cc.style.display='block';}else cc.style.display='none';}if(c2){if(COACH_URL){c2.href='#';c2.style.display='block';}else c2.style.display='none';}}
+  function book(){var c=document.getElementById('bookCard'),a=document.getElementById('bookLink');if(c&&a){if(BOOK_URL){a.href=BOOK_URL;c.style.display='block';}else c.style.display='none';}var cc=document.getElementById('coachCard'),ca=document.getElementById('coachLink'),c2=document.getElementById('coachLink2'),cs=document.getElementById('coachSoon');if(cc&&ca){cc.style.display='block';ca.style.display=COACH_URL?'inline-block':'none';if(cs)cs.style.display=COACH_URL?'none':'block';}if(c2){if(COACH_URL){c2.href='#';c2.style.display='block';}else c2.style.display='none';}}
   var _g=window.goTo;window.goTo=function(id){var r=_g.apply(this,arguments);if(id==='s-ladder'||id==='s-mirror')book();return r;};book();
 })();
 
@@ -5822,7 +5826,20 @@ var COACH_URL='';
     try{if(id==='pg-words'&&window.affRender)affRender();}catch(e){}
     if(window.hap)hap('light');};
   window.closePanel=function(){var p=document.getElementById('pnl');if(p)p.classList.remove('on');if(cur&&ph&&ph.parentNode){ph.parentNode.insertBefore(cur,ph);ph.parentNode.removeChild(ph);}cur=null;ph=null;tiles();if(window.hap)hap('light');};
-  function T(title,sub,fn,ok){return '<button class="tl" onclick="'+fn+'"><span class="tl-m"><span class="tl-t">'+title+'</span><span class="tl-s'+(ok?' ok':'')+'">'+sub+'</span></span><span class="tl-c">&rsaquo;</span></button>';}
+  var IC={
+    words:'<path d="M7 7h4v4c0 3-1 5-4 6M15 7h4v4c0 3-1 5-4 6"/>',
+    complain:'<path d="M4 5h16v11H9l-5 4z"/>',
+    sit:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',
+    rules:'<path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+    pen:'<path d="M13 3c0 4 4 5 4 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 2-9z"/>',
+    rew:'<path d="M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.4 6.8 19.2l1-5.9L3.5 9.2l5.9-.8z"/>',
+    look:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+    buddy:'<circle cx="9" cy="9" r="3"/><circle cx="17" cy="10" r="2.4"/><path d="M3 19c0-3.2 2.7-5 6-5s6 1.8 6 5M15 15c3 0 6 1.4 6 4"/>',
+    coach:'<path d="M4 4h12v9H9l-3 3v-3H4z"/><path d="M20 9v8h-2v3l-3-3h-5v-2"/>',
+    book:'<path d="M4 4h11a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3z"/><path d="M8 8h6"/>',
+    data:'<path d="M12 4v10M8 10l4 4 4-4"/><path d="M5 18h14"/>'
+  };
+  function T(title,sub,fn,ok,ic,badge,hot){return '<button class="tl'+(hot?' hot':'')+'" onclick="'+fn+'"><span class="tl-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(IC[ic]||'')+'</svg></span><span class="tl-m"><span class="tl-t">'+title+'</span><span class="tl-s'+(ok?' ok':'')+'">'+sub+'</span></span>'+(badge?'<span class="tl-badge">'+badge+'</span>':'')+'<span class="tl-c">&rsaquo;</span></button>';}
   function tiles(){
     var d=document.getElementById('dayTiles');
     if(d){var said=0;try{said=affToday().length;}catch(e){}
@@ -5830,21 +5847,21 @@ var COACH_URL='';
       var cSub='5 minutes to say it all, then three questions',cOk=false;
       if(cs.s==='run'){cSub='Window is open';}else if(cs.s==='closed'&&!w){cSub='Next: the three questions';}else if(cs.s==='closed'&&w){cSub='Done today';cOk=true;}
       var sw=0;try{sw=loadWiringLog().length;}catch(e){}
-      d.innerHTML=T('Your words',said>=3?'Said '+said+' times today':'Say it out loud. '+said+' of 3 today',"openPanel('pg-words')",said>=3)
-        +T('Complain and think',cSub,"openPanel('pg-complain')",cOk)
-        +T('Sit with nothing','3, 5 or 10 minutes. '+sw+(sw===1?' session so far':' sessions so far'),"goTo('s-wiring')",false);}
+      d.innerHTML=T('Your words',said>=3?'Said '+said+' times today':'Say it out loud. '+said+' of 3 today',"openPanel('pg-words')",said>=3,'words')
+        +T('Complain and think',cSub,"openPanel('pg-complain')",cOk,'complain')
+        +T('Sit with nothing','3, 5 or 10 minutes. '+sw+(sw===1?' session so far':' sessions so far'),"goTo('s-wiring')",false,'sit');}
     var l=document.getElementById('ladTiles');
     if(l){var nr=0;try{nr=loadRules().length;}catch(e){}
       var km=(document.getElementById('stKm')||{}).textContent||'0km';var b=jget('ladder_buddy',{on:false,partners:[]});
       var h='<div class="tiles-h" style="padding:0">More</div>';
-      h='<div class="tiles">'+T('Unbreakable rules',nr+(nr===1?' rule':' rules')+'. Hold them or run.',"openPanel('pg-rules')")
-        +T('Penalties','Km debt: '+km,"openPanel('pg-pen')")
-        +T('Rewards','Earned, not given',"openPanel('pg-rew')")
-        +T('Look back','Your lessons and patterns',"openLookBack()")
-        +T('Accountability partner',b.on?((b.partners||[]).length+(((b.partners||[]).length===1)?' partner':' partners')):'Let a friend see your streak',"openPanel('pg-partner')",!!b.on)
-        +(window.COACH_URL?T('Coaching call','Talk to a real person',"openPanel('pg-coach')"):'')
-        +(window.BOOK_URL?T('The book','Where LADDER comes from',"openPanel('pg-book')"):'')
-        +T('Your data','Back up, restore, reminder',"openPanel('pg-data')")+'</div>';
+      h='<div class="tiles">'+T('Coaching call',window.COACH_URL?'Talk to a real person, one on one':'One on one with a real person. Opens soon.',"openPanel('pg-coach')",false,'coach',window.COACH_URL?'':'Soon',!!window.COACH_URL)
+        +T('Accountability partner',b.on?((b.partners||[]).length+(((b.partners||[]).length===1)?' partner':' partners')):'Let a friend see your streak',"openPanel('pg-partner')",!!b.on,'buddy')
+        +T('Unbreakable rules',nr+(nr===1?' rule':' rules')+'. Hold them or run.',"openPanel('pg-rules')",false,'rules')
+        +T('Penalties','Km debt: '+km,"openPanel('pg-pen')",false,'pen')
+        +T('Rewards','Earned, not given',"openPanel('pg-rew')",false,'rew')
+        +T('Look back','Your lessons and patterns',"openLookBack()",false,'look')
+        +(window.BOOK_URL?T('The book','Where LADDER comes from',"openPanel('pg-book')",false,'book'):'')
+        +T('Your data','Back up, restore, reminder',"openPanel('pg-data')",false,'data')+'</div>';
       l.outerHTML='<div id="ladTiles">'+h+'</div>';}
   }
   window.refreshTiles=tiles;
