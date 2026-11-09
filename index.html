@@ -811,6 +811,21 @@ body.wp-on #wpMoreBtn{display:none!important}
 .bd-nudge{border:1px solid var(--lime);background:rgba(212,240,0,.1);border-radius:14px;padding:14px 16px;margin-bottom:16px;font-family:'IBM Plex Sans',sans-serif;color:#fff;font-size:1rem}
 .bd-nudge button{display:block;margin-top:10px}
 
+
+/* sheets v97 */
+.ex-more{margin-bottom:12px}
+.ex-more>summary{cursor:pointer;list-style:none;font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(244,240,232,.6);padding:14px 0;border-top:1px solid rgba(244,240,232,.1)}
+.ex-more>summary::-webkit-details-marker{display:none}
+.ex-more>summary:after{content:' +';color:var(--lime)}
+.ex-more[open]>summary:after{content:' \2212'}
+.ss-wrap{position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.78);display:none;align-items:flex-end;justify-content:center;padding:0}
+.ss-wrap.on{display:flex}
+.ss-card{width:100%;max-width:520px;background:#111;border-top:1px solid rgba(244,240,232,.15);border-radius:22px 22px 0 0;padding:22px 20px calc(24px + env(safe-area-inset-bottom))}
+.ss-note{font-family:'IBM Plex Sans',sans-serif;font-size:.95rem;line-height:1.5;color:rgba(244,240,232,.75);margin-bottom:12px}
+.ss-ta{width:100%;box-sizing:border-box;min-height:150px;background:rgba(244,240,232,.05);border:1px solid rgba(244,240,232,.14);border-radius:12px;padding:12px;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:.78rem;line-height:1.6;margin-bottom:12px;resize:vertical}
+.sh-go{width:100%;background:var(--lime);color:#000;border:none;border-radius:14px;padding:16px;font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;cursor:pointer}
+.ss-cancel{width:100%;background:none;border:none;color:rgba(244,240,232,.5);padding:14px;font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+
 /* week module v78 */
 .wk-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;margin:8px 0 6px}
 .wk-bar i{display:block;height:100%;background:var(--lime);transition:width .4s}
@@ -1042,13 +1057,14 @@ body.wp-on #wpMoreBtn{display:none!important}
     <div class="brow"><button class="bg" onclick="openLookBack()">Open look back</button></div>
 
     <div class="sdiv"></div>
+    <details class="ex-more"><summary>Partner, coaching and book</summary>
     <div id="buddyCard" class="bk-card"></div>
 
     <div id="coachCard" class="bk-card cc-card" style="display:none">
       <div class="lbl" style="margin-bottom:8px">Coaching</div>
       <div class="bk-t">Want someone to keep you honest?</div>
       <div class="bk-s">Book a coaching call with a real person, or get an accountability partner who checks in on your day. You choose what you need.</div>
-      <a class="bk-b cc-b" id="coachLink" href="#" target="_blank" rel="noopener">Book a call</a>
+      <a class="bk-b cc-b" id="coachLink" href="#" onclick="return openCoach(event)">Book a call</a>
     </div>
 
     <div id="bookCard" class="bk-card" style="display:none">
@@ -1057,6 +1073,7 @@ body.wp-on #wpMoreBtn{display:none!important}
       <div class="bk-s">LADDER comes from the book. It explains why the rules work and what to do when you want to quit.</div>
       <a class="bk-b" id="bookLink" href="#" target="_blank" rel="noopener">Get the book</a>
     </div>
+    </details>
 
     <div class="sdiv"></div>
     <div class="lbl" style="margin-bottom:12px">Your data</div>
@@ -1138,7 +1155,7 @@ body.wp-on #wpMoreBtn{display:none!important}
       <div class="md-line" id="mdLine"></div>
       <div class="md-go">Done.<br><em>Go chill.</em></div>
       <button class="sh-btn" id="shareDayBtn" onclick="shareMyDay()">Share my day</button>
-        <a class="sh-link" id="coachLink2" href="#" target="_blank" rel="noopener" style="display:none">Want someone to go through your day with you? Book a call</a>
+        <a class="sh-link" id="coachLink2" href="#" onclick="return openCoach(event)" style="display:none">Want someone to go through your day with you? Book a call</a>
         <div class="sh-sub">Sends a short message with what you did today. Send it to your partner, your coach or a friend who keeps you honest.</div>
       <div class="md-links"><button onclick="mReopen()">Edit tonight</button><button onclick="goTo('s-ladder')">Ladder &rarr;</button></div>
     </div>
@@ -5697,12 +5714,17 @@ var COACH_URL='';
     if(one.trim())l.push('Today taught me: '+one.trim());
     return l.join('\n');
   };
-  window.shareMyDay=async function(){
-    var text=buildShareText(),b=document.getElementById('shareDayBtn');
-    try{if(navigator.share){await navigator.share({text:text});if(window.hap)hap('success');return;}}catch(e){if(e&&e.name==='AbortError')return;}
-    try{await navigator.clipboard.writeText(text);if(b){var o=b.textContent;b.textContent='Copied. Paste it in a message.';setTimeout(function(){b.textContent=o;},2500);}}catch(e){prompt('Copy this message',text);}
-  };
-  function book(){var c=document.getElementById('bookCard'),a=document.getElementById('bookLink');if(c&&a){if(BOOK_URL){a.href=BOOK_URL;c.style.display='block';}else c.style.display='none';}var cc=document.getElementById('coachCard'),ca=document.getElementById('coachLink'),c2=document.getElementById('coachLink2');if(cc&&ca){if(COACH_URL){ca.href=COACH_URL;cc.style.display='block';}else cc.style.display='none';}if(c2){if(COACH_URL){c2.href=COACH_URL;c2.style.display='block';}else c2.style.display='none';}}
+  window.closeSheet=function(){var e=document.getElementById('sendSheet');if(e)e.classList.remove('on');};
+  function openSheet(title,note,text,btn,fn){var e=document.getElementById('sendSheet');document.getElementById('ssTitle').textContent=title;document.getElementById('ssNote').textContent=note;var t=document.getElementById('ssText');t.style.display=text===null?'none':'block';t.value=text||'';var g=document.getElementById('ssGo');g.textContent=btn;g.onclick=fn;e.classList.add('on');}
+  window.shareMyDay=function(){
+    openSheet('Share my day','This is exactly what will be sent. You can change it. Nothing is sent until you choose a person in the next step.',buildShareText(),'Choose who gets it',async function(){
+      var text=document.getElementById('ssText').value,g=document.getElementById('ssGo');
+      try{if(navigator.share){await navigator.share({text:text});closeSheet();if(window.hap)hap('success');return;}}catch(e){if(e&&e.name==='AbortError')return;}
+      try{await navigator.clipboard.writeText(text);g.textContent='Copied. Paste it in a message.';setTimeout(function(){g.textContent='Choose who gets it';},2500);}catch(e){}
+    });};
+  window.openCoach=function(ev){if(ev&&ev.preventDefault)ev.preventDefault();if(!COACH_URL)return false;
+    openSheet('Book a coaching call','A coaching call is a real conversation with a person, in a booking page outside the app. You pick a time there. The app sends nothing: not your streak, not your goals, not your answers.',null,'Open the booking page',function(){closeSheet();window.open(COACH_URL,'_blank');});return false;};
+  function book(){var c=document.getElementById('bookCard'),a=document.getElementById('bookLink');if(c&&a){if(BOOK_URL){a.href=BOOK_URL;c.style.display='block';}else c.style.display='none';}var cc=document.getElementById('coachCard'),ca=document.getElementById('coachLink'),c2=document.getElementById('coachLink2');if(cc&&ca){if(COACH_URL){ca.href='#';cc.style.display='block';}else cc.style.display='none';}if(c2){if(COACH_URL){c2.href='#';c2.style.display='block';}else c2.style.display='none';}}
   var _g=window.goTo;window.goTo=function(id){var r=_g.apply(this,arguments);if(id==='s-ladder'||id==='s-mirror')book();return r;};book();
 })();
 
@@ -5766,6 +5788,7 @@ var COACH_URL='';
   draw();setTimeout(function(){publish(true);},2500);
 })();
 </script>
+<div id="sendSheet" class="ss-wrap"><div class="ss-card"><div class="lbl" id="ssTitle" style="margin-bottom:8px"></div><div class="ss-note" id="ssNote"></div><textarea class="ss-ta" id="ssText"></textarea><button class="sh-go" id="ssGo"></button><button class="ss-cancel" onclick="closeSheet()">Cancel</button></div></div>
 <div id="ovTop"></div>
 </body>
 </html>
