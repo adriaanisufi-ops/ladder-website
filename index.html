@@ -779,6 +779,15 @@ body.wp-on #wpMoreBtn{display:none!important}
 .wr-line{margin-top:34px;font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(244,240,232,.5);text-align:center;min-height:1.4em;transition:opacity .6s}
 .wr-give{margin-top:40px;background:none;border:1px solid rgba(244,240,232,.18);color:rgba(244,240,232,.5);border-radius:14px;font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;padding:14px 22px}
 
+
+/* share + book v93 */
+.sh-btn{width:100%;margin-top:20px;background:transparent;color:var(--lime);border:1px solid var(--lime);border-radius:16px;padding:16px;font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;cursor:pointer}
+.sh-sub{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:rgba(244,240,232,.4);line-height:1.7;margin-top:10px}
+.bk-card{border:1px solid rgba(244,240,232,.12);border-radius:18px;padding:18px;background:rgba(244,240,232,.03);margin-bottom:6px}
+.bk-t{font-family:'IBM Plex Sans',sans-serif;font-size:1.15rem;color:#fff;margin-bottom:6px}
+.bk-s{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:rgba(244,240,232,.5);line-height:1.7;margin-bottom:14px}
+.bk-b{display:inline-block;border:1px solid var(--lime);color:var(--lime);border-radius:14px;padding:12px 18px;font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;text-decoration:none}
+
 /* week module v78 */
 .wk-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;margin:8px 0 6px}
 .wk-bar i{display:block;height:100%;background:var(--lime);transition:width .4s}
@@ -1009,6 +1018,14 @@ body.wp-on #wpMoreBtn{display:none!important}
     <div class="brow"><button class="bg" onclick="openLookBack()">Open look back</button></div>
 
     <div class="sdiv"></div>
+    <div id="bookCard" class="bk-card" style="display:none">
+      <div class="lbl" style="margin-bottom:8px">The book behind LADDER</div>
+      <div class="bk-t">Want the full story behind this system?</div>
+      <div class="bk-s">LADDER comes from the book. It explains why the rules work and what to do when you want to quit.</div>
+      <a class="bk-b" id="bookLink" href="#" target="_blank" rel="noopener">Get the book</a>
+    </div>
+
+    <div class="sdiv"></div>
     <div class="lbl" style="margin-bottom:12px">Your data</div>
   <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--muted);line-height:1.7;margin-bottom:12px;">Everything lives on this phone. Back it up so you never lose your streak.</div>
   <div id="backupAge" style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--lime);margin-bottom:12px;"></div>
@@ -1060,6 +1077,8 @@ body.wp-on #wpMoreBtn{display:none!important}
       <div class="mstep" id="mStepSum">
         <div class="big-q" style="margin-bottom:22px">What you<br><em>did</em> today.</div>
         <div id="mSummary"></div>
+        <button class="sh-btn" id="shareDayBtn" onclick="shareMyDay()">Share my day</button>
+        <div class="sh-sub">Sends a short message with what you did today. Send it to your coach or a friend who keeps you honest.</div>
       </div>
 
       <div class="mstep" id="mStepOne">
@@ -5621,6 +5640,35 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   function hide(){var f=document.getElementById('wrFocus');if(f)f.classList.remove('on');}
   var _u=window.resetWiringIdleUI;window.resetWiringIdleUI=function(){_u.apply(this,arguments);hide();};
   var _x=window.stopWiring;window.stopWiring=function(){_x.apply(this,arguments);hide();};
+})();
+
+/* ===== share my day + book link v93 ===== */
+var BOOK_URL='';
+(function(){
+  function pad(n){return (n<10?'0':'')+n;}
+  function dk(){var d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+  function jget(k,f){try{return JSON.parse(localStorage.getItem(k)||'')||f;}catch(e){return f;}}
+  window.buildShareText=function(){
+    var V=jget('ladder_dlv_'+dk(),{}),done=[],open=[];
+    try{loadGoals().forEach(function(g){(g.actions||[]).forEach(function(a){if(!a||!a.text)return;var v=V[a.id],t=(v&&v.w)?v.w:a.text,ok=false;try{ok=isActionDone(a);}catch(e){}(ok?done:open).push(t);});});}catch(e){}
+    jget('ladder_extra_'+dk(),[]).forEach(function(x,i){var v=V['x'+i],t=(v&&v.w)?v.w:x.t;(x.d?done:open).push(t);});
+    var st=(document.getElementById('stStreak')||{}).textContent||'0';
+    var l=[];
+    l.push('LADDER. Streak: '+st+(st==='1'?' day':' days')+'.');
+    l.push('Done today ('+done.length+' of '+(done.length+open.length)+'):');
+    if(done.length)done.forEach(function(t){l.push('✓ '+t);});else l.push('Nothing yet.');
+    if(open.length){l.push('Not done:');open.forEach(function(t){l.push('○ '+t);});}
+    var one='';try{one=(document.getElementById('oneLineInput')||{}).value||'';}catch(e){}
+    if(one.trim())l.push('Today taught me: '+one.trim());
+    return l.join('\n');
+  };
+  window.shareMyDay=async function(){
+    var text=buildShareText(),b=document.getElementById('shareDayBtn');
+    try{if(navigator.share){await navigator.share({text:text});if(window.hap)hap('success');return;}}catch(e){if(e&&e.name==='AbortError')return;}
+    try{await navigator.clipboard.writeText(text);if(b){var o=b.textContent;b.textContent='Copied. Paste it in a message.';setTimeout(function(){b.textContent=o;},2500);}}catch(e){prompt('Copy this message',text);}
+  };
+  function book(){var c=document.getElementById('bookCard'),a=document.getElementById('bookLink');if(!c||!a)return;if(BOOK_URL){a.href=BOOK_URL;c.style.display='block';}else c.style.display='none';}
+  var _g=window.goTo;window.goTo=function(id){var r=_g.apply(this,arguments);if(id==='s-ladder')book();return r;};book();
 })();
 </script>
 <div id="ovTop"></div>
