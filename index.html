@@ -4585,10 +4585,10 @@ function closeLookBack(){var l=document.getElementById('lookBack');if(l)l.classL
 // ---- type pass: reading text in Plex Sans, mono kept for tiny uppercase labels ----
 (function(){
   var busy=false,timer=null;
-  function pass(){
+  function pass(root){
     if(busy)return;busy=true;
     try{
-      var els=document.querySelectorAll('body *');
+      var els=(root&&root.nodeType===1)?[root].concat([].slice.call(root.querySelectorAll('*'))):document.querySelectorAll('body *');
       for(var i=0;i<els.length;i++){
         var e=els[i];
         if(e.dataset&&e.dataset.tf==='1')continue;
@@ -4613,10 +4613,10 @@ function closeLookBack(){var l=document.getElementById('lookBack');if(l)l.classL
     }catch(err){}
     busy=false;
   }
-  function sched(){clearTimeout(timer);timer=setTimeout(pass,250);}
+  function sched(){clearTimeout(timer);timer=setTimeout(function(){pass();},250);}
   document.addEventListener('DOMContentLoaded',sched);
-  setTimeout(pass,600);
-  try{new MutationObserver(sched).observe(document.body,{childList:true,subtree:true});}catch(e){}
+  setTimeout(function(){pass();},600);
+  try{new MutationObserver(function(ms){for(var i=0;i<ms.length;i++){var a=ms[i].addedNodes;for(var j=0;j<a.length;j++){if(a[j].nodeType===1)pass(a[j]);}}sched();}).observe(document.body,{childList:true,subtree:true});}catch(e){}
 })();
 // ===== v36: timer alerts, backup nudge, weekly review, affirmation streak, first use hints =====
 (function(){
