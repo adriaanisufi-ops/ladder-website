@@ -829,6 +829,7 @@ body.wp-on #wpMoreBtn{display:none!important}
 
 /* panels and tiles v98 */
 .pg{display:none}
+.screen.active .inner>.pg,.screen.active .inner>.tiles,.screen.active .inner>#ladTiles,.screen.active .inner>#dayTiles,.screen.active .inner>#weekCard,.screen.active .inner>#buddyNudge{animation:none!important}
 #pnl .pg{display:block}
 .tiles{margin:6px 0 22px}
 .tl{display:flex;align-items:center;gap:14px;width:100%;box-sizing:border-box;text-align:left;background:linear-gradient(160deg,rgba(244,240,232,.06),rgba(244,240,232,.02));border:1px solid rgba(244,240,232,.1);border-radius:18px;margin-bottom:10px;padding:14px 16px;color:#fff;cursor:pointer;min-height:72px;transition:transform .15s,border-color .2s}
@@ -5847,9 +5848,9 @@ var COACH_URL='';
       var cSub='5 minutes to say it all, then three questions',cOk=false;
       if(cs.s==='run'){cSub='Window is open';}else if(cs.s==='closed'&&!w){cSub='Next: the three questions';}else if(cs.s==='closed'&&w){cSub='Done today';cOk=true;}
       var sw=0;try{sw=loadWiringLog().length;}catch(e){}
-      d.innerHTML=T('Your words',said>=3?'Said '+said+' times today':'Say it out loud. '+said+' of 3 today',"openPanel('pg-words')",said>=3,'words')
+      var dh=T('Your words',said>=3?'Said '+said+' times today':'Say it out loud. '+said+' of 3 today',"openPanel('pg-words')",said>=3,'words')
         +T('Complain and think',cSub,"openPanel('pg-complain')",cOk,'complain')
-        +T('Sit with nothing','3, 5 or 10 minutes. '+sw+(sw===1?' session so far':' sessions so far'),"goTo('s-wiring')",false,'sit');}
+        +T('Sit with nothing','3, 5 or 10 minutes. '+sw+(sw===1?' session so far':' sessions so far'),"goTo('s-wiring')",false,'sit');if(d.getAttribute('data-sig')!==dh){d.innerHTML=dh;d.setAttribute('data-sig',dh);}}
     var l=document.getElementById('ladTiles');
     if(l){var nr=0;try{nr=loadRules().length;}catch(e){}
       var km=(document.getElementById('stKm')||{}).textContent||'0km';var b=jget('ladder_buddy',{on:false,partners:[]});
@@ -5862,7 +5863,7 @@ var COACH_URL='';
         +T('Look back','Your lessons and patterns',"openLookBack()",false,'look')
         +(window.BOOK_URL?T('The book','Where LADDER comes from',"openPanel('pg-book')",false,'book'):'')
         +T('Your data','Back up, restore, reminder',"openPanel('pg-data')",false,'data')+'</div>';
-      l.outerHTML='<div id="ladTiles">'+h+'</div>';}
+      if(l.getAttribute('data-sig')!==h){l.innerHTML=h;l.setAttribute('data-sig',h);}}
   }
   window.refreshTiles=tiles;
   var _g=window.goTo;window.goTo=function(id){if(cur&&id!==undefined)closePanelQuiet();var r=_g.apply(this,arguments);if(id==='s-morning'||id==='s-ladder')setTimeout(tiles,60);return r;};
