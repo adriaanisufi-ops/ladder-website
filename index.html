@@ -1328,6 +1328,16 @@ body.wp-on #wpMoreBtn{display:none!important}
             </div>
             <input id="gName" class="li" placeholder="e.g. Freedom of action" style="font-size:0.9rem;">
           </div>
+          <div>
+            <div class="lbl" style="margin-bottom:8px">The number that proves it works (optional)</div>
+            <input id="mLabel" class="li" placeholder="What you measure, e.g. 10K time, weight, euros saved">
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <input id="mStart" class="li" inputmode="decimal" style="flex:1" placeholder="Now">
+              <input id="mTarget" class="li" inputmode="decimal" style="flex:1" placeholder="Target">
+              <input id="mUnit" class="li" style="flex:1" placeholder="Unit, e.g. min">
+            </div>
+            <div style="font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;color:rgba(244,240,232,.5);margin-top:8px;line-height:1.4">Ticking things off shows you were busy. A number that moves shows you are getting somewhere. You log it once a week and the app tells you when you reach it.</div>
+          </div>
           <div style="display:none">
             <div class="lbl" style="margin-bottom:8px">Outcome goal
               <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t2')">i</span><div class="tip-box" id="t2">What exactly do you want to achieve, and by when? Be as specific as possible. A good outcome goal has a number and a date in it.<br><br>Examples:<br>• €10.000 balance by 16 feb 2027<br>• 3 interviews planned by 1 sept 2026<br>• Run a 10K in under 50 min by 1 jan 2027</div></span>
@@ -3904,6 +3914,7 @@ function buildGoalsList(){
         +'</div>';
       }).join(''):'<div style="font-family:\'IBM Plex Sans\',sans-serif;font-size:.9rem;color:rgba(244,240,232,.5);line-height:1.4;padding:4px 0 8px">No deliverables yet. A deliverable is something that must exist, specific and finishable, with a number.</div>')
       +'<div class="wk-add" style="margin:10px 0 4px"><input class="wk-in" id="dAdd_'+g.id+'" placeholder="e.g. 10 outreach messages sent" onkeydown="if(event.key===\'Enter\')addDeliverable(\''+g.id+'\')"><button class="cp-btn" onclick="addDeliverable(\''+g.id+'\')">ADD</button></div>'
+      +metricHTML(g)
 
       +((g.rules&&g.rules.length)||g.reward||g.punish?'<div style="margin:12px 0 4px;font-family:\'IBM Plex Sans\',sans-serif;font-size:.88rem;line-height:1.5;color:rgba(244,240,232,.7)">'
         +(g.rules&&g.rules.length?'<div class="wk-sub" style="margin-bottom:4px">Unbreakable rules</div>'+g.rules.map(function(r){return '<div>&bull; '+esc(r)+'</div>';}).join(''):'')
@@ -3948,6 +3959,108 @@ function buildGoalsList(){
   });
 }
 
+
+// ── MEETGETAL: one number per goal, logged weekly, with forecast ──
+function isoDay(d){d=d||new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+function isoToDate(i){var p=i.split('-');return new Date(+p[0],+p[1]-1,+p[2]);}
+function dayDiff(a,b){return Math.round((isoToDate(b)-isoToDate(a))/86400000);}
+function numIn(v){var n=parseFloat(String(v==null?'':v).replace(',','.'));return isNaN(n)?null:n;}
+function fmtNum(n){return (Math.round(n*100)/100).toString().replace('.',',');}
+function fmtDay(d){return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
+function buildMetricFromForm(prev){
+  var label=document.getElementById('mLabel').value.trim();
+  var st=numIn(document.getElementById('mStart').value),tg=numIn(document.getElementById('mTarget').value);
+  if(!label||st===null||tg===null||st===tg) return null;
+  return {label:label,unit:document.getElementById('mUnit').value.trim(),start:st,target:tg,startDate:(prev&&prev.startDate)||isoDay(),readings:(prev&&prev.readings)||[]};
+}
+function metricPoints(m){
+  var pts=[{d:m.startDate,v:m.start}];
+  (m.readings||[]).slice().sort(function(a,b){return a.d<b.d?-1:1;}).forEach(function(r){pts.push(r);});
+  return pts;
+}
+function routineShare(g){
+  var acts=(g.actions||[]).filter(function(a){return a.type!=='timer';});
+  if(!acts.length||!S.goalActions) return null;
+  var hit=0,seen=0;
+  for(var i=0;i<21;i++){
+    var d=new Date();d.setDate(d.getDate()-i);
+    var day=S.goalActions[d.toDateString()];
+    if(i>0||day) seen++;
+    if(day&&acts.some(function(a){return day[a.id];})) hit++;
+  }
+  return seen?hit/21:null;
+}
+function metricForecast(g){
+  var m=g.metric,pts=metricPoints(m),last=pts[pts.length-1];
+  var up=m.target>m.start;
+  var reached=up?last.v>=m.target:last.v<=m.target;
+  if(reached) return {kind:'done',text:'You reached '+fmtNum(m.target)+(m.unit?' '+m.unit:'')+'. Set a new target or a new goal.'};
+  var span=dayDiff(pts[0].d,last.d);
+  if(pts.length<2||span<7) return {kind:'wait',text:'Log your number once a week. After the second reading you see where you are heading.'};
+  var n=pts.length,xs=pts.map(function(p){return dayDiff(pts[0].d,p.d);}),ys=pts.map(function(p){return p.v;});
+  var slope;
+  if(n>=3){var mx=xs.reduce(function(a,b){return a+b;},0)/n,my=ys.reduce(function(a,b){return a+b;},0)/n,num=0,den=0;for(var i=0;i<n;i++){num+=(xs[i]-mx)*(ys[i]-my);den+=(xs[i]-mx)*(xs[i]-mx);}slope=den?num/den:0;}
+  else slope=(ys[n-1]-ys[0])/span;
+  var good=up?slope>0:slope<0;
+  if(!good||Math.abs(slope)<1e-9){
+    var share=routineShare(g);
+    if(share!==null&&share>=0.6&&span>=14) return {kind:'stuck',text:'You are doing the work, but the number is not moving. Do not push harder. Change the routine.'};
+    if(share!==null&&share<0.6) return {kind:'stuck',text:'The number is not moving and the routine is patchy. Fix the routine first, then judge the plan.'};
+    return {kind:'stuck',text:'The number is not moving yet. Give it one more week, then change the routine if it stays flat.'};
+  }
+  var left=(m.target-last.v)/slope;
+  if(left>730) return {kind:'slow',text:'At this pace it takes more than two years. Make the routine bigger or the target smaller.'};
+  var eta=isoToDate(last.d);eta.setDate(eta.getDate()+Math.ceil(left));
+  var txt='At this pace you reach '+fmtNum(m.target)+(m.unit?' '+m.unit:'')+' on '+fmtDay(eta)+'.';
+  var dl=parseFlexDate(g.deadline);
+  if(dl){var diff=Math.round((eta-dl)/86400000);
+    if(diff>7) txt+=' That is '+Math.round(diff/7)+' week'+(Math.round(diff/7)>1?'s':'')+' after your deadline.';
+    else if(diff<-7) txt+=' That is '+Math.round(-diff/7)+' week'+(Math.round(-diff/7)>1?'s':'')+' ahead of your deadline.';
+    else txt+=' That fits your deadline.';}
+  return {kind:'ok',text:txt};
+}
+function metricSpark(m){
+  var pts=metricPoints(m),W=300,H=72,pad=8;
+  var t0=isoToDate(pts[0].d).getTime(),t1=Math.max(isoToDate(pts[pts.length-1].d).getTime(),t0+7*86400000);
+  var vals=pts.map(function(p){return p.v;}).concat([m.target]),lo=Math.min.apply(null,vals),hi=Math.max.apply(null,vals);
+  if(hi===lo){hi+=1;lo-=1;}
+  function X(t){return pad+(t-t0)/(t1-t0)*(W-2*pad);}
+  function Y(v){return H-pad-(v-lo)/(hi-lo)*(H-2*pad);}
+  var line=pts.map(function(p){return X(isoToDate(p.d).getTime()).toFixed(1)+','+Y(p.v).toFixed(1);}).join(' ');
+  var dots=pts.map(function(p){return '<circle cx="'+X(isoToDate(p.d).getTime()).toFixed(1)+'" cy="'+Y(p.v).toFixed(1)+'" r="3.5" fill="#d4f000"/>';}).join('');
+  return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:72px;display:block" aria-hidden="true">'
+    +'<line x1="'+pad+'" x2="'+(W-pad)+'" y1="'+Y(m.target).toFixed(1)+'" y2="'+Y(m.target).toFixed(1)+'" stroke="rgba(212,240,0,.45)" stroke-dasharray="4 4"/>'
+    +'<polyline points="'+line+'" fill="none" stroke="#d4f000" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'+dots+'</svg>';
+}
+function metricHTML(g){
+  var m=g.metric;
+  if(!m) return '<button onclick="openEditGoal(\''+g.id+'\')" style="margin-top:12px;background:none;border:1px dashed rgba(244,240,232,.2);border-radius:12px;color:rgba(244,240,232,.6);font-family:\'IBM Plex Sans\',sans-serif;font-size:.9rem;padding:12px;width:100%;text-align:left">+ Add the number that proves this works</button>';
+  var pts=metricPoints(m),last=pts[pts.length-1],fc=metricForecast(g);
+  var since=dayDiff(last.d,isoDay());
+  var due=pts.length>1?since>=7:since>=7;
+  var col=fc.kind==='stuck'||fc.kind==='slow'?'var(--red)':'var(--lime)';
+  var loggedToday=last.d===isoDay()&&pts.length>1;
+  return '<div style="margin-top:16px;padding:16px;background:rgba(255,255,255,.03);border-radius:16px;box-shadow:inset 0 0 0 1px var(--line)">'
+    +'<div class="wk-sub" style="margin:0 0 6px">'+esc(m.label)+'</div>'
+    +'<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span style="font-family:\'Bebas Neue\',sans-serif;font-size:2.4rem;line-height:1;color:var(--white)">'+fmtNum(last.v)+'</span>'
+    +'<span style="font-family:\'IBM Plex Sans\',sans-serif;font-size:.9rem;color:rgba(244,240,232,.55)">'+esc(m.unit||'')+' now. Start '+fmtNum(m.start)+', target '+fmtNum(m.target)+'</span></div>'
+    +'<div style="margin:10px 0 6px">'+metricSpark(m)+'</div>'
+    +'<div style="font-family:\'IBM Plex Sans\',sans-serif;font-size:.95rem;line-height:1.45;color:'+col+'">'+esc(fc.text)+'</div>'
+    +'<div style="font-family:\'IBM Plex Sans\',sans-serif;font-size:.82rem;color:'+(due?'var(--lime)':'rgba(244,240,232,.45)')+';margin:12px 0 6px">'+(loggedToday?'Logged today. You can correct it below.':(due?'Time for this week\'s number.':'Next number in '+(7-since)+' day'+((7-since)>1?'s':'')+'. You can log earlier.'))+'</div>'
+    +'<div class="wk-add"><input class="wk-in" id="mIn_'+g.id+'" inputmode="decimal" placeholder="This week: '+esc(m.unit||'number')+'" onkeydown="if(event.key===\'Enter\')logMetric(\''+g.id+'\')"><button class="cp-btn" onclick="logMetric(\''+g.id+'\')">LOG</button></div>'
+    +'</div>';
+}
+function logMetric(gid){
+  var el=document.getElementById('mIn_'+gid);if(!el)return;
+  var v=numIn(el.value);if(v===null)return;
+  var goals=loadGoals(),g=goals.filter(function(x){return x.id===gid;})[0];if(!g||!g.metric)return;
+  var t=isoDay(),r=g.metric.readings=g.metric.readings||[];
+  var ex=r.filter(function(x){return x.d===t;})[0];
+  if(ex)ex.v=v;else r.push({d:t,v:v});
+  saveGoals(goals);buildGoalsList();
+  try{if(window.refreshTiles)refreshTiles();}catch(e){}
+  if(window.hap)hap('light');
+}
 function toggleGoalAction(actionId){
   if(!S.goalActions) S.goalActions={};
   if(!S.goalActions[TODAY]) S.goalActions[TODAY]={};
@@ -3980,7 +4093,7 @@ function openAddGoal(){
   editingGoalId=null;
   document.getElementById('modalTitle').textContent='New goal';
   document.getElementById('deleteGoalBtn').style.display='none';
-  ['gName','gOutcome','gDeadline','gAdjust','gMilestones','gCheckinFields','gRules','gReward','gPunish'].forEach(function(id){
+  ['gName','gOutcome','gDeadline','gAdjust','gMilestones','gCheckinFields','gRules','gReward','gPunish','mLabel','mStart','mTarget','mUnit'].forEach(function(id){
     document.getElementById(id).value='';
   });
   currentActions=[];
@@ -4002,6 +4115,7 @@ function openEditGoal(goalId){
   delBtn.style.color='var(--red)';
   document.getElementById('gName').value=g.name||'';
   document.getElementById('gOutcome').value=g.outcome||'';
+  var mt=g.metric||{};document.getElementById('mLabel').value=mt.label||'';document.getElementById('mStart').value=(mt.start!=null?mt.start:'');document.getElementById('mTarget').value=(mt.target!=null?mt.target:'');document.getElementById('mUnit').value=mt.unit||'';
   document.getElementById('gDeadline').value=g.deadline||'';
   currentActions=(g.actions||[]).map(function(a){return {id:a.id,text:a.text,type:a.type,minutes:a.minutes,target:a.target||0,unit:a.unit||''};});
   renderActionRows();
@@ -4025,6 +4139,7 @@ function saveGoal(){
   var lines=document.getElementById('gItems').value.split('\n').map(function(x){return x.trim();}).filter(Boolean);
   var actions=lines.map(function(t,k){var o=currentActions.filter(function(a){return (a.text||'').trim()===t;})[0];if(o)return {id:o.id,text:t,type:o.type==='timer'?'timer':(o.type==='count'&&parseInt(o.target)>0?'count':'check'),minutes:o.type==='timer'?(parseInt(o.minutes)||0):0,target:o.type==='count'?(parseInt(o.target)||0):0,unit:o.type==='count'?(o.unit||'').trim():''};return {id:'a_'+Date.now()+'_'+k,text:t,type:'check',minutes:0,target:0,unit:''};});
   var goals=loadGoals();
+  var metric=buildMetricFromForm(editingGoalId?(goals.filter(function(g){return g.id===editingGoalId;})[0]||{}).metric:null);
   if(editingGoalId){
     var idx=goals.findIndex(function(g){return g.id===editingGoalId;});
     if(idx>-1){
@@ -4033,10 +4148,10 @@ function saveGoal(){
       milestones=milestones.map(function(m,i){
         return {text:m.text,date:m.date,done:(existing.milestones&&existing.milestones[i])?existing.milestones[i].done:false};
       });
-      goals[idx]={id:editingGoalId,name:name,outcome:document.getElementById('gOutcome').value.trim(),deadline:document.getElementById('gDeadline').value.trim(),actions:actions,adjust:document.getElementById('gAdjust').value.trim(),milestones:milestones,checkinFields:checkinFields,rules:RULES(),reward:document.getElementById('gReward').value.trim(),punish:document.getElementById('gPunish').value.trim()};
+      goals[idx]={id:editingGoalId,name:name,outcome:document.getElementById('gOutcome').value.trim(),deadline:document.getElementById('gDeadline').value.trim(),actions:actions,adjust:document.getElementById('gAdjust').value.trim(),milestones:milestones,checkinFields:checkinFields,rules:RULES(),reward:document.getElementById('gReward').value.trim(),punish:document.getElementById('gPunish').value.trim(),metric:metric,featured:!!existing.featured};
     }
   } else {
-    goals.push({id:'g_'+Date.now(),name:name,outcome:document.getElementById('gOutcome').value.trim(),deadline:document.getElementById('gDeadline').value.trim(),actions:actions,adjust:document.getElementById('gAdjust').value.trim(),milestones:milestones,checkinFields:checkinFields,rules:RULES(),reward:document.getElementById('gReward').value.trim(),punish:document.getElementById('gPunish').value.trim()});
+    goals.push({id:'g_'+Date.now(),name:name,outcome:document.getElementById('gOutcome').value.trim(),deadline:document.getElementById('gDeadline').value.trim(),actions:actions,adjust:document.getElementById('gAdjust').value.trim(),milestones:milestones,checkinFields:checkinFields,rules:RULES(),reward:document.getElementById('gReward').value.trim(),punish:document.getElementById('gPunish').value.trim(),metric:metric});
   }
   saveGoals(goals);
   closeGoalModal();
