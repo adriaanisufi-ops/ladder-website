@@ -1063,6 +1063,13 @@ body.wp-on #wpMoreBtn{display:none!important}
             <div class="lbl" style="margin-bottom:8px">Consequence when broken (km)</div>
             <input id="rKm" class="li" type="number" placeholder="10">
           </div>
+          <div>
+            <div class="lbl" style="margin-bottom:8px">Who checks it</div>
+            <div class="cp-kinds" id="rKinds"><button class="cp-kind" data-k="manual" onclick="ruleKind('manual')">I tick it</button><button class="cp-kind" data-k="plan" onclick="ruleKind('plan')">To dos written by</button><button class="cp-kind" data-k="window" onclick="ruleKind('window')">Social window</button></div>
+            <div id="rKindPlan" class="cp-pick" style="display:none"><input type="time" id="rBy" value="10:00"></div>
+            <div id="rKindWin" class="cp-pick" style="display:none"><input type="time" id="rFrom" value="19:00"><input type="time" id="rTo" value="21:00"></div>
+            <div class="cp-why" id="rKindWhy" style="margin:8px 0 0"></div>
+          </div>
         </div>
         <div style="display:flex;gap:10px;margin-top:28px;">
           <button onclick="saveRule()" style="background:var(--lime);border:none;color:var(--black);font-family:'IBM Plex Mono',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:16px 28px;cursor:pointer;flex:1;">Save rule</button>
@@ -2304,19 +2311,60 @@ function isMilestoneOverdue(dateStr){
 function fmtThousands(n){return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');}
 
 // ── UNBREAKABLE RULES (user-owned) ──────────────────────
+function ruleDay(){var d=new Date(),p=function(n){return (n<10?'0':'')+n;};return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());}
+function systemRules(){var t=ruleDay();return [
+  {id:'s1', text:'Mattress stays off the bed frame until today\'s to dos are done', km:10, kind:'manual', since:t},
+  {id:'s2', text:'Set up to dos immediately in the morning', km:10, kind:'plan', by:'10:00', since:t},
+  {id:'s3', text:'No social media, except between 19:00 and 21:00', km:10, kind:'window', from:'19:00', to:'21:00', since:t}
+];}
 function loadRules(){
   var r=JSON.parse(localStorage.getItem('ladder_rules')||'null');
   if(!r){
-    r=[
-      {id:'r0', text:'No porn. No masturbation.', km:10},
-      {id:'r1', text:'No social media until goal actions are done', km:10},
-      {id:'r2', text:'No bed until the day is closed', km:10},
-      {id:'r3', text:'Mattress stays off the bed frame until today\'s to dos are done', km:10},
-    ];
+    r=systemRules();
     localStorage.setItem('ladder_rules',JSON.stringify(r));
   }
   return r;
 }
+function ruleNorm(t){return String(t||'').toLowerCase().replace(/[^a-z0-9]/g,'');}
+function missingSystemRules(){var have=loadRules();return systemRules().filter(function(x){return !have.some(function(h){return h.id===x.id||ruleNorm(h.text)===ruleNorm(x.text)||(x.kind!=='manual'&&h.kind===x.kind);});});}
+var sysArmed=false;
+function addSystemRules(){
+  var miss=missingSystemRules();if(!miss.length)return;
+  if(!sysArmed){sysArmed=true;buildRules();setTimeout(function(){if(sysArmed){sysArmed=false;buildRules();}},4000);return;}
+  sysArmed=false;var r=loadRules().concat(miss);saveRulesList(r);buildRules();rulesAuto();
+  try{if(window.lockRefresh)lockRefresh();}catch(e){}
+  if(window.hap)hap('success');
+}
+function ruleMin(hm){var p=String(hm||'').split(':');if(p.length<2)return -1;var m=(+p[0])*60+(+p[1]);return isNaN(m)?-1:m;}
+/* the social window rule, if any: {from,to} in minutes */
+window.ruleWindow=function(){var w=loadRules().filter(function(x){return x.kind==='window';})[0];if(!w)return null;var f=ruleMin(w.from),t=ruleMin(w.to);if(f<0||t<0||f===t)return null;return {from:f,to:t,fromTxt:w.from,toTxt:w.to};};
+window.inRuleWindow=function(w){if(!w)return true;var d=new Date(),m=d.getHours()*60+d.getMinutes();return w.from<w.to?(m>=w.from&&m<w.to):(m>=w.from||m<w.to);};
+/* has today got written to dos: an added row, or a deliverable written for a goal row */
+function dayHasPlan(){
+  var k=ruleDay();
+  try{var x=JSON.parse(localStorage.getItem('ladder_extra_'+k)||'[]');if(x.some(function(o){return o&&o.t;}))return true;}catch(e){}
+  try{var v=JSON.parse(localStorage.getItem('ladder_dlv_'+k)||'{}');for(var i in v){if(v[i]&&v[i].w)return true;}}catch(e){}
+  return false;
+}
+/* Ladder checks the plan rule itself. Nobody ticks it. */
+function rulesAuto(){
+  if(!S||S.date!==new Date().toDateString())return;
+  var k=ruleDay(),pk='ladder_planat_'+k,at=+(localStorage.getItem(pk)||0);
+  if(!at&&dayHasPlan()){at=Date.now();try{localStorage.setItem(pk,String(at));}catch(e){}}
+  if(!S.rules)S.rules={};
+  var changed=false;
+  loadRules().forEach(function(r){
+    if(r.kind!=='plan'||S.rules[r.id]!==undefined||r.since===k)return;
+    var m=ruleMin(r.by||'10:00');if(m<0)return;
+    var dl=new Date();dl.setHours(Math.floor(m/60),m%60,0,0);dl=dl.getTime();
+    if(at&&at<=dl){S.rules[r.id]=true;changed=true;}
+    else if(Date.now()>dl){S.rules[r.id]=false;S.kmDebt=(S.kmDebt||0)+r.km;changed=true;
+      var pf=document.getElementById('pFlash');if(pf){pf.style.opacity='1';setTimeout(function(){pf.style.opacity='0';},600);}}
+  });
+  if(changed){save();buildRules();try{updateStats();}catch(e){}}
+}
+setTimeout(rulesAuto,1500);setInterval(rulesAuto,30000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(rulesAuto,300);});
 function saveRulesList(r){localStorage.setItem('ladder_rules',JSON.stringify(r));}
 
 var editingRuleId=null;
@@ -2326,7 +2374,18 @@ function openAddRule(){
   document.getElementById('deleteRuleBtn').style.display='none';
   document.getElementById('rText').value='';
   document.getElementById('rKm').value='10';
+  ruleKind('manual');
   document.getElementById('ruleModal').style.display='block';
+}
+var ruleKindSel='manual';
+function ruleKind(k){
+  ruleKindSel=k;
+  var b=document.querySelectorAll('#rKinds .cp-kind');for(var i=0;i<b.length;i++)b[i].classList.toggle('on',b[i].getAttribute('data-k')===k);
+  var p=document.getElementById('rKindPlan'),w=document.getElementById('rKindWin'),y=document.getElementById('rKindWhy');
+  if(p)p.style.display=k==='plan'?'flex':'none';if(w)w.style.display=k==='window'?'flex':'none';
+  if(y)y.textContent=k==='plan'?'Ladder checks it. No to dos written by this time means the km go on your debt. You cannot tick it yourself.'
+    :k==='window'?'Your phone lock follows this. Locked apps only open inside this window, and only after your deliverables are done.'
+    :'You tick held or broke yourself, every day.';
 }
 function openEditRule(ruleId){
   var rules=loadRules();
@@ -2342,6 +2401,10 @@ function openEditRule(ruleId){
   delBtn.style.color='var(--red)';
   document.getElementById('rText').value=r.text;
   document.getElementById('rKm').value=r.km;
+  if(r.by)document.getElementById('rBy').value=r.by;
+  if(r.from)document.getElementById('rFrom').value=r.from;
+  if(r.to)document.getElementById('rTo').value=r.to;
+  ruleKind(r.kind||'manual');
   document.getElementById('ruleModal').style.display='block';
 }
 function saveRule(){
@@ -2349,15 +2412,20 @@ function saveRule(){
   var km=parseInt(document.getElementById('rKm').value)||10;
   if(!text) return;
   var rules=loadRules();
+  var k=ruleKindSel||'manual',extra={kind:k};
+  if(k==='plan')extra.by=document.getElementById('rBy').value||'10:00';
+  if(k==='window'){extra.from=document.getElementById('rFrom').value||'19:00';extra.to=document.getElementById('rTo').value||'21:00';}
+  if(k==='window')rules=rules.map(function(x){if(x.kind==='window'&&x.id!==editingRuleId){x.kind='manual';delete x.from;delete x.to;}return x;});
   if(editingRuleId){
     var idx=rules.findIndex(function(x){return x.id===editingRuleId;});
-    if(idx>-1){rules[idx].text=text;rules[idx].km=km;}
+    if(idx>-1){var o=rules[idx],was=o.kind+'|'+(o.by||'');o.text=text;o.km=km;delete o.by;delete o.from;delete o.to;Object.assign(o,extra);if(k==='plan'&&was!==('plan|'+extra.by))o.since=ruleDay();}
   } else {
-    rules.push({id:'r_'+Date.now(),text:text,km:km});
+    rules.push(Object.assign({id:'r_'+Date.now(),text:text,km:km,since:ruleDay()},extra));
   }
   saveRulesList(rules);
   closeRuleModal();
   buildRules();
+  try{if(window.lockRefresh)lockRefresh();}catch(e){}
 }
 var ruleDeleteArmed=false;
 function deleteRule(){
@@ -2394,6 +2462,7 @@ var REWARDS=[
   {days:90, title:'90 days',  desc:'Big reward: your choice. A trip, a purchase, an experience. Something you\'ll remember. You\'ve become a different person.'},
 ];
 
+var ruleMsg='';
 function buildRules(){
   var c=document.getElementById('rulesList'); if(!c) return;
   c.innerHTML='';
@@ -2404,8 +2473,10 @@ function buildRules(){
     var div=document.createElement('div');
     div.className='rule-row'+(state===true?' held':state===false?' broke':'');
     div.setAttribute('data-rid',rule.id);
-    var statusTxt=state===true?'held ✓':state===false?'broke +'+rule.km+'km':'.';
-    div.innerHTML='<div class="rule-indicator"></div><span class="rule-name">'+esc(rule.text)+'</span><span class="rule-status">'+statusTxt+'</span><span class="rule-edit" data-edit="'+rule.id+'" style="color:rgba(212,240,0,0.85);border:1px solid rgba(212,240,0,0.4);font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;padding:11px 12px;margin-left:8px;cursor:pointer;flex-shrink:0;">edit</span>';
+    var statusTxt=state===true?'held ✓':state===false?'broke +'+rule.km+'km':(rule.kind==='plan'?'by '+esc(rule.by||'10:00'):'.');
+    var sub=rule.kind==='plan'?'Ladder checks this. To dos written by '+esc(rule.by||'10:00')+'.'
+      :rule.kind==='window'?'Phone lock follows this. Apps open '+esc(rule.from)+' to '+esc(rule.to)+', after your deliverables.':'';
+    div.innerHTML='<div class="rule-indicator"></div><span class="rule-name">'+esc(rule.text)+(sub?'<span style="display:block;margin-top:4px;font-size:.62rem;color:rgba(244,240,232,.45)">'+sub+'</span>':'')+'</span><span class="rule-status">'+statusTxt+'</span><span class="rule-edit" data-edit="'+rule.id+'" style="color:rgba(212,240,0,0.85);border:1px solid rgba(212,240,0,0.4);font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;padding:11px 12px;margin-left:8px;cursor:pointer;flex-shrink:0;">edit</span>';
     c.appendChild(div);
   });
   var brokeRules=RULES.filter(function(r){return S.rules[r.id]===false;});
@@ -2416,12 +2487,18 @@ function buildRules(){
     info.textContent=brokeRules.length+' rule'+(brokeRules.length>1?'s':'')+' broke today. '+totalKm+'km added to debt';
     c.appendChild(info);
   }
+  if(ruleMsg){var m=document.createElement('div');m.className='cp-why';m.style.cssText='margin:12px 0 0;color:var(--lime)';m.textContent=ruleMsg;c.appendChild(m);}
+  var miss=missingSystemRules();
+  if(miss.length){var sb=document.createElement('button');sb.className='cp-btn ghost lime';sb.style.marginTop='14px';
+    sb.textContent=sysArmed?'Tap again to add '+miss.length+' rule'+(miss.length>1?'s':''):'Add the rules from The System';
+    sb.onclick=addSystemRules;c.appendChild(sb);}
 }
 
 function cycleRule(ruleId){
   var RULES=loadRules();
   var rule=RULES.find(function(r){return r.id===ruleId;});
   if(!rule) return;
+  if(rule.kind==='plan'){ruleMsg='Ladder checks this rule. You cannot tick it yourself.';buildRules();setTimeout(function(){ruleMsg='';buildRules();},3500);return;}
   if(!S.rules) S.rules={};
   var old=S.rules[ruleId];
   var next;
@@ -6025,23 +6102,25 @@ var COACH_URL='';
     jget('ladder_extra_'+dk(),[]).forEach(function(x,i){if(!x||!x.t)return;total++;if(!x.d){var v=V['x'+i];open.push((v&&v.w)?v.w:x.t);}});
     return {open:open,total:total};
   }
-  function state(){var c=cfg(),o=items();return {c:c,o:o,locked:c.tasks&&(o.total===0||o.open.length>0),aiLocked:c.ai&&Date.now()>c.pass};}
+  function win(){try{return window.ruleWindow?ruleWindow():null;}catch(e){return null;}}
+  function state(){var c=cfg(),o=items(),w=win(),tl=o.total===0||o.open.length>0,out=!!(w&&!inRuleWindow(w));return {c:c,o:o,w:w,taskLocked:c.tasks&&tl,outside:out,locked:c.tasks&&(tl||out),aiLocked:c.ai&&Date.now()>c.pass};}
+  window.lockRefresh=function(){nsync();paint();try{if(window.refreshTiles)refreshTiles();}catch(e){}};
   function hhmm(ms){var d=new Date(ms);return pad(d.getHours())+':'+pad(d.getMinutes());}
   function status(s){
     var l=[];
     if(!s.c.tasks&&!s.c.ai)return 'Both locks are off.';
-    if(s.c.tasks)l.push(s.locked?(s.o.total===0?'Phone: locked. No deliverables written for today.':'Phone: locked. '+s.o.open.length+' of '+s.o.total+' still open.'):'Phone: open. All deliverables for today are done.');
+    if(s.c.tasks)l.push(s.taskLocked?(s.o.total===0?'Phone: locked. No deliverables written for today.':'Phone: locked. '+s.o.open.length+' of '+s.o.total+' still open.'):(s.outside?'Phone: locked. Deliverables done. Your social window is '+s.w.fromTxt+' to '+s.w.toTxt+'.':'Phone: open. All deliverables for today are done.'));
     if(s.c.ai)l.push(s.aiLocked?'AI: closed until you think first.':'AI: open until '+hhmm(s.c.pass)+'.');
     return l.join('<br>');
   }
   window.lockTile=function(){var s=state();
     if(!s.c.tasks&&!s.c.ai)return {sub:'Your apps stay closed until the work is done',ok:false,hot:false};
-    if(s.c.tasks)return s.locked?{sub:(s.o.total===0?'Locked. Write the deliverables for today':'Locked. '+s.o.open.length+' still open'),ok:false,hot:true}:{sub:'Open. All done today',ok:true,hot:false};
+    if(s.c.tasks)return s.taskLocked?{sub:(s.o.total===0?'Locked. Write the deliverables for today':'Locked. '+s.o.open.length+' still open'),ok:false,hot:true}:(s.outside?{sub:'Done. Apps open at '+s.w.fromTxt,ok:true,hot:false}:{sub:'Open. All done today',ok:true,hot:false});
     return {sub:s.aiLocked?'AI closed until you think first':'AI open until '+hhmm(s.c.pass),ok:!s.aiLocked,hot:false};
   };
   function nsync(){
     var s=state();
-    var o={mode:s.c.tasks,doneDay:(s.c.tasks&&!s.locked)?dk():'',ai:s.c.ai,passUntil:s.c.pass};
+    var o={mode:s.c.tasks,doneDay:(s.c.tasks&&!s.taskLocked)?dk():'',ai:s.c.ai,passUntil:s.c.pass,winFrom:s.w?s.w.from:-1,winTo:s.w?s.w.to:-1};
     try{liveCall('lock',o).then(function(r){var n=!!(r&&r.ok);if(n!==native){native=n;paint();}}).catch(function(){if(native!==false){native=false;paint();}});}catch(e){native=false;}
   }
   function gateCheck(){
@@ -6057,6 +6136,7 @@ var COACH_URL='';
     if(!s.locked&&!force){lockClose();return;}
     var top,list;
     if(s.o.total===0){top='No deliverables, no scrolling.';list='<div class="lk-p">You have not written the deliverables for today yet. Write them first.</div>';}
+    else if(!s.o.open.length&&s.outside){top='Your deliverables are done. Social media opens at '+s.w.fromTxt+' and closes at '+s.w.toTxt+'. Your own rule.';list='';}
     else if(!s.o.open.length){top='Nothing open right now. This is what you see while something still is.';list='';}
     else{top='Finish what you said you would do. '+s.o.open.length+' of '+s.o.total+' still open.';list=s.o.open.map(function(t){return '<div class="lk-li"><i></i><span>'+E(t)+'</span></div>';}).join('');}
     e.innerHTML='<div><div class="lk-k">Your apps are closed</div><div class="lk-h">LOCKED.</div><div class="lk-p" style="margin-bottom:14px">'+top+'</div>'+list+'</div>'
@@ -6097,7 +6177,7 @@ var COACH_URL='';
   window.lockToggle=function(k){
     var c=cfg(),s=state();
     if(k==='tasks'){
-      if(c.tasks){if(s.locked){arm='stay';paint();return;}c.tasks=false;arm='';}
+      if(c.tasks){if(s.taskLocked){arm='stay';paint();return;}c.tasks=false;arm='';}
       else{if(arm!=='tasks'){arm='tasks';paint();setTimeout(function(){if(arm==='tasks'){arm='';paint();}},4000);return;}c.tasks=true;arm='';}
     }else{c.ai=!c.ai;if(!c.ai)c.pass=0;arm='';}
     put(c);nsync();paint();try{if(window.refreshTiles)refreshTiles();}catch(e){}if(window.hap)hap('medium');
@@ -6109,7 +6189,7 @@ var COACH_URL='';
     var hint=arm==='tasks'?'<div class="cp-why" style="margin:8px 0 0;color:var(--lime)">Tap again to lock. You can only switch it off once the deliverables for today are done.</div>'
       :(arm==='stay'?'<div class="cp-why" style="margin:8px 0 0;color:var(--red)">Still locked. Finish the deliverables for today, then you can switch it off.</div>':'');
     el.innerHTML='<div class="lbl" style="margin-bottom:10px">Lock</div>'+where
-      +'<div class="lk-row"><div><div class="tl-t">Phone lock</div><div class="cp-why" style="margin:4px 0 0">Your chosen apps stay closed until the deliverables for today are done.</div>'+hint+'</div><button class="lk-sw'+(s.c.tasks?' on':'')+'" id="lkSwTasks" aria-label="Phone lock" aria-pressed="'+s.c.tasks+'" onclick="lockToggle(\'tasks\')"><i></i></button></div>'
+      +'<div class="lk-row"><div><div class="tl-t">Phone lock</div><div class="cp-why" style="margin:4px 0 0">Your chosen apps stay closed until the deliverables for today are done.'+(s.w?' After that they only open '+s.w.fromTxt+' to '+s.w.toTxt+', your social window rule.':'')+'</div>'+hint+'</div><button class="lk-sw'+(s.c.tasks?' on':'')+'" id="lkSwTasks" aria-label="Phone lock" aria-pressed="'+s.c.tasks+'" onclick="lockToggle(\'tasks\')"><i></i></button></div>'
       +'<div class="lk-row"><div><div class="tl-t">Think first</div><div class="cp-why" style="margin:4px 0 0">Your AI apps stay closed until you have written your own answer. Then they open for 15 minutes.</div></div><button class="lk-sw'+(s.c.ai?' on':'')+'" id="lkSwAi" aria-label="Think first" aria-pressed="'+s.c.ai+'" onclick="lockToggle(\'ai\')"><i></i></button></div>'
       +'<div class="cp-lab">Right now</div><div class="cp-why" style="margin:0 0 6px;color:rgba(244,240,232,.85)">'+status(s)+'</div>'
       +'<button class="cp-btn ghost" onclick="lockPreview(\'tasks\')">See the lock screen</button><button class="cp-btn ghost" onclick="lockPreview(\'ai\')">See the think first screen</button>'
