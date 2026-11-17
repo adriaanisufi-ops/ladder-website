@@ -5504,7 +5504,8 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   window.floorSheetClose=function(){sheet.classList.remove('on');};
   function chipRender(){
     var its=items(),boot=document.getElementById('s-boot')&&document.getElementById('s-boot').classList.contains('active');
-    if(boot){chip.style.display='none';return;}
+    var day=document.getElementById('s-morning')&&document.getElementById('s-morning').classList.contains('active');
+    if(boot||day){chip.style.display='none';return;}
     chip.style.display='block';
     if(!its||!its.length){chip.textContent='BUILD FLOOR';chip.className='';return;}
     var x=data()[TODAY]||{},n=its.filter(function(i){return x[i.id];}).length;
@@ -5607,6 +5608,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   setInterval(function(){chipRender();var a=document.activeElement;if(!(a&&a.closest&&a.closest('#floorDay')))render();},60000);
   setTimeout(chipRender,2500);
   setTimeout(function(){penalize();render();},2000);
+  var _goTo=window.goTo;if(typeof _goTo==='function')window.goTo=function(){var r=_goTo.apply(this,arguments);try{chipRender();}catch(e){}return r;};
   document.addEventListener('visibilitychange',function(){if(!document.hidden){penalize();render();}});
 })();
 
