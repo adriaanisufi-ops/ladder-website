@@ -1066,7 +1066,7 @@ body.wp-on #wpMoreBtn{display:none!important}
         <div style="display:flex;flex-direction:column;gap:20px;">
           <div>
             <div class="lbl" style="margin-bottom:8px">The rule</div>
-            <input id="rText" class="li" placeholder="e.g. No social media until goal actions are done">
+            <input id="rText" class="li" placeholder="No social media until goal actions are done">
           </div>
           <div>
             <div class="lbl" style="margin-bottom:8px">Consequence when broken (km)</div>
@@ -1309,11 +1309,11 @@ body.wp-on #wpMoreBtn{display:none!important}
         <div style="display:flex;flex-direction:column;gap:20px;">
           <div>
             <div class="lbl" style="margin-bottom:8px">Name</div>
-            <input id="ftName" class="li" placeholder="e.g. Rest">
+            <input id="ftName" class="li" placeholder="Rest">
           </div>
           <div>
             <div class="lbl" style="margin-bottom:8px">Duration (minutes)</div>
-            <input id="ftMinutes" class="li" type="number" placeholder="e.g. 60">
+            <input id="ftMinutes" class="li" type="number" placeholder="60">
           </div>
         </div>
         <div style="display:flex;gap:10px;margin-top:28px;">
@@ -1337,7 +1337,7 @@ body.wp-on #wpMoreBtn{display:none!important}
           Write freely about what you want. What it is, why you want it, when you want it, what you're willing to do. Don't structure it. That's the AI's job. It will turn your words into a complete goal: outcome, daily action, milestones, check-in fields, adjustment rule. You review it before saving.
         </div>
 
-        <textarea id="aiInput" style="width:100%;background:none;border:1px solid var(--dim);color:var(--white);font-family:'IBM Plex Mono',monospace;font-size:0.82rem;resize:vertical;min-height:180px;outline:none;padding:16px;caret-color:var(--lime);line-height:1.8;" placeholder="e.g. I want to have 10k saved by february 2027 because it gives me freedom to be myself without depending on anyone. I'm thinking remote work for like 200 a week plus I'm writing a book and building a website I want to sell subscriptions for. I can put in about 4 hours a day..."></textarea>
+        <textarea id="aiInput" style="width:100%;background:none;border:1px solid var(--dim);color:var(--white);font-family:'IBM Plex Mono',monospace;font-size:0.82rem;resize:vertical;min-height:180px;outline:none;padding:16px;caret-color:var(--lime);line-height:1.8;" placeholder="I want to have 10k saved by february 2027 because it gives me freedom to be myself without depending on anyone. I'm thinking remote work for like 200 a week plus I'm writing a book and building a website I want to sell subscriptions for. I can put in about 4 hours a day..."></textarea>
         <div id="aiQuestions" style="display:none;"></div>
         <div id="aiStatus" style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--lime);margin-top:12px;min-height:20px;"></div>
         <div id="aiActionRow" style="display:flex;gap:10px;margin-top:16px;">
@@ -1356,15 +1356,15 @@ body.wp-on #wpMoreBtn{display:none!important}
             <div class="lbl" style="margin-bottom:8px">Goal name
               <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t1')">i</span><div class="tip-box" id="t1">Give your goal a short name. This is just for you to recognize it. Keep it simple: one to four words.<br><br>Examples:<br>• Freedom of action<br>• Graduation internship<br>• Build the body</div></span>
             </div>
-            <input id="gName" class="li" placeholder="e.g. Freedom of action" style="font-size:0.9rem;">
+            <input id="gName" class="li" placeholder="Freedom of action" style="font-size:0.9rem;">
           </div>
           <div>
             <div class="lbl" style="margin-bottom:8px">The number that proves it works (optional)</div>
-            <input id="mLabel" class="li" placeholder="What you measure, e.g. 10K time, weight, euros saved">
+            <input id="mLabel" class="li" placeholder="What you measure, like 10K time, weight, euros saved">
             <div style="display:flex;gap:8px;margin-top:8px">
               <input id="mStart" class="li" inputmode="decimal" style="flex:1" placeholder="Now">
               <input id="mTarget" class="li" inputmode="decimal" style="flex:1" placeholder="Target">
-              <input id="mUnit" class="li" style="flex:1" placeholder="Unit, e.g. min">
+              <input id="mUnit" class="li" style="flex:1" placeholder="Unit, like min">
             </div>
             <div style="font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;color:rgba(244,240,232,.5);margin-top:8px;line-height:1.4">Ticking things off shows you were busy. A number that moves shows you are getting somewhere. You log it once a week and the app tells you when you reach it.</div>
           </div>
@@ -1372,13 +1372,13 @@ body.wp-on #wpMoreBtn{display:none!important}
             <div class="lbl" style="margin-bottom:8px">Outcome goal
               <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t2')">i</span><div class="tip-box" id="t2">What exactly do you want to achieve, and by when? Be as specific as possible. A good outcome goal has a number and a date in it.<br><br>Examples:<br>• €10.000 balance by 16 feb 2027<br>• 3 interviews planned by 1 sept 2026<br>• Run a 10K in under 50 min by 1 jan 2027</div></span>
             </div>
-            <input id="gOutcome" class="li" placeholder="e.g. €10.000 balance by 16 feb 2027">
+            <input id="gOutcome" class="li" placeholder="€10.000 balance by 16 feb 2027">
           </div>
           <div style="display:none">
             <div class="lbl" style="margin-bottom:8px">Deadline
               <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t3')">i</span><div class="tip-box" id="t3">The date by which you want to have achieved your outcome goal. This is shown in the overview so you can always see how much time you have left.<br><br>Example: 16 feb 2027</div></span>
             </div>
-            <input id="gDeadline" class="li" placeholder="e.g. 16 feb 2027">
+            <input id="gDeadline" class="li" placeholder="16 feb 2027">
           </div>
           <div>
             <div class="lbl" style="margin-bottom:8px">Deliverables
@@ -1397,18 +1397,18 @@ body.wp-on #wpMoreBtn{display:none!important}
           <div style="display:none">
             <div class="lbl" style="margin-bottom:8px">Reward</div>
             <div style="font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:rgba(244,240,232,.5);line-height:1.4;margin-bottom:8px">What you get when you hit every deliverable and keep every rule that day.</div>
-            <input id="gReward" class="li" placeholder="e.g. one episode, a good coffee, 30 min guilt free">
+            <input id="gReward" class="li" placeholder="one episode, a good coffee, 30 min guilt free">
           </div>
           <div style="display:none">
             <div class="lbl" style="margin-bottom:8px">Punishment</div>
             <div style="font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:rgba(244,240,232,.5);line-height:1.4;margin-bottom:8px">What you do when you miss a deliverable or break a rule. Pick something real that you will actually do.</div>
-            <input id="gPunish" class="li" placeholder="e.g. 3 km walk tomorrow before breakfast">
+            <input id="gPunish" class="li" placeholder="3 km walk tomorrow before breakfast">
           </div>
           <div style="display:none">
             <div class="lbl" style="margin-bottom:8px">Adjustment rule
               <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t6')">i</span><div class="tip-box" id="t6">What do you do if your daily actions are consistently done (green) but the outcome still isn't moving? This rule forces you to change your approach instead of repeating what doesn't work.<br><br>Examples:<br>• 2 weeks green but no movement → switch from email to calling, or try a different sector<br>• 2 weeks green but no sales → change price or target audience</div></span>
             </div>
-            <input id="gAdjust" class="li" placeholder="e.g. 2 weeks green but no movement → change price, channel or audience">
+            <input id="gAdjust" class="li" placeholder="2 weeks green but no movement → change price, channel or audience">
           </div>
           <div style="display:none">
             <div class="lbl" style="margin-bottom:8px">Milestones
@@ -1420,7 +1420,7 @@ body.wp-on #wpMoreBtn{display:none!important}
             <div class="lbl" style="margin-bottom:8px">Sunday check-in fields
               <span class="tip-wrap"><span class="tip-icon" onclick="toggleTip('t8')">i</span><div class="tip-box" id="t8">This is how you measure progress. Every Sunday you fill these in, and the app keeps the history so you can see if the outcome is actually moving.<br><br>Write the things you want to track, separated by commas. Each becomes its own input box.<br><br>Examples:<br>• Balance, Sales this week, Active users<br>• Reactions received, Interviews planned<br>• Weight (kg), Workouts this week</div></span>
             </div>
-            <input id="gCheckinFields" class="li" placeholder="e.g. Balance, Sales this week, Active users">
+            <input id="gCheckinFields" class="li" placeholder="Balance, Sales this week, Active users">
           </div>
         </div>
         <div style="display:flex;gap:10px;margin-top:28px;">
@@ -3928,7 +3928,7 @@ function renderActionRows(){
     row.className='action-row-edit';
     row.innerHTML=
       '<div style="display:flex;gap:10px;align-items:flex-start;">'
-        +'<input class="li" style="flex:1" value="'+escAttr(a.text)+'" placeholder="e.g. 1 hour calling, emailing, LinkedIn" oninput="updateActionText('+idx+',this.value)">'
+        +'<input class="li" style="flex:1" value="'+escAttr(a.text)+'" placeholder="1 hour calling, emailing, LinkedIn" oninput="updateActionText('+idx+',this.value)">'
         +'<span class="action-row-del" onclick="removeActionRow('+idx+')" style="padding:10px;display:inline-block;">&#10005;</span>'
       +'</div>'
       +'<div style="display:flex;gap:8px;margin-top:10px;">'
@@ -3936,8 +3936,8 @@ function renderActionRows(){
         +'<button type="button" class="atype-btn small'+(a.type==='timer'?' active':'')+'" onclick="setActionRowType('+idx+',\'timer\')">Timer</button>'
         +'<button type="button" class="atype-btn small'+(a.type==='count'?' active':'')+'" onclick="setActionRowType('+idx+',\'count\')">Number</button>'
       +'</div>'
-      +(a.type==='timer'?'<input class="li" type="number" style="margin-top:10px" placeholder="Duration in minutes, e.g. 60" value="'+(a.minutes||'')+'" oninput="updateActionMinutes('+idx+',this.value)">':'')
-      +(a.type==='count'?'<div style="display:flex;gap:8px;margin-top:10px"><input class="li" type="number" inputmode="numeric" style="width:90px" placeholder="How many" value="'+(a.target||'')+'" oninput="updateActionTarget('+idx+',this.value)"><input class="li" style="flex:1" placeholder="Of what, e.g. messages sent" value="'+escAttr(a.unit||'')+'" oninput="updateActionUnit('+idx+',this.value)"></div><div style="font-family:\'IBM Plex Sans\',sans-serif;font-size:.8rem;color:rgba(244,240,232,.5);margin-top:8px;line-height:1.4">A step is measurable when it has a number. You log how many you did and it counts as done when you reach it.</div>':'');
+      +(a.type==='timer'?'<input class="li" type="number" style="margin-top:10px" placeholder="Duration in minutes, like 60" value="'+(a.minutes||'')+'" oninput="updateActionMinutes('+idx+',this.value)">':'')
+      +(a.type==='count'?'<div style="display:flex;gap:8px;margin-top:10px"><input class="li" type="number" inputmode="numeric" style="width:90px" placeholder="How many" value="'+(a.target||'')+'" oninput="updateActionTarget('+idx+',this.value)"><input class="li" style="flex:1" placeholder="Of what, like messages sent" value="'+escAttr(a.unit||'')+'" oninput="updateActionUnit('+idx+',this.value)"></div><div style="font-family:\'IBM Plex Sans\',sans-serif;font-size:.8rem;color:rgba(244,240,232,.5);margin-top:8px;line-height:1.4">A step is measurable when it has a number. You log how many you did and it counts as done when you reach it.</div>':'');
     c.appendChild(row);
   });
 }
@@ -4012,7 +4012,7 @@ function buildGoalsList(){
           +(done?'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;color:var(--lime);margin-left:auto;">done</span>':'')
         +'</div>';
       }).join(''):'<div style="font-family:\'IBM Plex Sans\',sans-serif;font-size:.9rem;color:rgba(244,240,232,.5);line-height:1.4;padding:4px 0 8px">No deliverables yet. A deliverable is something that must exist, specific and finishable, with a number.</div>')
-      +'<div class="wk-add" style="margin:10px 0 4px"><input class="wk-in" id="dAdd_'+g.id+'" placeholder="e.g. 10 outreach messages sent" onkeydown="if(event.key===\'Enter\')addDeliverable(\''+g.id+'\')"><button class="cp-btn" onclick="addDeliverable(\''+g.id+'\')">ADD</button></div>'
+      +'<div class="wk-add" style="margin:10px 0 4px"><input class="wk-in" id="dAdd_'+g.id+'" placeholder="10 outreach messages sent" onkeydown="if(event.key===\'Enter\')addDeliverable(\''+g.id+'\')"><button class="cp-btn" onclick="addDeliverable(\''+g.id+'\')">ADD</button></div>'
       +metricHTML(g)
 
       +((g.rules&&g.rules.length)||g.reward||g.punish?'<div style="margin:12px 0 4px;font-family:\'IBM Plex Sans\',sans-serif;font-size:.88rem;line-height:1.5;color:rgba(244,240,232,.7)">'
@@ -5921,7 +5921,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     var tail=total&&done===total?'<div class="cp-why" style="margin:6px 0 10px;color:var(--lime)">All done. Check your reward on Ladder.</div>':'';
     if(!total)h='<div class="cp-why">Nothing here yet. Add what must exist each day under Goals, or add something for today below.</div><button class="cp-btn ghost" onclick="goTo(\'s-goals\')">Go to goals</button>';
     host.innerHTML='<div class="cp-card'+(total&&done===total?' held':' run')+'"><div class="cp-top"><span class="cp-k">'+head+'</span></div>'+h+tail
-      +'<div class="wk-add" style="margin:8px 0 0"><input class="wk-in" id="dayNew" placeholder="Add a deliverable, e.g. 3 pitches sent" onkeydown="if(event.key===\'Enter\')dayAdd()"><button class="cp-btn" onclick="dayAdd()">ADD</button></div></div>';
+      +'<div class="wk-add" style="margin:8px 0 0"><input class="wk-in" id="dayNew" placeholder="Add a deliverable, like 3 pitches sent" onkeydown="if(event.key===\'Enter\')dayAdd()"><button class="cp-btn" onclick="dayAdd()">ADD</button></div></div>';
   }
   function tickKey(k){if(!k)return;if(k.charAt(0)==='x'){var l=xload(),i=parseInt(k.slice(1));if(l[i]){l[i].d=true;xput(l);}}else{try{if(!S.goalActions)S.goalActions={};if(!S.goalActions[TODAY])S.goalActions[TODAY]={};S.goalActions[TODAY][k]=true;save();}catch(e){}}}
   window.dayTick=function(id){try{toggleGoalAction(id);}catch(e){}render();if(window.hap)hap('medium');};
