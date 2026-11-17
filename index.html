@@ -626,6 +626,14 @@ body.on-morning #catchFab{bottom:calc(92px + var(--sab))}
 .fl-t{flex:1;font-family:'IBM Plex Sans',sans-serif;font-size:1rem;color:#eee}
 .fl-row.on .fl-t{color:#888;text-decoration:line-through}
 .fl-s{font-family:'IBM Plex Sans',sans-serif;font-size:.78rem;color:#888}
+.fl-row.now{background:rgba(212,240,0,.07);margin:0 -18px;padding:13px 18px;border-top-color:rgba(212,240,0,.35)}
+.fl-row.now .fl-s{color:var(--lime);font-weight:600}
+.fl-row.late .fl-s{color:#ff6b6b}
+.fl-row.late i{border-color:rgba(255,45,45,.6)}
+.fl-tag{font-family:'IBM Plex Mono',monospace;font-size:.55rem;letter-spacing:.14em;color:var(--lime);margin-right:6px}
+.fl-warn{font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:#ff8a8a;margin:4px 0 10px;line-height:1.4}
+.fl-pen{font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:#ff8a8a;margin:0 0 10px;line-height:1.4}
+#floorDay .fl-card{margin:6px 0 22px}
 .fl-edit{background:none;border:0;color:#888;font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;text-decoration:underline;padding:10px 0}
 #floorEdit .fl-l{font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:#999;margin:10px 0 4px}
 #floorEdit input.li{width:100%}
@@ -903,6 +911,7 @@ body.wp-on #wpMoreBtn{display:none!important}
     <div class="ybar" id="yBar">Loading...</div>
 
     <div id="buddyNudge" class="bd-nudge" style="display:none"></div>
+    <div id="floorDay"></div>
     <div id="wkHost" style="margin-bottom:26px"></div>
     <div id="planRun" style="display:none;border-left:2px solid var(--lime);padding:4px 0 4px 14px;">
       <button id="wpMoreBtn" class="cp-more" onclick="wpMenu()">More</button>
@@ -1082,18 +1091,18 @@ body.wp-on #wpMoreBtn{display:none!important}
     <div class="pg" id="pg-pen" data-title="Penalties">
     <div class="lbl" style="margin-bottom:14px">Penalties</div>
     <div class="pen-card">
-      <div class="pen-row"><div class="pen-t">Skip the morning routine</div><div class="pen-v">+5 km</div></div>
+      <div class="pen-row"><div class="pen-t">Floor not held by midnight</div><div class="pen-v">+5 km</div></div>
       <div class="pen-row"><div class="pen-t">Break a rule</div><div class="pen-v">its own km</div></div>
-      <div class="pen-row"><div class="pen-t">All debt is run before Sunday ends</div><div class="pen-v w">Sunday</div></div>
-      <div class="pen-foot">No music while you run. That is the point.</div>
+      <div class="pen-row"><div class="pen-t">All debt is walked or run before Sunday ends</div><div class="pen-v w">Sunday</div></div>
+      <div class="pen-foot">Walking counts. Running is faster. No music either way. That is the point.</div>
     </div>
     <div id="debtPanel" class="debt-card" style="display:none;">
-      <div class="debt-top"><div class="debt-k">Run it off</div><div class="debt-n" id="debtNum">0 km</div></div>
+      <div class="debt-top"><div class="debt-k">Walk or run it off</div><div class="debt-n" id="debtNum">0 km</div></div>
       <div id="debtDeadline" class="debt-dl"></div>
       <div class="debt-btns">
-        <button class="debt-pay" onclick="payKm(1)">Ran 1 km</button>
-        <button class="debt-pay" onclick="payKm(5)">Ran 5 km</button>
-        <button class="debt-pay" onclick="payKm(10)">Ran 10 km</button>
+        <button class="debt-pay" onclick="payKm(1)">Did 1 km</button>
+        <button class="debt-pay" onclick="payKm(5)">Did 5 km</button>
+        <button class="debt-pay" onclick="payKm(10)">Did 10 km</button>
       </div>
       <div class="debt-add"><button onclick="addKm(5)">+ 5 km</button><button onclick="addKm(10)">+ 10 km</button><span>add a penalty</span></div>
     </div>
@@ -1393,7 +1402,7 @@ body.wp-on #wpMoreBtn{display:none!important}
           <div style="display:none">
             <div class="lbl" style="margin-bottom:8px">Punishment</div>
             <div style="font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:rgba(244,240,232,.5);line-height:1.4;margin-bottom:8px">What you do when you miss a deliverable or break a rule. Pick something real that you will actually do.</div>
-            <input id="gPunish" class="li" placeholder="e.g. 3 km run tomorrow before breakfast">
+            <input id="gPunish" class="li" placeholder="e.g. 3 km walk tomorrow before breakfast">
           </div>
           <div style="display:none">
             <div class="lbl" style="margin-bottom:8px">Adjustment rule
@@ -3339,7 +3348,7 @@ function updateStats(){
     var dow=nw.getDay(); // 0=Sun
     var daysLeft=dow===0?0:7-dow;
     var txt;
-    if(daysLeft===0) txt='Deadline today. Sunday. Run it or it doubles.';
+    if(daysLeft===0) txt='Deadline today. Sunday. Walk or run it, or it doubles.';
     else if(daysLeft===1) txt='Due by Sunday. 1 day left.';
     else txt='Due by Sunday. '+daysLeft+' days left.';
     dd.innerHTML=txt+' <span style="color:rgba(244,240,232,0.18)">'+(S.kmDebt||0)+'km outstanding</span>';
@@ -3405,7 +3414,6 @@ function markToday(win){
     var mDone=Object.values(S.morning).filter(Boolean).length;
     var tDone=(S.tasks||[]).filter(function(t){return t.done;}).length;
     var tTotal=(S.tasks||[]).length;
-    if(mDone<MS.length) debt+=5;
     if(tTotal>0&&tDone===0) debt+=10;
     S.kmDebt=(S.kmDebt||0)+debt;
     var f=document.getElementById('pFlash');
@@ -5440,6 +5448,9 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
 (function(){
   var FK='ladder_floor',IK='ladder_floor_items',MAXI=7;
   var SUGG=['Phone out of the bedroom','Lights out on time','Up on time','Move for ten minutes','Plan tomorrow in one line','Read ten pages','Write for ten minutes','Meditate five minutes','Drink water before coffee','Eat a proper meal'];
+  var STIME={'Up on time':'07:30','Drink water before coffee':'07:35','Move for ten minutes':'07:45','Meditate five minutes':'08:00','Read ten pages':'08:10','Write for ten minutes':'08:30','Eat a proper meal':'18:00','Plan tomorrow in one line':'21:30','Phone out of the bedroom':'22:30','Lights out on time':'23:00'};
+  var SYSTEM=[{t:'Up with the light alarm. Phone stays in the closet',time:'07:30'},{t:'Worry time on paper, 15 minutes',time:'07:45'},{t:'Three to dos written, hard task first',time:'08:00'},{t:'Sort everything in Drafts, 30 minutes',time:'20:30'},{t:'Phone away, no screens',time:'22:30'},{t:'Lights out',time:'23:00'}];
+  var PEN=5;
   var LEGACY=[{id:'0',t:'Phone in the closet, laptop closed',time:'22:30',remind:true},{id:'1',t:'Head dump on paper',time:'',remind:false},{id:'2',t:'Lights out',time:'23:00',remind:true},{id:'3',t:'Up, feet on the floor',time:'07:30',remind:false},{id:'4',t:'Move for ten minutes',time:'',remind:false}];
   function load(k,d){try{var v=JSON.parse(localStorage.getItem(k)||'null');return v==null?d:v;}catch(e){return d;}}
   function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
@@ -5457,9 +5468,33 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   }
   function data(){return load(FK,{});}
   function dstr(n){var d=new Date();d.setDate(d.getDate()-n);return d.toDateString();}
-  function heldDay(k,d){var x=(d||data())[k]||{};return !!x.held||['0','1','2','3','4'].every(function(i){return x[i];});}
+  function heldDay(k,d){var x=(d||data())[k]||{};if(x.held)return true;var its=load(IK,null);if(its&&its.length)return its.every(function(i){return x[i.id];});return ['0','1','2','3','4'].every(function(i){return x[i];});}
   function streak(){var d=data(),n=0,s=heldDay(dstr(0),d)?0:1;while(heldDay(dstr(s+n),d))n++;return n;}
   window.floorStreak=streak;
+  function mins(t){var p=String(t||'').split(':');return p.length<2?9999:(+p[0])*60+(+p[1]);}
+  function sorted(its){return its.slice().sort(function(a,b){return mins(a.time)-mins(b.time);});}
+  /* the floor is the day: every day it was not held costs PEN km, counted once */
+  function penalize(){
+    try{
+      var its=items();if(!its||!its.length)return;
+      if(!S||S.date!==new Date().toDateString())return;
+      var since=+(localStorage.getItem('ladder_floor_since')||0);
+      if(!since){localStorage.setItem('ladder_floor_since',String(Date.now()));return;}
+      var last=localStorage.getItem('ladder_floor_pen')||'';
+      var d=data(),add=0,miss=[];
+      for(var n=7;n>=1;n--){
+        var day=new Date();day.setHours(12,0,0,0);day.setDate(day.getDate()-n);
+        var ks=day.toDateString(),iso=day.toISOString().slice(0,10);
+        if(day.getTime()<since)continue;
+        if(last&&iso<=last)continue;
+        if(!heldDay(ks,d)){add+=PEN;miss.push(ks);}
+      }
+      var y=new Date();y.setDate(y.getDate()-1);y.setHours(12,0,0,0);
+      localStorage.setItem('ladder_floor_pen',y.toISOString().slice(0,10));
+      if(add){S.kmDebt=(S.kmDebt||0)+add;window.save&&window.save();try{localStorage.setItem('ladder_floor_pen_msg',JSON.stringify({day:new Date().toDateString(),n:miss.length,km:add}));}catch(e){}try{updateStats();}catch(e){}}
+    }catch(e){}
+  }
+  window.floorPenalize=penalize;
   var sheet=document.createElement('div');sheet.id='floorSheet';sheet.className='ovl';sheet.style.justifyContent='flex-start';
   sheet.innerHTML='<button class="aff-x" onclick="floorSheetClose()">Close</button><div class="fs-h">TODAY\'S FLOOR</div><div id="floorCard"></div>';
   document.body.appendChild(sheet);
@@ -5478,25 +5513,33 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   window.floorChipRender=chipRender;
   function host(){return document.getElementById('floorCard');}
   function esc2(s){return typeof esc==='function'?esc(s):String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
-  function render(){
-    chipRender();
-    var c=host();if(!c)return;
+  function hosts(){return [document.getElementById('floorCard'),document.getElementById('floorDay')].filter(Boolean);}
+  function cardHTML(){
     var its=items();
     if(!its||!its.length){
-      c.className='fl-card';
-      c.innerHTML='<div class="fl-top"><div class="fl-k">YOUR FLOOR</div></div><div class="fl-q">The minimum you do every day, even on your worst day. Three to five small things. You choose them.</div><button class="fl-build" onclick="floorEdit()">BUILD MY FLOOR</button>';
-      return;
+      return {cls:'fl-card',h:'<div class="fl-top"><div class="fl-k">YOUR FLOOR</div></div><div class="fl-q">Your routine from morning to night. The minimum you do every day, even on your worst day. Every item gets a time. Miss it and '+PEN+' km go on your debt.</div><button class="fl-build" onclick="floorEdit()">BUILD MY FLOOR</button>'};
     }
-    var d=data(),x=d[TODAY]||{},n=0,h='';
-    its.forEach(function(it){var on=!!x[it.id];if(on)n++;h+='<div class="fl-row'+(on?' on':'')+'" data-id="'+esc2(it.id)+'"><i></i><div class="fl-t">'+esc2(it.t)+'</div><div class="fl-s">'+esc2(it.time||'')+'</div></div>';});
-    var ok=n===its.length,st=streak();
-    c.className='fl-card'+(ok?' held':'');
-    c.innerHTML='<div class="fl-top"><div class="fl-k">THE FLOOR</div><div class="fl-n">'+n+'/'+its.length+(st>0?' · '+st+' day streak':'')+'</div></div>'
-      +(ok?'<div class="fl-big">THE FLOOR HELD.</div>':'<div class="fl-q">Every day. No negotiating.</div>')
-      +h+'<button class="fl-edit" onclick="floorEdit()">Edit my floor</button>';
+    var d=data(),x=d[TODAY]||{},n=0,h='',list=sorted(its),now=new Date(),nm=now.getHours()*60+now.getMinutes(),nowId='',noTime=0;
+    list.forEach(function(it){if(!x[it.id]&&!nowId&&mins(it.time)!==9999&&(mins(it.time)>=nm-30))nowId=it.id;});
+    if(!nowId)list.forEach(function(it){if(!x[it.id]&&!nowId)nowId=it.id;});
+    list.forEach(function(it){var on=!!x[it.id];if(on)n++;var m=mins(it.time);if(m===9999)noTime++;
+      var late=!on&&m!==9999&&m<nm-30,isNow=!on&&it.id===nowId;
+      h+='<div class="fl-row'+(on?' on':'')+(isNow?' now':'')+(late?' late':'')+'" data-id="'+esc2(it.id)+'"><i></i><div class="fl-t">'+(isNow?'<span class="fl-tag">NOW</span>':'')+esc2(it.t)+'</div><div class="fl-s">'+esc2(it.time||'no time')+'</div></div>';});
+    var ok=n===its.length,st=streak(),pm=null;
+    try{pm=JSON.parse(localStorage.getItem('ladder_floor_pen_msg')||'null');}catch(e){}
+    var pen=(pm&&pm.day===TODAY)?'<div class="fl-pen">'+(pm.n>1?pm.n+' days':'Yesterday')+' the floor did not hold. '+pm.km+' km added to your debt.</div>':'';
+    return {cls:'fl-card'+(ok?' held':''),h:'<div class="fl-top"><div class="fl-k">THE FLOOR</div><div class="fl-n">'+n+'/'+its.length+(st>0?' · '+st+' day streak':'')+'</div></div>'
+      +pen+(ok?'<div class="fl-big">THE FLOOR HELD.</div>':'<div class="fl-q">Morning to night. Not all done by midnight costs '+PEN+' km.</div>')
+      +(noTime?'<div class="fl-warn">'+noTime+' item'+(noTime>1?'s have':' has')+' no time yet. Give every item a time.</div>':'')
+      +h+'<button class="fl-edit" onclick="floorEdit()">Edit my floor</button>'};
+  }
+  function render(){
+    chipRender();
+    var o=cardHTML();
+    hosts().forEach(function(c){c.className=o.cls;c.innerHTML=o.h;});
   }
   document.addEventListener('click',function(e){
-    var r=e.target.closest&&e.target.closest('#floorCard .fl-row');if(!r)return;
+    var r=e.target.closest&&e.target.closest('#floorCard .fl-row,#floorDay .fl-row');if(!r)return;
     var id=r.getAttribute('data-id'),d=data();if(!d[TODAY])d[TODAY]={};d[TODAY][id]=!d[TODAY][id];
     var its=items()||[];var all=its.length>0&&its.every(function(i){return d[TODAY][i.id];});
     d[TODAY].held=all;save(FK,d);
@@ -5506,37 +5549,44 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
 
   // builder
   var ed=document.createElement('div');ed.id='floorEdit';ed.className='ovl';ed.style.justifyContent='flex-start';document.body.appendChild(ed);
-  var draft=[];
+  var draft=[],sysArm=false,bWarn='';
   function collect(){
     draft=[].slice.call(ed.querySelectorAll('.fb-row')).map(function(r){return {id:r.getAttribute('data-id'),t:r.querySelector('.fb-t').value.trim(),time:r.querySelector('.fb-time').value||'',remind:r.querySelector('.fb-rem').checked};});
   }
   function has(t){return draft.some(function(x){return x.t.toLowerCase()===t.toLowerCase();});}
   function bRender(){
-    var h='<h2>BUILD YOUR<br><span>FLOOR.</span></h2><p>The minimum you do every day, even on your worst day. Small enough that you never skip it. Three to five things.</p><div class="fb-k">Tap to add</div><div class="fb-chips">';
+    var h='<h2>BUILD YOUR<br><span>FLOOR.</span></h2><p>Your routine from morning to night. The minimum you do every day, even on your worst day. Every item gets a time. Not all done by midnight means '+PEN+' km on your debt.</p>'
+      +'<button class="fl-build" id="fbSystem" style="margin-top:14px">'+(sysArm?'TAP AGAIN. THIS REPLACES YOUR LIST':'START FROM THE SYSTEM')+'</button><div class="fb-k">Or tap to add</div><div class="fb-chips">';
     SUGG.forEach(function(s,i){h+='<button class="'+(has(s)?'on':'')+'" data-s="'+i+'">'+esc2(s)+'</button>';});
     h+='</div><div class="fb-k">Your floor ('+draft.length+' of '+MAXI+')</div>';
     draft.forEach(function(it){
       h+='<div class="fb-row" data-id="'+esc2(it.id)+'"><input class="li fb-t" value="'+esc2(it.t)+'" placeholder="What is it?"><div class="fb-line"><div class="fb-tw'+(it.time?'':' empty')+'"><input class="fb-time" type="time" value="'+esc2(it.time||'')+'"></div><label class="fb-rm'+(it.remind?' on':'')+'"><input type="checkbox" class="fb-rem"'+(it.remind?' checked':'')+'>Remind me</label><button class="fb-x">Remove</button></div></div>';
     });
     h+='<div class="fb-add"><input class="li" id="fbNew" placeholder="Write your own"><button id="fbAdd">Add</button></div>'
-      +(draft.length>5?'<div class="fb-warn">More than five is how a floor breaks. Keep it small.</div>':'')
+      +(draft.length>6?'<div class="fb-warn">More than six is how a floor breaks. Keep it small.</div>':'')
+      +(bWarn?'<div class="fb-warn">'+bWarn+'</div>':'')
       +'<button class="ov-go" style="margin-top:20px" id="fbSave">SAVE MY FLOOR</button><button class="ov-skip" id="fbCancel">Cancel</button>';
     var sc=ed.scrollTop;ed.innerHTML=h;ed.scrollTop=sc;
   }
   ed.addEventListener('click',function(e){
     var t=e.target;
-    if(t.closest('.fb-chips button')){collect();var s=SUGG[+t.closest('button').getAttribute('data-s')];var i=draft.findIndex(function(x){return x.t.toLowerCase()===s.toLowerCase();});if(i>-1)draft.splice(i,1);else if(draft.length<MAXI)draft.push({id:'u'+Date.now()+Math.floor(Math.random()*99),t:s,time:'',remind:false});bRender();return;}
+    if(t.id==='fbSystem'){collect();if(draft.length&&!sysArm){sysArm=true;bRender();setTimeout(function(){if(sysArm){sysArm=false;if(ed.classList.contains('on')){collect();bRender();}}},4000);return;}
+      sysArm=false;bWarn='';draft=SYSTEM.map(function(x,i){return {id:'s'+Date.now()+i,t:x.t,time:x.time,remind:true};});bRender();return;}
+    if(t.closest('.fb-chips button')){collect();bWarn='';var s=SUGG[+t.closest('button').getAttribute('data-s')];var i=draft.findIndex(function(x){return x.t.toLowerCase()===s.toLowerCase();});if(i>-1)draft.splice(i,1);else if(draft.length<MAXI)draft.push({id:'u'+Date.now()+Math.floor(Math.random()*99),t:s,time:STIME[s]||'',remind:!!STIME[s]});bRender();return;}
     if(t.classList.contains('fb-x')){collect();var id=t.closest('.fb-row').getAttribute('data-id');draft=draft.filter(function(x){return x.id!==id;});bRender();return;}
     if(t.id==='fbAdd'){collect();var v=document.getElementById('fbNew').value.trim();if(v&&draft.length<MAXI&&!has(v))draft.push({id:'u'+Date.now(),t:v,time:'',remind:false});bRender();return;}
     if(t.id==='fbCancel'){ed.classList.remove('on');return;}
-    if(t.id==='fbSave'){collect();draft=draft.filter(function(x){return x.t;});if(!draft.length)return;save(IK,draft);ed.classList.remove('on');render();schedule();hap('success');}
+    if(t.id==='fbSave'){collect();draft=draft.filter(function(x){return x.t;});if(!draft.length)return;
+      var nt=draft.filter(function(x){return !x.time;}).length;if(nt){bWarn='Give every item a time. '+nt+' still '+(nt>1?'have':'has')+' none.';bRender();return;}
+      bWarn='';draft=sorted(draft);save(IK,draft);try{if(!localStorage.getItem('ladder_floor_since'))localStorage.setItem('ladder_floor_since',String(Date.now()));}catch(e){}
+      ed.classList.remove('on');render();schedule();hap('success');}
   });
   ed.addEventListener('change',function(e){
     var t=e.target;
     if(t.classList.contains('fb-time')){t.parentNode.classList.toggle('empty',!t.value);if(!t.value){var r=t.closest('.fb-row').querySelector('.fb-rm');r.classList.remove('on');r.querySelector('input').checked=false;}}
     if(t.classList.contains('fb-rem')){var row=t.closest('.fb-row'),tm=row.querySelector('.fb-time');if(t.checked&&!tm.value){tm.value='20:00';tm.parentNode.classList.remove('empty');}t.parentNode.classList.toggle('on',t.checked);}
   });
-  window.floorEdit=function(){draft=(items()||[]).map(function(x){return Object.assign({},x);});bRender();ed.classList.add('on');ed.scrollTop=0;};
+  window.floorEdit=function(){sysArm=false;bWarn='';draft=sorted(items()||[]).map(function(x){return Object.assign({},x);});bRender();ed.classList.add('on');ed.scrollTop=0;};
 
   // reminders per item
   async function schedule(){
@@ -5554,8 +5604,10 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   window.floorSchedule=schedule;
   setTimeout(function(){render();try{if(localStorage.getItem('ladder_floor_sched')!=='2'&&(items()||[]).length)schedule();}catch(e){}},1800);
   var _g=goTo;goTo=function(id){_g(id);chipRender();};
-  setInterval(chipRender,30000);
+  setInterval(function(){chipRender();var a=document.activeElement;if(!(a&&a.closest&&a.closest('#floorDay')))render();},60000);
   setTimeout(chipRender,2500);
+  setTimeout(function(){penalize();render();},2000);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden){penalize();render();}});
 })();
 
 
