@@ -626,6 +626,10 @@ body.on-morning #catchFab{bottom:calc(92px + var(--sab))}
 .fl-t{flex:1;font-family:'IBM Plex Sans',sans-serif;font-size:1rem;color:#eee}
 .fl-row.on .fl-t{color:#888;text-decoration:line-through}
 .fl-s{font-family:'IBM Plex Sans',sans-serif;font-size:.78rem;color:#888}
+.cl-wrap{display:flex;gap:18px;align-items:center;margin:4px 0 26px;padding:18px;border:1px solid rgba(244,240,232,.08);border-radius:22px;background:rgba(244,240,232,.02)}
+.cl-k{font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.2em;color:rgba(244,240,232,.45);text-transform:uppercase}
+.cl-n{font-family:'Bebas Neue',sans-serif;font-size:3.4rem;line-height:1;color:var(--lime);margin:4px 0}
+.cl-p{font-family:'IBM Plex Sans',sans-serif;font-size:.86rem;color:rgba(244,240,232,.7);line-height:1.4}
 .fl-row.now{background:rgba(212,240,0,.07);margin:0 -18px;padding:13px 18px;border-top-color:rgba(212,240,0,.35)}
 .fl-row.now .fl-s{color:var(--lime);font-weight:600}
 .fl-row.late .fl-s{color:#ff6b6b}
@@ -931,6 +935,7 @@ body.wp-on #wpMoreBtn{display:none!important}
       <div class="lbl" style="margin-bottom:10px">Today I am</div>
       <div class="idstmt" id="idStmt">Someone who does<br>what he <span class="acc">says.</span></div>
       <div class="aff" data-set="am"></div>
+      <div id="voiceCard" style="margin-top:22px"></div>
     </div>
     <div class="pg" id="pg-complain" data-title="Complain and think"><div id="complainCard"></div></div>
 
@@ -1021,6 +1026,7 @@ body.wp-on #wpMoreBtn{display:none!important}
       <div class="sb"><div class="sn" id="stWins">0</div><div class="sl">Total<br>wins</div></div>
       <div class="sb" id="kmBlock" onclick="var d=document.getElementById('debtPanel');if(d&&d.style.display!=='none')d.scrollIntoView({behavior:'smooth',block:'center'});" style="cursor:pointer"><div class="sn bad" id="stKm">0km</div><div class="sl">KM<br>debt</div></div>
     </div>
+    <div id="climb"></div>
     <div id="timeLine" class="timeblock"></div>
 
     <div class="monthnav">
@@ -1114,6 +1120,7 @@ body.wp-on #wpMoreBtn{display:none!important}
 
     </div>
     <div class="pg" id="pg-lock" data-title="Lock"><div id="lockCard" class="bk-card"></div></div>
+    <div class="pg" id="pg-week" data-title="Your week"><div id="weekRcpt" class="bk-card"></div></div>
     <div class="pg" id="pg-vault" data-title="Your vault"><div id="vaultCard" class="bk-card"></div><input type="file" id="vaultIn" accept="video/*" capture="user" style="display:none"></div>
     <div class="pg" id="pg-partner" data-title="Accountability partner"><div id="buddyCard" class="bk-card"></div></div>
     <div class="pg" id="pg-coach" data-title="Coaching">
@@ -2350,7 +2357,7 @@ function rulesAuto(){
     var m=ruleMin(r.by||'10:00');if(m<0)return;
     var dl=new Date();dl.setHours(Math.floor(m/60),m%60,0,0);dl=dl.getTime();
     if(at&&at<=dl){S.rules[r.id]=true;changed=true;}
-    else if(Date.now()>dl){S.rules[r.id]=false;S.kmDebt=(S.kmDebt||0)+r.km;changed=true;
+    else if(Date.now()>dl){S.rules[r.id]=false;S.kmDebt=(S.kmDebt||0)+r.km;changed=true;try{var rl=JSON.parse(localStorage.getItem('ladder_rule_log')||'[]');rl.push({at:Date.now(),id:r.id});localStorage.setItem('ladder_rule_log',JSON.stringify(rl.slice(-500)));}catch(e){}
       var pf=document.getElementById('pFlash');if(pf){pf.style.opacity='1';setTimeout(function(){pf.style.opacity='0';},600);}}
   });
   if(changed){save();buildRules();try{updateStats();}catch(e){}}
@@ -2499,11 +2506,13 @@ function cycleRule(ruleId){
   else next=undefined;
   if(next===false && old!==false){
     S.kmDebt=(S.kmDebt||0)+rule.km;
+    try{var rl=JSON.parse(localStorage.getItem('ladder_rule_log')||'[]');rl.push({at:Date.now(),id:ruleId,day:new Date().toDateString()});localStorage.setItem('ladder_rule_log',JSON.stringify(rl.slice(-500)));}catch(e){}
     var pf=document.getElementById('pFlash');
     if(pf){pf.style.opacity='1';setTimeout(function(){pf.style.opacity='0';},600);}
   }
   if(next!==false && old===false){
     S.kmDebt=Math.max(0,(S.kmDebt||0)-rule.km);
+    try{var rl2=JSON.parse(localStorage.getItem('ladder_rule_log')||'[]');for(var q=rl2.length-1;q>=0;q--){if(rl2[q].id===ruleId&&rl2[q].day===new Date().toDateString()){rl2.splice(q,1);break;}}localStorage.setItem('ladder_rule_log',JSON.stringify(rl2));}catch(e){}
   }
   if(next===undefined) delete S.rules[ruleId];
   else S.rules[ruleId]=next;
@@ -3409,8 +3418,10 @@ function clearTodayMark(){
   S.history=S.history.filter(function(h){return h.date!==TODAY;});
   S.todayClosed=false; save(); buildLadder(); buildRewards();
 }
+function kmLog(km){try{var l=JSON.parse(localStorage.getItem('ladder_km_paid')||'[]');l.push({at:Date.now(),km:km});localStorage.setItem('ladder_km_paid',JSON.stringify(l.slice(-500)));}catch(e){}}
 function payKm(km){
   if((S.kmDebt||0)===0) return;
+  kmLog(Math.min(km,S.kmDebt||0));
   S.kmDebt=Math.max(0,(S.kmDebt||0)-km);
   save();
   updateStats();
@@ -5402,6 +5413,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   function heldDay(k,d){var x=(d||data())[k]||{};if(x.held)return true;var its=load(IK,null);if(its&&its.length)return its.every(function(i){return x[i.id];});return ['0','1','2','3','4'].every(function(i){return x[i];});}
   function streak(){var d=data(),n=0,s=heldDay(dstr(0),d)?0:1;while(heldDay(dstr(s+n),d))n++;return n;}
   window.floorStreak=streak;
+  window.floorHeldDay=function(k){var its=items();if(!its||!its.length)return null;return heldDay(k);};
   function mins(t){var p=String(t||'').split(':');return p.length<2?9999:(+p[0])*60+(+p[1]);}
   function sorted(its){return its.slice().sort(function(a,b){return mins(a.time)-mins(b.time);});}
   /* the floor is the day: every day it was not held costs PEN km, counted once */
@@ -6036,7 +6048,8 @@ var COACH_URL='';
     book:'<path d="M4 4h11a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3z"/><path d="M8 8h6"/>',
     data:'<path d="M12 4v10M8 10l4 4 4-4"/><path d="M5 18h14"/>',
     lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
-    vault:'<rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/>'
+    vault:'<rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/>',
+    rcpt:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>'
   };
   function T(title,sub,fn,ok,ic,badge,hot){return '<button class="tl'+(hot?' hot':'')+'" onclick="'+fn+'"><span class="tl-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(IC[ic]||'')+'</svg></span><span class="tl-m"><span class="tl-t">'+title+'</span><span class="tl-s'+(ok?' ok':'')+'">'+sub+'</span></span>'+(badge?'<span class="tl-badge">'+badge+'</span>':'')+'<span class="tl-c">&rsaquo;</span></button>';}
   function tiles(){
@@ -6055,7 +6068,7 @@ var COACH_URL='';
       var h='<div class="tiles-h" style="padding:0">More</div>';
       var lk={sub:'Your apps stay closed until the work is done',ok:false,hot:false};try{if(window.lockTile)lk=lockTile();}catch(e){}
       var vt={sub:'A video for every day that did not close',hot:false};try{if(window.vaultTile)vt=vaultTile();}catch(e){}
-      h='<div class="tiles">'+T('Lock',lk.sub,"openPanel('pg-lock')",lk.ok,'lock','',lk.hot)+T('Your vault',vt.sub,"openPanel('pg-vault')",false,'vault','',vt.hot)+T('Coaching call',window.COACH_URL?'Talk to a real person, one on one':'One on one with a real person. Opens soon.',"openPanel('pg-coach')",false,'coach',window.COACH_URL?'':'Soon',!!window.COACH_URL)
+      h='<div class="tiles">'+T('Lock',lk.sub,"openPanel('pg-lock')",lk.ok,'lock','',lk.hot)+T('Your vault',vt.sub,"openPanel('pg-vault')",false,'vault','',vt.hot)+T('Your week',new Date().getDay()===0?'Sunday. Your receipt is ready':'Your receipt of the last 7 days',"openPanel('pg-week')",false,'rcpt','',new Date().getDay()===0)+T('Coaching call',window.COACH_URL?'Talk to a real person, one on one':'One on one with a real person. Opens soon.',"openPanel('pg-coach')",false,'coach',window.COACH_URL?'':'Soon',!!window.COACH_URL)
         +T('Accountability partner',b.on?((b.partners||[]).length+(((b.partners||[]).length===1)?' partner':' partners')):'Let a friend see your streak',"openPanel('pg-partner')",!!b.on,'buddy')
         +T('Unbreakable rules',nr+(nr===1?' rule':' rules')+'. Hold them or run.',"openPanel('pg-rules')",false,'rules')
         +T('Penalties','Km debt: '+km,"openPanel('pg-pen')",false,'pen')
@@ -6080,7 +6093,8 @@ var COACH_URL='';
   function jget(k,f){try{var v=JSON.parse(localStorage.getItem(k)||'');return v==null?f:v;}catch(e){return f;}}
   function E(x){return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
   function wc(t){t=(t||'').trim();return t?t.split(/\s+/).length:0;}
-  function cfg(){var c=jget('ladder_lock',{});return {tasks:!!c.tasks,ai:!!c.ai,pass:+c.pass||0};}
+  function cfg(){var c=jget('ladder_lock',{});return {tasks:!!c.tasks,ai:!!c.ai,pass:+c.pass||0,glass:+c.glass||0};}
+  var GLASS_KM=10,GLASS_MIN=30,glassArm=false,glassMsg='';
   function put(c){try{localStorage.setItem('ladder_lock',JSON.stringify(c));}catch(e){}}
   function isApp(){try{return !!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());}catch(e){return false;}}
   function items(){
@@ -6091,12 +6105,13 @@ var COACH_URL='';
   }
   function win(){try{return window.ruleWindow?ruleWindow():null;}catch(e){return null;}}
   function debtKm(){try{return (window.hkOn&&hkOn())?(+S.kmDebt||0):0;}catch(e){return 0;}}
-  function state(){var c=cfg(),o=items(),w=win(),db=debtKm(),tl=o.total===0||o.open.length>0||db>0,out=!!(w&&!inRuleWindow(w));return {c:c,o:o,w:w,debt:db,taskLocked:c.tasks&&tl,outside:out,locked:c.tasks&&(tl||out),aiLocked:c.ai&&Date.now()>c.pass};}
+  function state(){var c=cfg(),o=items(),w=win(),db=debtKm(),tl=o.total===0||o.open.length>0||db>0,out=!!(w&&!inRuleWindow(w)),gl=Date.now()<c.glass;return {c:c,o:o,w:w,debt:db,glass:gl,taskLocked:c.tasks&&tl&&!gl,outside:out&&!gl,locked:c.tasks&&(tl||out)&&!gl,aiLocked:c.ai&&Date.now()>c.pass};}
   window.lockRefresh=function(){nsync();paint();try{if(window.refreshTiles)refreshTiles();}catch(e){}};
   function hhmm(ms){var d=new Date(ms);return pad(d.getHours())+':'+pad(d.getMinutes());}
   function status(s){
     var l=[];
     if(!s.c.tasks&&!s.c.ai)return 'Both locks are off.';
+    if(s.c.tasks&&s.glass)l.push('Phone: glass broken. Your apps are open until '+hhmm(s.c.glass)+'. It cost you '+GLASS_KM+' km.');else
     if(s.c.tasks&&s.debt>0&&!(s.o.total===0||s.o.open.length>0))l.push('Phone: locked. Deliverables done, but '+s.debt+' km debt is still open. Walk it off.');
     else if(s.c.tasks)l.push(s.taskLocked?(s.o.total===0?'Phone: locked. No deliverables written for today.':'Phone: locked. '+s.o.open.length+' of '+s.o.total+' still open.'):(s.outside?'Phone: locked. Deliverables done. Your social window is '+s.w.fromTxt+' to '+s.w.toTxt+'.':'Phone: open. All deliverables for today are done.'));
     if(s.c.ai)l.push(s.aiLocked?'AI: closed until you think first.':'AI: open until '+hhmm(s.c.pass)+'.');
@@ -6104,18 +6119,21 @@ var COACH_URL='';
   }
   window.lockTile=function(){var s=state();
     if(!s.c.tasks&&!s.c.ai)return {sub:'Your apps stay closed until the work is done',ok:false,hot:false};
+    if(s.c.tasks&&s.glass)return {sub:'Glass broken. Open until '+hhmm(s.c.glass),ok:false,hot:true};
     if(s.c.tasks&&s.debt>0&&!(s.o.total===0||s.o.open.length>0))return {sub:'Locked. '+s.debt+' km debt to walk off',ok:false,hot:true};
     if(s.c.tasks)return s.taskLocked?{sub:(s.o.total===0?'Locked. Write the deliverables for today':'Locked. '+s.o.open.length+' still open'),ok:false,hot:true}:(s.outside?{sub:'Done. Apps open at '+s.w.fromTxt,ok:true,hot:false}:{sub:'Open. All done today',ok:true,hot:false});
     return {sub:s.aiLocked?'AI closed until you think first':'AI open until '+hhmm(s.c.pass),ok:!s.aiLocked,hot:false};
   };
   function nsync(){
     var s=state();
-    var o={mode:s.c.tasks,doneDay:(s.c.tasks&&!s.taskLocked)?dk():'',ai:s.c.ai,passUntil:s.c.pass,winFrom:s.w?s.w.from:-1,winTo:s.w?s.w.to:-1};
+    var o={mode:s.c.tasks,doneDay:(s.c.tasks&&!s.taskLocked)?dk():'',ai:s.c.ai,passUntil:s.c.pass,winFrom:s.w?s.w.from:-1,winTo:s.w?s.w.to:-1,glassUntil:s.c.glass,openCount:s.o.open.length,openFirst:String(s.o.open[0]||'').slice(0,80),vaultHas:!!(window.vaultCount&&vaultCount()>0)};
     try{liveCall('lock',o).then(function(r){var n=!!(r&&r.ok);if(n!==native){native=n;paint();}}).catch(function(){if(native!==false){native=false;paint();}});}catch(e){native=false;}
   }
   function gateCheck(){
     try{liveCall('gate',{clear:true}).then(function(r){
-      if(!r||!r.at||Date.now()-r.at>20000)return;
+      if(!r||!r.at)return;var age=Date.now()-r.at;
+      if(r.kind==='vault'&&age<15*60000){try{openPanel('pg-vault');if(window.vaultPlayLatest)setTimeout(vaultPlayLatest,400);}catch(e){}return;}
+      if(age>(r.kind==='tasks'?15*60000:20000))return;
       if(r.kind==='ai')showThink();else showTasks(false);
     }).catch(function(){});}catch(e){}
   }
@@ -6167,7 +6185,7 @@ var COACH_URL='';
   window.lockToggle=function(k){
     var c=cfg(),s=state();
     if(k==='tasks'){
-      if(c.tasks){if(s.taskLocked){arm='stay';paint();return;}c.tasks=false;arm='';}
+      if(c.tasks){if(s.taskLocked||s.glass||s.o.total===0||s.o.open.length>0||s.debt>0){arm='stay';paint();return;}c.tasks=false;arm='';}
       else{if(arm!=='tasks'){arm='tasks';paint();setTimeout(function(){if(arm==='tasks'){arm='';paint();}},4000);return;}c.tasks=true;arm='';}
     }else{c.ai=!c.ai;if(!c.ai)c.pass=0;arm='';}
     put(c);nsync();paint();try{if(window.refreshTiles)refreshTiles();}catch(e){}if(window.hap)hap('medium');
@@ -6182,11 +6200,37 @@ var COACH_URL='';
       +'<div class="lk-row"><div><div class="tl-t">Phone lock</div><div class="cp-why" style="margin:4px 0 0">Your chosen apps stay closed until the deliverables for today are done.'+(s.w?' After that they only open '+s.w.fromTxt+' to '+s.w.toTxt+', your social window rule.':'')+'</div>'+hint+'</div><button class="lk-sw'+(s.c.tasks?' on':'')+'" id="lkSwTasks" aria-label="Phone lock" aria-pressed="'+s.c.tasks+'" onclick="lockToggle(\'tasks\')"><i></i></button></div>'
       +'<div class="lk-row"><div><div class="tl-t">Think first</div><div class="cp-why" style="margin:4px 0 0">Your AI apps stay closed until you have written your own answer. Then they open for 15 minutes.</div></div><button class="lk-sw'+(s.c.ai?' on':'')+'" id="lkSwAi" aria-label="Think first" aria-pressed="'+s.c.ai+'" onclick="lockToggle(\'ai\')"><i></i></button></div>'
       +'<div class="cp-lab">Right now</div><div class="cp-why" style="margin:0 0 6px;color:rgba(244,240,232,.85)">'+status(s)+'</div>'
+      +glassHTML(s)
       +stHTML()
       +'<button class="cp-btn ghost" onclick="lockPreview(\'tasks\')">See the lock screen</button><button class="cp-btn ghost" onclick="lockPreview(\'ai\')">See the think first screen</button>'
       +((st&&st.approved)?'<div class="cp-lab">Think first on iPhone</div><div class="cp-why" style="margin:0">Screen Time closes your locked apps for real. For your AI apps, use a Shortcuts automation: App, choose the AI apps, Is Opened, Run Immediately, action Check think first lock from LADDER, then If true, Open App LADDER.</div>':'<div class="cp-lab">Set it up on iPhone, once</div><div class="cp-why" style="margin:0">'
       +'1. Open the Shortcuts app, tab Automation, tap the plus.<br>2. Choose App, pick the apps to lock, choose Is Opened and Run Immediately.<br>3. Add the action Check task lock from LADDER.<br>4. Add If: when the result is true, add Open App and choose LADDER.<br>5. Do the same for your AI apps with the action Check think first lock.</div>');
   }
+  function glassHTML(s){
+    if(!s.c.tasks)return '';
+    var h='';
+    if(s.locked){h+='<div class="cp-lab">Emergency</div><div class="cp-why" style="margin:0 0 8px">Break the glass and your apps open for '+GLASS_MIN+' minutes. It costs '+GLASS_KM+' km on your debt, walked for real. Freedom has a price.</div>'
+      +'<button class="cp-btn ghost" style="border-color:'+(glassArm?'var(--red)':'rgba(255,45,45,.4)')+';color:var(--red)" onclick="lockGlass()">'+(glassArm?'TAP AGAIN. +'+GLASS_KM+' KM, OPEN '+GLASS_MIN+' MIN':'BREAK THE GLASS')+'</button>';}
+    if(glassMsg)h+='<div class="cp-why" style="margin:8px 0 0;color:var(--lime)">'+E(glassMsg)+'</div>';
+    if(s.glass)h+='<button class="cp-btn ghost" onclick="lockGlassTell()">Tell your partner</button>';
+    return h;
+  }
+  window.lockGlass=function(){
+    var s=state();if(!s.locked)return;
+    if(!glassArm){glassArm=true;paint();setTimeout(function(){if(glassArm){glassArm=false;paint();}},4000);return;}
+    glassArm=false;var c=cfg();c.glass=Date.now()+GLASS_MIN*60000;put(c);
+    try{S.kmDebt=(+S.kmDebt||0)+GLASS_KM;save();updateStats();var st2=document.getElementById('stKm');if(st2)st2.textContent=S.kmDebt+'km';}catch(e){}
+    var lg=jget('ladder_glass_log',[]);lg.push({at:Date.now(),km:GLASS_KM});try{localStorage.setItem('ladder_glass_log',JSON.stringify(lg.slice(-200)));}catch(e){}
+    glassMsg='Glass broken. '+GLASS_KM+' km added. Your apps open now, until '+hhmm(c.glass)+'.';
+    try{if(window.hap)hap('warning');}catch(e){}
+    nsync();paint();try{if(window.refreshTiles)refreshTiles();}catch(e){}
+    setTimeout(function(){glassMsg='';nsync();paint();try{if(window.refreshTiles)refreshTiles();}catch(e){}},GLASS_MIN*60000+2000);
+  };
+  window.lockGlassTell=function(){
+    var t='I broke the glass on my phone lock today. '+GLASS_KM+' km on my debt. Hold me to it.';
+    try{if(navigator.share){navigator.share({text:t}).catch(function(){});return;}}catch(e){}
+    try{location.href='sms:&body='+encodeURIComponent(t);}catch(e){}
+  };
   var st=null,stBusy=false;
   function stLoad(){try{liveCall('stStatus',{}).then(function(r){st=(r&&r.ok)?r:null;paint();}).catch(function(){st=null;});}catch(e){st=null;}}
   window.lockStAuth=function(){if(stBusy)return;stBusy=true;paint();try{liveCall('stAuth',{}).then(function(r){stBusy=false;if(r&&!r.approved&&r.error)stErr=r.error;stLoad();nsync();}).catch(function(){stBusy=false;paint();});}catch(e){stBusy=false;}};
@@ -6224,6 +6268,8 @@ var COACH_URL='';
   function owed(){try{var pm=JSON.parse(localStorage.getItem('ladder_floor_pen_msg')||'null');return !!(pm&&pm.day===new Date().toDateString());}catch(e){return false;}}
   window.vaultDoneToday=function(){return localStorage.getItem('ladder_vault_done_'+iso())==='1';};
   window.vaultTile=function(){var n=clips.length;if(owed()&&!vaultDoneToday())return {sub:'Yesterday did not close. Record why',hot:true};return {sub:n?n+(n===1?' video. Only for you':' videos. Only for you'):'A video for every day that did not close',hot:false};};
+  window.vaultCount=function(){return clips.length;};
+  window.vaultPlayLatest=function(){var go=function(){if(clips[0])vaultPlay(clips[0].id);};if(clips.length)go();else all(function(r){clips=r;paint();go();});};
   window.vaultOpenFor=function(k){pendReason=k==='floor'?'The floor did not hold':'';openPanel('pg-vault');};
   function paint(){
     var c=document.getElementById('vaultCard');if(!c)return;
@@ -6278,7 +6324,7 @@ var COACH_URL='';
     if(c.zero||!c.base){c.base=Date.now();c.cred=0;c.zero=false;put(c);}
     try{liveCall('hkDistance',{from:c.base}).then(function(r){
       if(!r||!r.ok)return;var k=km1(+r.km||0);lastKm=k;var nw=km1(k-(c.cred||0));
-      if(nw>=0.1){var pay=Math.min(nw,+S.kmDebt||0);S.kmDebt=km1((+S.kmDebt||0)-pay);c.cred=k;
+      if(nw>=0.1){var pay=Math.min(nw,+S.kmDebt||0);try{kmLog(km1(pay));}catch(e){}S.kmDebt=km1((+S.kmDebt||0)-pay);c.cred=k;
         if(S.kmDebt<=0){S.kmDebt=0;c.zero=true;msg='Debt walked off. Your phone opens if the rest is done.';try{if(window.hap)hap('success');}catch(e){}}
         put(c);save();try{updateStats();}catch(e){}var st=document.getElementById('stKm');if(st)st.textContent=(S.kmDebt||0)+'km';
         try{if(window.lockRefresh)lockRefresh();}catch(e){}}
@@ -6295,6 +6341,125 @@ var COACH_URL='';
 /* v112: modals live on top of everything, also when opened from a panel (rules edit was hidden behind it) */
 (function(){function lift(){['ruleModal','goalModal','checkinModal','freeTimerModal','aiGoalModal','catchModal'].forEach(function(id){var m=document.getElementById(id);if(m&&m.parentElement!==document.body)document.body.appendChild(m);});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',lift);else lift();setTimeout(lift,1000);})();
+
+/* v113: the ladder as a picture. A held day is a rung up, a broken day a rung down. */
+(function(){
+  function day(n){var d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-n);return d;}
+  function hist(){var m={};try{(S.history||[]).forEach(function(h){m[h.date]=h.win;});}catch(e){}return m;}
+  function climb(){
+    var h=hist(),rung=0,best=0,run=[],since=+(localStorage.getItem('ladder_floor_since')||0);
+    for(var n=60;n>=1;n--){var d=day(n),k=d.toDateString(),v=null;
+      if(window.floorHeldDay&&since&&d.getTime()>=since){var f=floorHeldDay(k);if(f!==null)v=f;}
+      if(v===null&&k in h)v=!!h[k];
+      if(v===null)continue;
+      rung=v?rung+1:Math.max(0,rung-1);best=Math.max(best,rung);run.push(v);}
+    var today=null;try{if(window.floorHeldDay)today=floorHeldDay(new Date().toDateString());}catch(e){}
+    return {rung:rung,best:best,last:run.slice(-7),today:today};
+  }
+  function svg(r){
+    var top=Math.max(r+3,8),bottom=Math.max(0,top-9),H=180,W=70,step=H/9,o='<svg width="'+W+'" height="'+(H+12)+'" viewBox="0 0 '+W+' '+(H+12)+'" aria-hidden="true">';
+    o+='<line x1="10" y1="2" x2="10" y2="'+(H+10)+'" stroke="rgba(244,240,232,.35)" stroke-width="2"/><line x1="60" y1="2" x2="60" y2="'+(H+10)+'" stroke="rgba(244,240,232,.35)" stroke-width="2"/>';
+    for(var i=0;i<=9;i++){var n=top-i,y=6+i*step,c=n===r?'#d4f000':(n<r?'rgba(244,240,232,.75)':'rgba(244,240,232,.14)'),w=n===r?5:2.5;
+      o+='<line x1="10" y1="'+y+'" x2="60" y2="'+y+'" stroke="'+c+'" stroke-width="'+w+'" stroke-linecap="round"/>';
+      if(n===r)o+='<circle cx="35" cy="'+(y-9)+'" r="5" fill="#d4f000"/>';}
+    return o+'</svg>';
+  }
+  function render(){
+    var el=document.getElementById('climb');if(!el)return;var c=climb();
+    var dots=c.last.map(function(v){return '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;background:'+(v?'#d4f000':'#ff2d2d')+'"></span>';}).join('');
+    var p=c.rung===0?'Every held day is one rung up. Every broken day takes you one down.'
+      :(c.rung>=c.best?'Your highest rung yet. Hold today and you climb to '+(c.rung+1)+'.':'Your best was rung '+c.best+'. Hold today and you climb to '+(c.rung+1)+'.');
+    if(c.today===true)p='Today is held. Tomorrow you stand on rung '+(c.rung+1)+'.';
+    var h='<div class="cl-wrap">'+svg(c.rung)+'<div><div class="cl-k">Your ladder</div><div class="cl-n">RUNG '+c.rung+'</div><div class="cl-p">'+p+'</div>'+(dots?'<div style="margin-top:10px">'+dots+'</div>':'')+'</div></div>';
+    if(el.getAttribute('data-sig')!==h){el.innerHTML=h;el.setAttribute('data-sig',h);}
+  }
+  window.climbRender=render;window.climbState=climb;
+  setTimeout(render,2200);setInterval(render,60000);
+  var _g=window.goTo;if(typeof _g==='function')window.goTo=function(id){var r=_g.apply(this,arguments);if(id==='s-ladder')setTimeout(render,50);return r;};
+})();
+
+/* v113: the weekly receipt. Proof of the week, made to share. */
+(function(){
+  var img=null,msg='';
+  function jg(k,f){try{var v=JSON.parse(localStorage.getItem(k)||'');return v==null?f:v;}catch(e){return f;}}
+  function stats(){
+    var from=new Date();from.setHours(0,0,0,0);from.setDate(from.getDate()-6);var t0=from.getTime();
+    var held=0,known=0;
+    for(var n=0;n<7;n++){var d=new Date(t0+n*86400000+43200000),k=d.toDateString(),v=null;try{if(window.floorHeldDay)v=floorHeldDay(k);}catch(e){}
+      if(v===null){try{(S.history||[]).forEach(function(h){if(h.date===k)v=!!h.win;});}catch(e){}}
+      if(v!==null){known++;if(v)held++;}}
+    var km=jg('ladder_km_paid',[]).filter(function(x){return x.at>=t0;}).reduce(function(a,x){return a+(+x.km||0);},0);
+    var rules=jg('ladder_rule_log',[]).filter(function(x){return x.at>=t0;}).length;
+    var glass=jg('ladder_glass_log',[]).filter(function(x){return x.at>=t0;}).length;
+    var rung=0;try{rung=climbState().rung;}catch(e){}
+    var debt=+S.kmDebt||0;
+    var f=new Date(t0),tt=new Date();var fmt=function(d){return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});};
+    return {held:held,km:Math.round(km*10)/10,rules:rules,glass:glass,rung:rung,debt:debt,range:fmt(f)+' to '+fmt(tt)};
+  }
+  function draw(st){
+    var c=document.createElement('canvas');c.width=1080;c.height=1350;var x=c.getContext('2d');
+    x.fillStyle='#080808';x.fillRect(0,0,1080,1350);
+    x.fillStyle='#d4f000';x.font='bold 64px "Bebas Neue", Impact, sans-serif';x.fillText('THE LADDER',90,150);
+    x.fillStyle='rgba(244,240,232,.55)';x.font='34px "IBM Plex Mono", monospace';x.fillText('WEEK RECEIPT  '+st.range.toUpperCase(),90,210);
+    x.strokeStyle='rgba(244,240,232,.25)';x.setLineDash([10,10]);x.beginPath();x.moveTo(90,260);x.lineTo(990,260);x.stroke();x.setLineDash([]);
+    var rows=[['FLOORS HELD',st.held+' / 7'],['KM WALKED OFF',st.km+' KM'],['RULES BROKEN',String(st.rules)],['GLASS BROKEN',String(st.glass)],['RUNG',String(st.rung)]];
+    rows.forEach(function(r,i){var y=360+i*150;x.fillStyle='rgba(244,240,232,.7)';x.font='40px "IBM Plex Mono", monospace';x.fillText(r[0],90,y);
+      x.fillStyle=i===0||i===4?'#d4f000':'#f4f0e8';x.font='bold 96px "Bebas Neue", Impact, sans-serif';var w=x.measureText(r[1]).width;x.fillText(r[1],990-w,y+8);
+      x.strokeStyle='rgba(244,240,232,.12)';x.beginPath();x.moveTo(90,y+50);x.lineTo(990,y+50);x.stroke();});
+    x.fillStyle='#f4f0e8';x.font='bold 54px "Bebas Neue", Impact, sans-serif';x.fillText('DISCIPLINE IS NOT FOR SALE.',90,1200);
+    x.fillStyle='rgba(244,240,232,.5)';x.font='32px "IBM Plex Mono", monospace';x.fillText('@theladderrr',90,1260);
+    return c;
+  }
+  function paint(){
+    var el=document.getElementById('weekRcpt');if(!el)return;var st=stats();var c=draw(st);img=c;
+    el.innerHTML='<div class="cp-lab">Your week</div><div class="cp-why" style="margin:0 0 12px">The last 7 days, as proof. Share it when it is good. Share it when it is bad, that is the braver one.</div>'
+      +'<img src="'+c.toDataURL('image/png')+'" alt="Your week receipt" style="width:100%;border-radius:16px;border:1px solid rgba(244,240,232,.12)">'
+      +'<button class="cp-btn" style="margin-top:14px" onclick="weekShare()">SHARE MY WEEK</button>'
+      +(msg?'<div class="cp-why" style="margin:8px 0 0;color:var(--lime)">'+msg+'</div>':'');
+  }
+  window.weekShare=function(){
+    if(!img)return;img.toBlob(function(b){
+      try{var f=new File([b],'ladder-week.png',{type:'image/png'});
+        if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],text:'My week on The Ladder.'}).catch(function(){});return;}}catch(e){}
+      var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='ladder-week.png';document.body.appendChild(a);a.click();a.remove();msg='Saved the image. Post it from your photos.';paint();
+    },'image/png');
+  };
+  window.weekStats=stats;
+  var _o=window.openPanel;if(typeof _o==='function')window.openPanel=function(id){var r=_o.apply(this,arguments);if(id==='pg-week'){msg='';setTimeout(paint,30);}return r;};
+})();
+
+/* v113: your line in your own voice. Recorded once, stays on this phone. */
+(function(){
+  var DB='ladder_voice',db=null,rec=null,chunks=[],state='idle',url='',msg='',t0=0,tick=null;
+  function open(cb){if(db)return cb(db);try{var r=indexedDB.open(DB,1);r.onupgradeneeded=function(){r.result.createObjectStore('v');};r.onsuccess=function(){db=r.result;cb(db);};r.onerror=function(){cb(null);};}catch(e){cb(null);}}
+  function get(cb){open(function(d){if(!d)return cb(null);var q=d.transaction('v','readonly').objectStore('v').get('line');q.onsuccess=function(){cb(q.result||null);};q.onerror=function(){cb(null);};});}
+  function put(b,cb){open(function(d){if(!d)return cb(false);var tx=d.transaction('v','readwrite');tx.objectStore('v').put(b,'line');tx.oncomplete=function(){cb(true);};tx.onerror=function(){cb(false);};});}
+  function paint(){
+    var el=document.getElementById('voiceCard');if(!el)return;
+    var h='<div class="cp-lab">In your own voice</div>';
+    if(state==='rec'){var sec=Math.floor((Date.now()-t0)/1000);h+='<div class="cp-why" style="margin:0 0 10px;color:var(--red)">Recording. '+sec+' s. Say your line like you mean it.</div><button class="cp-btn" onclick="voiceStop()">STOP</button>';}
+    else{h+='<div class="cp-why" style="margin:0 0 10px">'+(url?'Your line, in your voice. Play it every morning before anyone else talks to you.':'Record your line once, in your own voice. Hearing yourself say it hits harder than reading it.')+'</div>';
+      if(url)h+='<audio src="'+url+'" controls style="width:100%;margin:0 0 10px"></audio>';
+      h+='<button class="cp-btn'+(url?' ghost':'')+'" onclick="voiceRec()">'+(url?'RECORD AGAIN':'RECORD MY LINE')+'</button>';}
+    if(msg)h+='<div class="cp-why" style="margin:8px 0 0;color:var(--lime)">'+msg+'</div>';
+    el.innerHTML=h;
+  }
+  function load(){get(function(b){if(url){URL.revokeObjectURL(url);url='';}if(b)url=URL.createObjectURL(b);paint();});}
+  window.voiceRec=function(){
+    msg='';if(!navigator.mediaDevices||!window.MediaRecorder){msg='Recording is not supported here. Update the iPhone app.';paint();return;}
+    navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+      chunks=[];var type=MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported('audio/mp4')?'audio/mp4':'';
+      try{rec=type?new MediaRecorder(stream,{mimeType:type}):new MediaRecorder(stream);}catch(e){msg='Could not start recording.';paint();return;}
+      rec.ondataavailable=function(e){if(e.data&&e.data.size)chunks.push(e.data);};
+      rec.onstop=function(){stream.getTracks().forEach(function(t){t.stop();});clearInterval(tick);state='idle';
+        var b=new Blob(chunks,{type:rec.mimeType||'audio/mp4'});if(!b.size){msg='Nothing was recorded.';paint();return;}
+        put(b,function(ok){msg=ok?'Saved. Play it tomorrow morning.':'Could not save it.';load();});};
+      rec.start();state='rec';t0=Date.now();tick=setInterval(function(){paint();if(Date.now()-t0>60000)voiceStop();},1000);paint();
+    }).catch(function(){msg='Ladder needs the microphone for this. Allow it in Settings.';paint();});
+  };
+  window.voiceStop=function(){try{if(rec&&rec.state!=='inactive')rec.stop();}catch(e){}};
+  var _o=window.openPanel;if(typeof _o==='function')window.openPanel=function(id){var r=_o.apply(this,arguments);if(id==='pg-words'){msg='';load();}return r;};
+})();
 </script>
 <div id="pnl"><div class="pnl-top"><button onclick="closePanel()">&lsaquo; Back</button><span id="pnlT"></span></div><div class="pnl-body" id="pnlB"></div></div>
 <div id="lockOv" class="lk-ov"></div>
