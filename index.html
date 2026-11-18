@@ -1113,6 +1113,7 @@ body.wp-on #wpMoreBtn{display:none!important}
 
     </div>
     <div class="pg" id="pg-lock" data-title="Lock"><div id="lockCard" class="bk-card"></div></div>
+    <div class="pg" id="pg-vault" data-title="Your vault"><div id="vaultCard" class="bk-card"></div><input type="file" id="vaultIn" accept="video/*" capture="user" style="display:none"></div>
     <div class="pg" id="pg-partner" data-title="Accountability partner"><div id="buddyCard" class="bk-card"></div></div>
     <div class="pg" id="pg-coach" data-title="Coaching">
 
@@ -5457,7 +5458,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
       h+='<div class="fl-row'+(on?' on':'')+(isNow?' now':'')+(late?' late':'')+'" data-id="'+esc2(it.id)+'"><i></i><div class="fl-t">'+(isNow?'<span class="fl-tag">NOW</span>':'')+esc2(it.t)+'</div><div class="fl-s">'+esc2(it.time||'no time')+'</div></div>';});
     var ok=n===its.length,st=streak(),pm=null;
     try{pm=JSON.parse(localStorage.getItem('ladder_floor_pen_msg')||'null');}catch(e){}
-    var pen=(pm&&pm.day===TODAY)?'<div class="fl-pen">'+(pm.n>1?pm.n+' days':'Yesterday')+' the floor did not hold. '+pm.km+' km added to your debt.</div>':'';
+    var pen=(pm&&pm.day===TODAY)?'<div class="fl-pen">'+(pm.n>1?pm.n+' days':'Yesterday')+' the floor did not hold. '+pm.km+' km added to your debt.'+(window.vaultDoneToday&&vaultDoneToday()?'':'<br><button class="fl-edit" style="color:var(--lime);margin-top:6px" onclick="vaultOpenFor(\'floor\')">Record why. 60 seconds, only for you</button>')+'</div>':'';
     return {cls:'fl-card'+(ok?' held':''),h:'<div class="fl-top"><div class="fl-k">THE FLOOR</div><div class="fl-n">'+n+'/'+its.length+(st>0?' · '+st+' day streak':'')+'</div></div>'
       +pen+(ok?'<div class="fl-big">THE FLOOR HELD.</div>':'<div class="fl-q">Morning to night. Not all done by midnight costs '+PEN+' km.</div>')
       +(noTime?'<div class="fl-warn">'+noTime+' item'+(noTime>1?'s have':' has')+' no time yet. Give every item a time.</div>':'')
@@ -6033,7 +6034,8 @@ var COACH_URL='';
     coach:'<path d="M4 4h12v9H9l-3 3v-3H4z"/><path d="M20 9v8h-2v3l-3-3h-5v-2"/>',
     book:'<path d="M4 4h11a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3z"/><path d="M8 8h6"/>',
     data:'<path d="M12 4v10M8 10l4 4 4-4"/><path d="M5 18h14"/>',
-    lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'
+    lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    vault:'<rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/>'
   };
   function T(title,sub,fn,ok,ic,badge,hot){return '<button class="tl'+(hot?' hot':'')+'" onclick="'+fn+'"><span class="tl-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(IC[ic]||'')+'</svg></span><span class="tl-m"><span class="tl-t">'+title+'</span><span class="tl-s'+(ok?' ok':'')+'">'+sub+'</span></span>'+(badge?'<span class="tl-badge">'+badge+'</span>':'')+'<span class="tl-c">&rsaquo;</span></button>';}
   function tiles(){
@@ -6051,7 +6053,8 @@ var COACH_URL='';
       var km=(document.getElementById('stKm')||{}).textContent||'0km';var b=jget('ladder_buddy',{on:false,partners:[]});
       var h='<div class="tiles-h" style="padding:0">More</div>';
       var lk={sub:'Your apps stay closed until the work is done',ok:false,hot:false};try{if(window.lockTile)lk=lockTile();}catch(e){}
-      h='<div class="tiles">'+T('Lock',lk.sub,"openPanel('pg-lock')",lk.ok,'lock','',lk.hot)+T('Coaching call',window.COACH_URL?'Talk to a real person, one on one':'One on one with a real person. Opens soon.',"openPanel('pg-coach')",false,'coach',window.COACH_URL?'':'Soon',!!window.COACH_URL)
+      var vt={sub:'A video for every day that did not close',hot:false};try{if(window.vaultTile)vt=vaultTile();}catch(e){}
+      h='<div class="tiles">'+T('Lock',lk.sub,"openPanel('pg-lock')",lk.ok,'lock','',lk.hot)+T('Your vault',vt.sub,"openPanel('pg-vault')",false,'vault','',vt.hot)+T('Coaching call',window.COACH_URL?'Talk to a real person, one on one':'One on one with a real person. Opens soon.',"openPanel('pg-coach')",false,'coach',window.COACH_URL?'':'Soon',!!window.COACH_URL)
         +T('Accountability partner',b.on?((b.partners||[]).length+(((b.partners||[]).length===1)?' partner':' partners')):'Let a friend see your streak',"openPanel('pg-partner')",!!b.on,'buddy')
         +T('Unbreakable rules',nr+(nr===1?' rule':' rules')+'. Hold them or run.',"openPanel('pg-rules')",false,'rules')
         +T('Penalties','Km debt: '+km,"openPanel('pg-pen')",false,'pen')
@@ -6199,6 +6202,51 @@ var COACH_URL='';
   document.addEventListener('visibilitychange',function(){if(document.hidden)nsync();else setTimeout(gateCheck,250);});
   setTimeout(function(){nsync();gateCheck();},1200);
   setInterval(nsync,30000);
+  /* every tap can finish the last deliverable: tell the phone right away, not in 30 seconds */
+  var tapT=null;document.addEventListener('click',function(){clearTimeout(tapT);tapT=setTimeout(function(){nsync();try{paint();}catch(e){}},500);},true);
+})();
+
+/* v110: the vault. A video for every day that did not close. Stays on this phone. */
+(function(){
+  var DB='ladder_vault',ST='clips',db=null,clips=[],armDel='',urls={},busy=false,pendReason='',msg='';
+  function open(cb){if(db)return cb(db);try{var r=indexedDB.open(DB,1);r.onupgradeneeded=function(){r.result.createObjectStore(ST,{keyPath:'id'});};r.onsuccess=function(){db=r.result;cb(db);};r.onerror=function(){cb(null);};}catch(e){cb(null);}}
+  function all(cb){open(function(d){if(!d)return cb([]);var out=[];var tx=d.transaction(ST,'readonly');var q=tx.objectStore(ST).openCursor();q.onsuccess=function(){var c=q.result;if(c){var v=c.value;out.push({id:v.id,day:v.day,at:v.at,reason:v.reason,size:v.size,type:v.type});c.continue();}else{out.sort(function(a,b){return b.at-a.at;});cb(out);}};q.onerror=function(){cb([]);};});}
+  function blob(id,cb){open(function(d){if(!d)return cb(null);var q=d.transaction(ST,'readonly').objectStore(ST).get(id);q.onsuccess=function(){cb(q.result&&q.result.blob);};q.onerror=function(){cb(null);};});}
+  function put(o,cb){open(function(d){if(!d)return cb(false);var tx=d.transaction(ST,'readwrite');tx.objectStore(ST).put(o);tx.oncomplete=function(){cb(true);};tx.onerror=function(){cb(false);};});}
+  function del(id,cb){open(function(d){if(!d)return cb();var tx=d.transaction(ST,'readwrite');tx.objectStore(ST).delete(id);tx.oncomplete=cb;tx.onerror=cb;});}
+  function iso(){var d=new Date(),p=function(n){return (n<10?'0':'')+n;};return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());}
+  function E(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function fday(k){try{var p=k.split('-');return new Date(+p[0],+p[1]-1,+p[2]).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});}catch(e){return k;}}
+  function owed(){try{var pm=JSON.parse(localStorage.getItem('ladder_floor_pen_msg')||'null');return !!(pm&&pm.day===new Date().toDateString());}catch(e){return false;}}
+  window.vaultDoneToday=function(){return localStorage.getItem('ladder_vault_done_'+iso())==='1';};
+  window.vaultTile=function(){var n=clips.length;if(owed()&&!vaultDoneToday())return {sub:'Yesterday did not close. Record why',hot:true};return {sub:n?n+(n===1?' video. Only for you':' videos. Only for you'):'A video for every day that did not close',hot:false};};
+  window.vaultOpenFor=function(k){pendReason=k==='floor'?'The floor did not hold':'';openPanel('pg-vault');};
+  function paint(){
+    var c=document.getElementById('vaultCard');if(!c)return;
+    var due=owed()&&!vaultDoneToday();
+    var h='<div class="cp-lab">Your vault</div><div class="cp-why" style="margin:0 0 12px">A day that did not close well gets a video. 60 seconds, to yourself: what happened, and what you do differently tomorrow. It stays on this phone. Nobody else sees it. Watch them back when you want to quit.</div>'
+      +(due?'<div class="cp-why" style="margin:0 0 10px;color:var(--red)">Yesterday did not close. This one is owed.</div>':'')
+      +'<textarea id="vaultWhy" class="li" rows="2" style="width:100%;margin:0 0 10px" placeholder="What went wrong, in one line">'+E(pendReason)+'</textarea>'
+      +'<button class="cp-btn" onclick="vaultRec()">'+(busy?'SAVING...':'RECORD 60 SECONDS')+'</button>'
+      +(msg?'<div class="cp-why" style="margin:10px 0 0;color:var(--lime)">'+E(msg)+'</div>':'');
+    if(clips.length){h+='<div class="cp-lab" style="margin-top:22px">'+clips.length+(clips.length===1?' video':' videos')+'</div>';
+      clips.forEach(function(x){h+='<div style="border-top:1px solid rgba(244,240,232,.1);padding:14px 0"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><div class="tl-t">'+E(fday(x.day))+'</div><button class="fl-edit" style="margin:0;color:'+(armDel===x.id?'var(--red)':'rgba(244,240,232,.45)')+'" onclick="vaultDel(\''+x.id+'\')">'+(armDel===x.id?'Tap again to delete':'Delete')+'</button></div>'
+        +(x.reason?'<div class="cp-why" style="margin:4px 0 8px">'+E(x.reason)+'</div>':'')
+        +(urls[x.id]?'<video src="'+urls[x.id]+'" controls playsinline style="width:100%;border-radius:12px;background:#000"></video>':'<button class="cp-btn ghost" onclick="vaultPlay(\''+x.id+'\')">Watch</button>')+'</div>';});}
+    c.innerHTML=h;
+  }
+  function load(){all(function(r){clips=r;paint();try{if(window.refreshTiles)refreshTiles();}catch(e){}});}
+  window.vaultRec=function(){if(busy)return;var w=document.getElementById('vaultWhy');pendReason=w?w.value:pendReason;var i=document.getElementById('vaultIn');if(i){i.value='';i.click();}};
+  window.vaultPlay=function(id){blob(id,function(b){if(!b){msg='Could not open this video.';paint();return;}urls[id]=URL.createObjectURL(b);paint();});};
+  window.vaultDel=function(id){if(armDel!==id){armDel=id;paint();setTimeout(function(){if(armDel===id){armDel='';paint();}},4000);return;}armDel='';if(urls[id]){URL.revokeObjectURL(urls[id]);delete urls[id];}del(id,load);};
+  document.addEventListener('change',function(e){
+    if(!e.target||e.target.id!=='vaultIn')return;var f=e.target.files&&e.target.files[0];if(!f)return;
+    busy=true;msg='';paint();
+    var o={id:'v'+Date.now(),day:iso(),at:Date.now(),reason:(pendReason||'').trim(),blob:f,size:f.size,type:f.type};
+    put(o,function(ok){busy=false;if(ok){localStorage.setItem('ladder_vault_done_'+iso(),'1');pendReason='';msg='Saved. Tomorrow you do it differently.';try{if(window.hap)hap('success');}catch(x){}try{if(window.floorRender)floorRender();}catch(x){}}else msg='Could not save the video. Try a shorter one.';load();});
+  });
+  var _o=window.openPanel;if(typeof _o==='function')window.openPanel=function(id){var r=_o.apply(this,arguments);if(id==='pg-vault'){msg='';load();}return r;};
+  setTimeout(load,1500);
 })();
 </script>
 <div id="pnl"><div class="pnl-top"><button onclick="closePanel()">&lsaquo; Back</button><span id="pnlT"></span></div><div class="pnl-body" id="pnlB"></div></div>
