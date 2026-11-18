@@ -630,6 +630,12 @@ body.on-morning #catchFab{bottom:calc(92px + var(--sab))}
 .cl-k{font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.2em;color:rgba(244,240,232,.45);text-transform:uppercase}
 .cl-n{font-family:'Bebas Neue',sans-serif;font-size:3.4rem;line-height:1;color:var(--lime);margin:4px 0}
 .cl-p{font-family:'IBM Plex Sans',sans-serif;font-size:.86rem;color:rgba(244,240,232,.7);line-height:1.4}
+.pf-ov{position:fixed;inset:0;z-index:1400;background:rgba(8,8,8,.97);display:none;overflow-y:auto;padding:calc(var(--sat,0px) + 34px) 26px calc(var(--sab,0px) + 40px)}
+.pf-ov.on{display:block}
+.pf-k{font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--lime);line-height:1;margin:0 0 6px}
+.pf-promise{font-family:'IBM Plex Sans',sans-serif;font-size:1.05rem;color:#f4f0e8;margin:0 0 18px;padding:12px 14px;border-left:3px solid var(--lime);background:rgba(212,240,0,.05)}
+.pf-ta{width:100%;min-height:90px;background:#111;border:1px solid rgba(244,240,232,.18);border-radius:14px;color:#f4f0e8;font-family:'IBM Plex Sans',sans-serif;font-size:1rem;padding:12px;margin:0 0 12px}
+.pf-img{width:100%;border-radius:14px;margin:0 0 12px;border:1px solid rgba(244,240,232,.12)}
 .fl-row.now{background:rgba(212,240,0,.07);margin:0 -18px;padding:13px 18px;border-top-color:rgba(212,240,0,.35)}
 .fl-row.now .fl-s{color:var(--lime);font-weight:600}
 .fl-row.late .fl-s{color:#ff6b6b}
@@ -5869,6 +5875,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
       +'<div class="wk-add" style="margin:8px 0 0"><input class="wk-in" id="dayNew" placeholder="Add a deliverable, like 3 pitches sent" onkeydown="if(event.key===\'Enter\')dayAdd()"><button class="cp-btn" onclick="dayAdd()">ADD</button></div></div>';
   }
   function tickKey(k){if(!k)return;if(k.charAt(0)==='x'){var l=xload(),i=parseInt(k.slice(1));if(l[i]){l[i].d=true;xput(l);}}else{try{if(!S.goalActions)S.goalActions={};if(!S.goalActions[TODAY])S.goalActions[TODAY]={};S.goalActions[TODAY][k]=true;save();}catch(e){}}}
+  window.dayRefresh=function(){try{render();}catch(e){}};
   window.dayTick=function(id){try{toggleGoalAction(id);}catch(e){}render();if(window.hap)hap('medium');};
   window.dayX=function(i){var l=xload();if(!l[i])return;l[i].d=!l[i].d;xput(l);render();if(window.hap)hap('medium');};
   /* adding opens the time form right away: no time, no item */
@@ -6459,6 +6466,68 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   };
   window.voiceStop=function(){try{if(rec&&rec.state!=='inactive')rec.stop();}catch(e){}};
   var _o=window.openPanel;if(typeof _o==='function')window.openPanel=function(id){var r=_o.apply(this,arguments);if(id==='pg-words'){msg='';load();}return r;};
+})();
+
+/* v114: proof. A deliverable only counts when you write what exists and add a photo. */
+(function(){
+  var ov=null,cur=null,photo='',busy=false,note='',bad=false;
+  function iso(){var d=new Date(),p=function(n){return (n<10?'0':'')+n;};return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());}
+  function jg(k,f){try{var v=JSON.parse(localStorage.getItem(k)||'');return v==null?f:v;}catch(e){return f;}}
+  function E(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function promiseFor(key,fallback){var V=jg('ladder_dlv_'+iso(),{});var v=V[key];return (v&&v.w)?v.w:fallback;}
+  function el(){if(!ov){ov=document.createElement('div');ov.className='pf-ov';ov.id='proofOv';document.body.appendChild(ov);
+    var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.id='proofIn';inp.style.display='none';inp.setAttribute('capture','environment');document.body.appendChild(inp);
+    inp.addEventListener('change',function(){var f=inp.files&&inp.files[0];if(!f)return;shrink(f,function(d){photo=d;note='';bad=false;paint();});});}return ov;}
+  function shrink(f,cb){var r=new FileReader();r.onload=function(){var im=new Image();im.onload=function(){var m=1024,w=im.width,h=im.height,k=Math.min(1,m/Math.max(w,h));var c=document.createElement('canvas');c.width=Math.round(w*k);c.height=Math.round(h*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',0.72));};im.onerror=function(){cb('');};im.src=r.result;};r.readAsDataURL(f);}
+  function paint(){
+    var o=el();var t=(document.getElementById('proofTxt')||{}).value;if(t!=null&&cur)cur.text=t;
+    o.innerHTML='<div class="pf-k">PROOF.</div><div class="cp-why" style="margin:0 0 14px">This morning you said this would exist:</div><div class="pf-promise">'+E(cur.promise)+'</div>'
+      +'<div class="cp-lab">What exists now?</div><textarea id="proofTxt" class="pf-ta" placeholder="A number, a name, a link. Like: 10 sent, last one to Bakkerij De Jong">'+E(cur.text||'')+'</textarea>'
+      +(photo?'<img class="pf-img" src="'+photo+'" alt="Your proof photo"><button class="cp-btn ghost" onclick="proofPhoto()">Other photo</button>':'<button class="cp-btn ghost" onclick="proofPhoto()">ADD A PHOTO AS PROOF</button>')
+      +'<button class="cp-btn" style="margin-top:12px" onclick="proofCheck()">'+(busy?'CHECKING...':'CHECK MY PROOF')+'</button>'
+      +(note?'<div class="cp-why" style="margin:12px 0 0;color:'+(bad?'var(--red)':'var(--lime)')+'">'+E(note)+'</div>':'')
+      +'<button class="fl-edit" style="margin-top:18px" onclick="proofClose()">Not done yet</button>';
+  }
+  function open(key,promise,onOk){cur={key:key,promise:promise,text:'',onOk:onOk};photo='';note='';bad=false;busy=false;paint();el().classList.add('on');}
+  window.proofClose=function(){if(ov)ov.classList.remove('on');cur=null;photo='';};
+  window.proofPhoto=function(){el();var i=document.getElementById('proofIn');if(i){i.value='';i.click();}};
+  function words(t){return (t||'').trim().split(/\s+/).filter(Boolean).length;}
+  function accept(n){
+    var all=jg('ladder_proof',{}),d=iso();if(!all[d])all[d]={};all[d][cur.key]={text:cur.text,at:Date.now(),note:n||''};
+    var keys=Object.keys(all).sort();while(keys.length>40){delete all[keys.shift()];}
+    try{localStorage.setItem('ladder_proof',JSON.stringify(all));}catch(e){}
+    try{if(photo&&window.proofPhotoSave)proofPhotoSave(d+'_'+cur.key,photo);}catch(e){}
+    var f=cur.onOk;proofClose();try{f();}catch(e){}try{if(window.dayRefresh)dayRefresh();}catch(e){}try{if(window.lockRefresh)lockRefresh();}catch(e){}try{if(window.hap)hap('success');}catch(e){}
+  }
+  window.proofCheck=function(){
+    if(busy||!cur)return;var t=(document.getElementById('proofTxt')||{}).value||'';cur.text=t;
+    if(words(t)<3){note='Write what exists. At least a few words, with a number or a name.';bad=true;paint();return;}
+    if(!photo){note='Add a photo as proof. A screenshot counts.';bad=true;paint();return;}
+    busy=true;note='';paint();
+    var ctl=new AbortController();var to=setTimeout(function(){ctl.abort();},20000);
+    fetch(API_BASE+'/api/proof',{method:'POST',headers:ladderHeaders(),signal:ctl.signal,body:JSON.stringify({promise:cur.promise,proof:t,image:photo})})
+      .then(function(r){return r.ok?r.json():Promise.reject(r.status);})
+      .then(function(p){clearTimeout(to);busy=false;if(p&&p.ok){accept(p.note);}else{note=(p&&p.note)||'Not specific enough yet.';bad=true;paint();}})
+      .catch(function(){clearTimeout(to);busy=false;
+        /* offline: still demand something specific */
+        if(/\d/.test(t)&&words(t)>=3){accept('Checked offline.');}else{note='No connection to check it. Add a number to your proof and try again.';bad=true;paint();}});
+  };
+  /* photos go to the device only */
+  var pdb=null;function popen(cb){if(pdb)return cb(pdb);try{var r=indexedDB.open('ladder_proofs',1);r.onupgradeneeded=function(){r.result.createObjectStore('p');};r.onsuccess=function(){pdb=r.result;cb(pdb);};r.onerror=function(){cb(null);};}catch(e){cb(null);}}
+  window.proofPhotoSave=function(id,data){popen(function(d){if(!d)return;try{d.transaction('p','readwrite').objectStore('p').put(data,id);}catch(e){}});};
+  /* the gate: ticking a deliverable ON needs proof, ticking it off does not */
+  var _tga=window.toggleGoalAction;
+  if(typeof _tga==='function')window.toggleGoalAction=function(id){
+    var on=false;try{on=!!(S.goalActions&&S.goalActions[TODAY]&&S.goalActions[TODAY][id]);}catch(e){}
+    if(on)return _tga(id);
+    var txt=id;try{loadGoals().forEach(function(g){(g.actions||[]).forEach(function(a){if(a.id===id)txt=a.text;});});}catch(e){}
+    open(id,promiseFor(id,txt),function(){_tga(id);});
+  };
+  var _dx=window.dayX;
+  if(typeof _dx==='function')window.dayX=function(i){
+    var l=jg('ladder_extra_'+iso(),[]);if(!l[i])return;if(l[i].d)return _dx(i);
+    open('x'+i,promiseFor('x'+i,l[i].t),function(){_dx(i);});
+  };
 })();
 </script>
 <div id="pnl"><div class="pnl-top"><button onclick="closePanel()">&lsaquo; Back</button><span id="pnlT"></span></div><div class="pnl-body" id="pnlB"></div></div>
