@@ -1493,25 +1493,6 @@ body.wp-on #wpMoreBtn{display:none!important}
   localStorage.setItem('ladder_goals_archived_v84','1');
 }catch(e){}})();
 
-// ── v86: restore Freedom of action as the only goal ──
-(function(){try{
-  if(localStorage.getItem('ladder_freedom_v86'))return;
-  var cur=JSON.parse(localStorage.getItem('ladder_goals')||'[]');
-  if(cur.some(function(g){return /freedom/i.test(g.name||'');})){localStorage.setItem('ladder_freedom_v86','1');return;}
-  var arch=[];try{arch=JSON.parse(localStorage.getItem('ladder_goals_archive')||'[]');}catch(e){}
-  var g=arch.filter(function(x){return /freedom|10\.?000|saldo|balance/i.test((x.name||'')+' '+(x.outcome||''));})[0];
-  var t=Date.now();
-  var texts=g&&g.actions&&g.actions.length?g.actions.map(function(a){return a.text;}):['Outreach to strangers: calling, emailing, LinkedIn, TikTok','Book and site: get Relentless and LADDER sold'];
-  var goal={id:'g_'+t,name:(g&&g.name)||'Freedom of action',outcome:(g&&g.outcome)||'€10.000 balance by 16 feb 2027',deadline:(g&&g.deadline)||'16 feb 2027',
-    actions:texts.map(function(x,i){return {id:'a_'+t+'_'+i,text:x,type:'check',minutes:0,target:0,unit:''};}),
-    adjust:(g&&g.adjust)||'If a milestone date passes without a result, change the approach on the next Sunday. Never move the deadline.',
-    milestones:(g&&g.milestones)||[],checkinFields:(g&&g.checkinFields)||[],featured:true};
-  cur.push(goal);localStorage.setItem('ladder_goals',JSON.stringify(cur));
-  localStorage.setItem('ladder_freedom_v86','1');
-}catch(e){}})();
-
-
-
 var API_BASE=(location.protocol.indexOf('http')===0&&location.hostname.indexOf('localhost')===-1)?'':'https://ladder-website-xi.vercel.app';
 var KEY='ladder_v5', TODAY=new Date().toDateString();
 var DAYS=['SUN','MON','TUE','WED','THU','FRI','SAT'];
@@ -4580,58 +4561,6 @@ setTimeout(function(){try{var t=S.todayTask;liveDiag('boot check task='+(t&&t.st
       });});
     }catch(e){}
   },3200);
-})();
-
-// ── One time goal update (adjusted to today's dates) ──
-(function(){
-  var FLAG='ladder_seed_goals_v2';
-  function seed(){
-    try{
-      if(localStorage.getItem(FLAG)) return;
-      var seeds=[
-       {match:function(g){var x=((g.name||'')+' '+(g.outcome||'')).toLowerCase();return /10\.?000|freedom|saldo|balance/.test(x);},
-        name:'Freedom of action',outcome:'€10.000 balance by 16 feb 2027',deadline:'16 feb 2027',
-        actions:[{text:'Outreach to strangers: calling, emailing, LinkedIn, TikTok',type:'timer',minutes:60},{text:'Book and site: get Relentless and LADDER sold',type:'timer',minutes:180}],
-        adjust:'If a milestone date passes without a result, change the approach on the next Sunday. Never move the deadline.',
-        milestones:[['First copy of Relentless sold','15 nov 2026'],['First paying LADDER user','1 dec 2026'],['First paid freelance project','15 dec 2026'],['€5.000 in the bank','15 jan 2027']],
-        checkin:['Saldo','Sales','Users']},
-       {match:function(g){var x=((g.name||'')+' '+(g.outcome||'')).toLowerCase();return /\bkg\b|body|weight|gewicht/.test(x);},
-        name:'Build the body',outcome:'85 kg by 31 dec 2026',deadline:'31 dec 2026',
-        actions:[{text:'Weigh in and log it',type:'check',minutes:0},{text:'Boxing or cardio',type:'timer',minutes:45},{text:'High protein, under 2000 kcal, no snacks after 20:00',type:'check',minutes:0}],
-        adjust:'If the weight does not move for two weeks while the actions are done, cut calories 200 and add one extra session.',
-        milestones:[['88 kg','20 nov 2026'],['86 kg','10 dec 2026']],
-        checkin:['Energy','Explosiveness','Sessions']},
-       {match:function(g){var x=((g.name||'')+' '+(g.outcome||'')).toLowerCase();return /afstudeer|internship|thesis|stage/.test(x);},
-        name:'Graduation internship',outcome:'Stage or afstudeeropdracht confirmed by 15 nov 2026. If not, stage in February, thesis afterwards.',deadline:'15 nov 2026',
-        actions:[{text:'5 organizations called or emailed',type:'check',minutes:0}],
-        adjust:'If the actions are on track for two weeks but the outcome does not move, change the action: call instead of mail, or try another sector.',
-        milestones:[['3 kennismakingsgesprekken planned','10 nov 2026'],['Stage or thesis confirmed','15 nov 2026']],
-        checkin:['Responses','Meetings planned']}
-      ];
-      var goals=loadGoals(), changed=[];
-      seeds.forEach(function(sd,i){
-        var g=goals.filter(sd.match)[0];
-        var ms=sd.milestones.map(function(m){return {text:m[0],date:m[1],done:false};});
-        if(g){
-          var old=g.milestones||[];
-          ms.forEach(function(m){old.forEach(function(o){if(o.done&&(o.text||'').toLowerCase()===m.text.toLowerCase())m.done=true;});});
-          g.outcome=sd.outcome; g.deadline=sd.deadline; g.milestones=ms;
-          if(!g.actions||!g.actions.length) g.actions=sd.actions.map(function(a,j){return {id:'a_'+Date.now()+'_'+i+j,text:a.text,type:a.type,minutes:a.minutes};});
-          if(!g.adjust) g.adjust=sd.adjust;
-          if(!g.checkinFields||!g.checkinFields.length) g.checkinFields=sd.checkin;
-        } else {
-          goals.push({id:'g_'+Date.now()+'_'+i,name:sd.name,outcome:sd.outcome,deadline:sd.deadline,
-            actions:sd.actions.map(function(a,j){return {id:'a_'+Date.now()+'_'+i+j,text:a.text,type:a.type,minutes:a.minutes};}),
-            adjust:sd.adjust,milestones:ms,checkinFields:sd.checkin});
-        }
-      });
-      saveGoals(goals);
-      localStorage.setItem(FLAG,'1');
-      try{buildGoalsList();}catch(e){}
-      try{liveDiag('goals updated');}catch(e){}
-    }catch(e){}
-  }
-  setTimeout(seed,1200);
 })();
 
 // ---- tutorial ----
