@@ -1099,7 +1099,8 @@ body.wp-on #wpMoreBtn{display:none!important}
     <div id="debtPanel" class="debt-card" style="display:none;">
       <div class="debt-top"><div class="debt-k">Walk or run it off</div><div class="debt-n" id="debtNum">0 km</div></div>
       <div id="debtDeadline" class="debt-dl"></div>
-      <div class="debt-btns">
+      <div id="debtHealth"></div>
+      <div class="debt-btns" id="debtBtns">
         <button class="debt-pay" onclick="payKm(1)">Did 1 km</button>
         <button class="debt-pay" onclick="payKm(5)">Did 5 km</button>
         <button class="debt-pay" onclick="payKm(10)">Did 10 km</button>
@@ -6089,18 +6090,21 @@ var COACH_URL='';
     return {open:open,total:total};
   }
   function win(){try{return window.ruleWindow?ruleWindow():null;}catch(e){return null;}}
-  function state(){var c=cfg(),o=items(),w=win(),tl=o.total===0||o.open.length>0,out=!!(w&&!inRuleWindow(w));return {c:c,o:o,w:w,taskLocked:c.tasks&&tl,outside:out,locked:c.tasks&&(tl||out),aiLocked:c.ai&&Date.now()>c.pass};}
+  function debtKm(){try{return (window.hkOn&&hkOn())?(+S.kmDebt||0):0;}catch(e){return 0;}}
+  function state(){var c=cfg(),o=items(),w=win(),db=debtKm(),tl=o.total===0||o.open.length>0||db>0,out=!!(w&&!inRuleWindow(w));return {c:c,o:o,w:w,debt:db,taskLocked:c.tasks&&tl,outside:out,locked:c.tasks&&(tl||out),aiLocked:c.ai&&Date.now()>c.pass};}
   window.lockRefresh=function(){nsync();paint();try{if(window.refreshTiles)refreshTiles();}catch(e){}};
   function hhmm(ms){var d=new Date(ms);return pad(d.getHours())+':'+pad(d.getMinutes());}
   function status(s){
     var l=[];
     if(!s.c.tasks&&!s.c.ai)return 'Both locks are off.';
-    if(s.c.tasks)l.push(s.taskLocked?(s.o.total===0?'Phone: locked. No deliverables written for today.':'Phone: locked. '+s.o.open.length+' of '+s.o.total+' still open.'):(s.outside?'Phone: locked. Deliverables done. Your social window is '+s.w.fromTxt+' to '+s.w.toTxt+'.':'Phone: open. All deliverables for today are done.'));
+    if(s.c.tasks&&s.debt>0&&!(s.o.total===0||s.o.open.length>0))l.push('Phone: locked. Deliverables done, but '+s.debt+' km debt is still open. Walk it off.');
+    else if(s.c.tasks)l.push(s.taskLocked?(s.o.total===0?'Phone: locked. No deliverables written for today.':'Phone: locked. '+s.o.open.length+' of '+s.o.total+' still open.'):(s.outside?'Phone: locked. Deliverables done. Your social window is '+s.w.fromTxt+' to '+s.w.toTxt+'.':'Phone: open. All deliverables for today are done.'));
     if(s.c.ai)l.push(s.aiLocked?'AI: closed until you think first.':'AI: open until '+hhmm(s.c.pass)+'.');
     return l.join('<br>');
   }
   window.lockTile=function(){var s=state();
     if(!s.c.tasks&&!s.c.ai)return {sub:'Your apps stay closed until the work is done',ok:false,hot:false};
+    if(s.c.tasks&&s.debt>0&&!(s.o.total===0||s.o.open.length>0))return {sub:'Locked. '+s.debt+' km debt to walk off',ok:false,hot:true};
     if(s.c.tasks)return s.taskLocked?{sub:(s.o.total===0?'Locked. Write the deliverables for today':'Locked. '+s.o.open.length+' still open'),ok:false,hot:true}:(s.outside?{sub:'Done. Apps open at '+s.w.fromTxt,ok:true,hot:false}:{sub:'Open. All done today',ok:true,hot:false});
     return {sub:s.aiLocked?'AI closed until you think first':'AI open until '+hhmm(s.c.pass),ok:!s.aiLocked,hot:false};
   };
@@ -6247,6 +6251,45 @@ var COACH_URL='';
   });
   var _o=window.openPanel;if(typeof _o==='function')window.openPanel=function(id){var r=_o.apply(this,arguments);if(id==='pg-vault'){msg='';load();}return r;};
   setTimeout(load,1500);
+})();
+
+/* v111: km debt goes down only when you really walk or run (Apple Health) */
+(function(){
+  var lastKm=0,msg='',busy=false;
+  function cfg(){try{return JSON.parse(localStorage.getItem('ladder_hk')||'null')||{on:false};}catch(e){return {on:false};}}
+  function put(c){try{localStorage.setItem('ladder_hk',JSON.stringify(c));}catch(e){}}
+  window.hkOn=function(){return !!cfg().on&&liveNative();};
+  function km1(v){return Math.round(v*10)/10;}
+  function render(){
+    var el=document.getElementById('debtHealth'),bt=document.getElementById('debtBtns');if(!el)return;
+    if(!liveNative()){el.innerHTML='';if(bt)bt.style.display='';return;}
+    var c=cfg();
+    if(!c.on){
+      el.innerHTML='<div class="debt-dl" style="margin:10px 0">Connect Apple Health and your debt only goes down when you really walk or run. No more ticking it off yourself.</div><button class="debt-pay" style="width:100%" onclick="hkConnect()">'+(busy?'WAITING...':'CONNECT APPLE HEALTH')+'</button>'+(msg?'<div class="debt-dl" style="color:var(--red)">'+msg+'</div>':'');
+      if(bt)bt.style.display='';return;
+    }
+    el.innerHTML='<div class="debt-dl" style="margin:10px 0">Walked since this debt started: <b>'+km1(lastKm)+' km</b>. Ladder takes it off by itself. Open Ladder after your walk.</div>'+(msg?'<div class="debt-dl">'+msg+'</div>':'');
+    if(bt)bt.style.display='none';
+  }
+  function sync(){
+    if(!hkOn()){render();return;}
+    var c=cfg(),debt=+S.kmDebt||0;
+    if(debt<=0){c.zero=true;put(c);lastKm=0;render();return;}
+    if(c.zero||!c.base){c.base=Date.now();c.cred=0;c.zero=false;put(c);}
+    try{liveCall('hkDistance',{from:c.base}).then(function(r){
+      if(!r||!r.ok)return;var k=km1(+r.km||0);lastKm=k;var nw=km1(k-(c.cred||0));
+      if(nw>=0.1){var pay=Math.min(nw,+S.kmDebt||0);S.kmDebt=km1((+S.kmDebt||0)-pay);c.cred=k;
+        if(S.kmDebt<=0){S.kmDebt=0;c.zero=true;msg='Debt walked off. Your phone opens if the rest is done.';try{if(window.hap)hap('success');}catch(e){}}
+        put(c);save();try{updateStats();}catch(e){}var st=document.getElementById('stKm');if(st)st.textContent=(S.kmDebt||0)+'km';
+        try{if(window.lockRefresh)lockRefresh();}catch(e){}}
+      render();}).catch(function(){});}catch(e){}
+  }
+  window.hkConnect=function(){if(busy)return;busy=true;msg='';render();
+    try{liveCall('hkAuth',{}).then(function(r){busy=false;if(r&&r.ok){put({on:true,base:Date.now(),cred:0,zero:!((+S.kmDebt||0)>0)});msg='';sync();try{if(window.lockRefresh)lockRefresh();}catch(e){}}else{msg=(r&&r.error)||'Apple Health did not connect.';render();}}).catch(function(){busy=false;msg='Update the iPhone app to use this.';render();});}catch(e){busy=false;}};
+  window.hkSync=sync;
+  setTimeout(sync,2500);setInterval(sync,60000);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(sync,400);});
+  var _o=window.openPanel;if(typeof _o==='function')window.openPanel=function(id){var r=_o.apply(this,arguments);if(id==='pg-pen'){render();sync();}return r;};
 })();
 </script>
 <div id="pnl"><div class="pnl-top"><button onclick="closePanel()">&lsaquo; Back</button><span id="pnlT"></span></div><div class="pnl-body" id="pnlB"></div></div>
