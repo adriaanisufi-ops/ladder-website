@@ -6291,6 +6291,10 @@ var COACH_URL='';
   document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(sync,400);});
   var _o=window.openPanel;if(typeof _o==='function')window.openPanel=function(id){var r=_o.apply(this,arguments);if(id==='pg-pen'){render();sync();}return r;};
 })();
+
+/* v112: modals live on top of everything, also when opened from a panel (rules edit was hidden behind it) */
+(function(){function lift(){['ruleModal','goalModal','checkinModal','freeTimerModal','aiGoalModal','catchModal'].forEach(function(id){var m=document.getElementById(id);if(m&&m.parentElement!==document.body)document.body.appendChild(m);});}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',lift);else lift();setTimeout(lift,1000);})();
 </script>
 <div id="pnl"><div class="pnl-top"><button onclick="closePanel()">&lsaquo; Back</button><span id="pnlT"></span></div><div class="pnl-body" id="pnlB"></div></div>
 <div id="lockOv" class="lk-ov"></div>
