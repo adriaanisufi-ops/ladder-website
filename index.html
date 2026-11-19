@@ -921,6 +921,7 @@ body.wp-on #wpMoreBtn{display:none!important}
     <div class="ybar" id="yBar">Loading...</div>
 
     <div id="buddyNudge" class="bd-nudge" style="display:none"></div>
+    <button id="lockChip" class="fl-edit" style="display:none;margin:0 0 12px;text-align:left" onclick="openPanel('pg-lock')"></button>
     <div id="floorDay"></div>
     <div id="wkHost" style="margin-bottom:26px"></div>
     <div id="planRun" style="display:none;border-left:2px solid var(--lime);padding:4px 0 4px 14px;">
@@ -1033,6 +1034,8 @@ body.wp-on #wpMoreBtn{display:none!important}
       <div class="sb" id="kmBlock" onclick="var d=document.getElementById('debtPanel');if(d&&d.style.display!=='none')d.scrollIntoView({behavior:'smooth',block:'center'});" style="cursor:pointer"><div class="sn bad" id="stKm">0km</div><div class="sl">KM<br>debt</div></div>
     </div>
     <div id="climb"></div>
+    <button class="fl-edit" id="histBtn" style="margin:0 0 18px" onclick="histToggle()">Show history</button>
+    <div id="histWrap" style="display:none">
     <div id="timeLine" class="timeblock"></div>
 
     <div class="monthnav">
@@ -1050,6 +1053,7 @@ body.wp-on #wpMoreBtn{display:none!important}
       <div class="dd-focus" id="ddFocus"></div>
       <div class="dd-tasks" id="ddTasks"></div>
       <div class="dd-mirror" id="ddMirror"></div>
+    </div>
     </div>
     <div class="csec">
       <div class="cq">Close today. Be honest.<br><span style="color:var(--white);font-size:0.85rem;">Did you show up?</span></div>
@@ -5454,7 +5458,8 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   function chipRender(){
     var its=items(),boot=document.getElementById('s-boot')&&document.getElementById('s-boot').classList.contains('active');
     var day=document.getElementById('s-morning')&&document.getElementById('s-morning').classList.contains('active');
-    if(boot||day){chip.style.display='none';return;}
+    /* the floor lives on Day now; a floating chip on other screens only covered titles */
+    chip.style.display='none';return;
     chip.style.display='block';
     if(!its||!its.length){chip.textContent='BUILD FLOOR';chip.className='';return;}
     var x=data()[TODAY]||{},n=its.filter(function(i){return x[i.id];}).length;
@@ -6068,24 +6073,41 @@ var COACH_URL='';
       var sw=0;try{sw=loadWiringLog().length;}catch(e){}
       var dh=T('Your words',said>=3?'Said '+said+' times today':'Say it out loud. '+said+' of 3 today',"openPanel('pg-words')",said>=3,'words')
         +T('Complain and think',cSub,"openPanel('pg-complain')",cOk,'complain')
-        +T('Sit with nothing','3, 5 or 10 minutes. '+sw+(sw===1?' session so far':' sessions so far'),"goTo('s-wiring')",false,'sit');if(d.getAttribute('data-sig')!==dh){d.innerHTML=dh;d.setAttribute('data-sig',dh);}}
+        +T('Sit with nothing','3, 5 or 10 minutes. '+sw+(sw===1?' session so far':' sessions so far'),"goTo('s-wiring')",false,'sit');
+      dh=window.dayMoreOpen?dh+'<button class="fl-edit" onclick="dayMoreToggle()">Less</button>':'<button class="fl-edit" onclick="dayMoreToggle()">More for today: your words, complain, sit</button>';
+      if(d.getAttribute('data-sig')!==dh){d.innerHTML=dh;d.setAttribute('data-sig',dh);}}
     var l=document.getElementById('ladTiles');
     if(l){var nr=0;try{nr=loadRules().length;}catch(e){}
       var km=(document.getElementById('stKm')||{}).textContent||'0km';var b=jget('ladder_buddy',{on:false,partners:[]});
       var h='<div class="tiles-h" style="padding:0">More</div>';
       var lk={sub:'Your apps stay closed until the work is done',ok:false,hot:false};try{if(window.lockTile)lk=lockTile();}catch(e){}
       var vt={sub:'A video for every day that did not close',hot:false};try{if(window.vaultTile)vt=vaultTile();}catch(e){}
-      h='<div class="tiles">'+T('Lock',lk.sub,"openPanel('pg-lock')",lk.ok,'lock','',lk.hot)+T('Your vault',vt.sub,"openPanel('pg-vault')",false,'vault','',vt.hot)+T('Your week',new Date().getDay()===0?'Sunday. Your receipt is ready':'Your receipt of the last 7 days',"openPanel('pg-week')",false,'rcpt','',new Date().getDay()===0)+T('Coaching call',window.COACH_URL?'Talk to a real person, one on one':'One on one with a real person. Opens soon.',"openPanel('pg-coach')",false,'coach',window.COACH_URL?'':'Soon',!!window.COACH_URL)
-        +T('Accountability partner',b.on?((b.partners||[]).length+(((b.partners||[]).length===1)?' partner':' partners')):'Let a friend see your streak',"openPanel('pg-partner')",!!b.on,'buddy')
-        +T('Unbreakable rules',nr+(nr===1?' rule':' rules')+'. Hold them or run.',"openPanel('pg-rules')",false,'rules')
+      var vc=0;try{vc=window.vaultCount?vaultCount():0;}catch(e){}var wd=new Date().getDay();
+      h='<div class="tiles">'+T('Lock',lk.sub,"openPanel('pg-lock')",lk.ok,'lock','',lk.hot)
+        +T('Unbreakable rules',nr+(nr===1?' rule':' rules')+'. Hold them or walk.',"openPanel('pg-rules')",false,'rules')
         +T('Penalties','Km debt: '+km,"openPanel('pg-pen')",false,'pen')
+        +((vt.hot||vc>0)?T('Your vault',vt.sub,"openPanel('pg-vault')",false,'vault','',vt.hot):'')
+        +((wd===0||wd===1)?T('Your week',wd===0?'Sunday. Your receipt is ready':'Last week, as proof',"openPanel('pg-week')",false,'rcpt','',wd===0):'')+'</div>';
+      if(window.ladMoreOpen){h+='<div class="tiles" style="margin-top:12px">'
+        +T('Accountability partner',b.on?((b.partners||[]).length+(((b.partners||[]).length===1)?' partner':' partners')):'Let a friend see your streak',"openPanel('pg-partner')",!!b.on,'buddy')
+        +((vt.hot||vc>0)?'':T('Your vault',vt.sub,"openPanel('pg-vault')",false,'vault'))
+        +((wd===0||wd===1)?'':T('Your week','Your receipt of the last 7 days',"openPanel('pg-week')",false,'rcpt'))
         +T('Rewards','Earned, not given',"openPanel('pg-rew')",false,'rew')
         +T('Look back','Your lessons and patterns',"openLookBack()",false,'look')
         +(window.BOOK_URL?T('The book','Where LADDER comes from',"openPanel('pg-book')",false,'book'):'')
-        +T('Your data','Back up, restore, reminder',"openPanel('pg-data')",false,'data')+'</div>';
+        +T('Your data','Back up, restore, reminder',"openPanel('pg-data')",false,'data')+'</div><button class="fl-edit" style="margin-top:12px" onclick="ladMoreToggle()">Less</button>';}
+      else h+='<button class="fl-edit" style="margin-top:12px" onclick="ladMoreToggle()">More: partner, rewards, vault, week, look back, your data</button>';
       if(l.getAttribute('data-sig')!==h){l.innerHTML=h;l.setAttribute('data-sig',h);}}
   }
   window.refreshTiles=tiles;
+  window.dayMoreToggle=function(){window.dayMoreOpen=!window.dayMoreOpen;tiles();};
+  window.ladMoreToggle=function(){window.ladMoreOpen=!window.ladMoreOpen;tiles();};
+  window.histToggle=function(){var w=document.getElementById('histWrap'),b=document.getElementById('histBtn');if(!w)return;var on=w.style.display==='none';w.style.display=on?'':'none';if(b)b.textContent=on?'Hide history':'Show history';};
+  /* one line on Day that says if your phone is locked, instead of a tile somewhere else */
+  function chip(){var c=document.getElementById('lockChip');if(!c)return;var lk=null;try{if(window.lockTile)lk=lockTile();}catch(e){}
+    var on=false;try{on=!!JSON.parse(localStorage.getItem('ladder_lock')||'{}').tasks;}catch(e){}
+    if(!on||!lk){c.style.display='none';return;}c.style.display='block';c.style.color=lk.hot?'var(--red)':'var(--lime)';c.textContent=(lk.hot?'Phone locked. ':'Phone open. ')+lk.sub.replace(/^(Locked|Open)\.\s*/,'');}
+  window.lockChipRender=chip;setInterval(chip,15000);setTimeout(chip,1500);document.addEventListener('click',function(){setTimeout(chip,700);},true);
   var _g=window.goTo;window.goTo=function(id){if(cur&&id!==undefined)closePanelQuiet();var r=_g.apply(this,arguments);if(id==='s-morning'||id==='s-ladder')setTimeout(tiles,60);return r;};
   function closePanelQuiet(){var p=document.getElementById('pnl');if(p)p.classList.remove('on');if(cur&&ph&&ph.parentNode){ph.parentNode.insertBefore(cur,ph);ph.parentNode.removeChild(ph);}cur=null;ph=null;}
   setInterval(function(){if(!cur)tiles();},20000);
