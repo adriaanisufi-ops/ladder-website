@@ -6112,7 +6112,7 @@ var COACH_URL='';
   }
   function win(){try{return window.ruleWindow?ruleWindow():null;}catch(e){return null;}}
   function debtKm(){try{return (window.hkOn&&hkOn())?(+S.kmDebt||0):0;}catch(e){return 0;}}
-  function state(){var c=cfg(),o=items(),w=win(),db=debtKm(),tl=o.total===0||o.open.length>0||db>0,out=!!(w&&!inRuleWindow(w)),gl=Date.now()<c.glass;return {c:c,o:o,w:w,debt:db,glass:gl,taskLocked:c.tasks&&tl&&!gl,outside:out&&!gl,locked:c.tasks&&(tl||out)&&!gl,aiLocked:c.ai&&Date.now()>c.pass};}
+  function state(){var c=cfg(),o=items(),w=win(),db=debtKm(),tl=o.total===0||o.open.length>0||db>0,out=!!(w&&!inRuleWindow(w)),gl=Date.now()<c.glass;return {c:c,o:o,w:w,debt:db,glass:gl,realLocked:c.tasks&&tl,taskLocked:c.tasks&&tl&&!gl,outside:out&&!gl,locked:c.tasks&&(tl||out)&&!gl,aiLocked:c.ai&&Date.now()>c.pass};}
   window.lockRefresh=function(){nsync();paint();try{if(window.refreshTiles)refreshTiles();}catch(e){}};
   function hhmm(ms){var d=new Date(ms);return pad(d.getHours())+':'+pad(d.getMinutes());}
   function status(s){
@@ -6133,7 +6133,7 @@ var COACH_URL='';
   };
   function nsync(){
     var s=state();
-    var o={mode:s.c.tasks,doneDay:(s.c.tasks&&!s.taskLocked)?dk():'',ai:s.c.ai,passUntil:s.c.pass,winFrom:s.w?s.w.from:-1,winTo:s.w?s.w.to:-1,glassUntil:s.c.glass,openCount:s.o.open.length,openFirst:String(s.o.open[0]||'').slice(0,80),vaultHas:!!(window.vaultCount&&vaultCount()>0)};
+    var o={mode:s.c.tasks,doneDay:(s.c.tasks&&!s.realLocked)?dk():'',ai:s.c.ai,passUntil:s.c.pass,winFrom:s.w?s.w.from:-1,winTo:s.w?s.w.to:-1,glassUntil:s.c.glass,openCount:s.o.open.length,openFirst:String(s.o.open[0]||'').slice(0,80),vaultHas:!!(window.vaultCount&&vaultCount()>0)};
     try{liveCall('lock',o).then(function(r){var n=!!(r&&r.ok);if(n!==native){native=n;paint();}}).catch(function(){if(native!==false){native=false;paint();}});}catch(e){native=false;}
   }
   function gateCheck(){
@@ -6239,9 +6239,13 @@ var COACH_URL='';
     try{location.href='sms:&body='+encodeURIComponent(t);}catch(e){}
   };
   var st=null,stBusy=false;
-  function stLoad(){try{liveCall('stStatus',{}).then(function(r){st=(r&&r.ok)?r:null;paint();}).catch(function(){st=null;});}catch(e){st=null;}}
+  function stLoad(){try{liveCall('stStatus',{}).then(function(r){stWatch(r);st=(r&&r.ok)?r:null;paint();}).catch(function(){st=null;});}catch(e){st=null;}}
   window.lockStAuth=function(){if(stBusy)return;stBusy=true;paint();try{liveCall('stAuth',{}).then(function(r){stBusy=false;if(r&&!r.approved&&r.error)stErr=r.error;stLoad();nsync();}).catch(function(){stBusy=false;paint();});}catch(e){stBusy=false;}};
-  window.lockStPick=function(){if(stBusy)return;stBusy=true;paint();try{liveCall('stPick',{}).then(function(r){stBusy=false;stLoad();nsync();}).catch(function(){stBusy=false;paint();});}catch(e){stBusy=false;}};
+  window.lockStPick=function(){if(stBusy)return;stBusy=true;stErr='';paint();try{liveCall('stPick',{}).then(function(r){stBusy=false;if(r&&r.removed)stErr='Not saved. While your work is still open you can add apps, not take them off.';stLoad();nsync();}).catch(function(){stBusy=false;paint();});}catch(e){stBusy=false;}};
+  /* taking away Screen Time in Settings is breaking the glass without paying: it costs the same, once a day */
+  function stWatch(r){try{var was=localStorage.getItem('ladder_st_was')==='1';
+    if(r&&r.ok&&r.approved){localStorage.setItem('ladder_st_was','1');return;}
+    if(r&&r.ok&&!r.approved&&was&&cfg().tasks){var k='ladder_st_pen_'+dk();if(!localStorage.getItem(k)){localStorage.setItem(k,'1');S.kmDebt=(+S.kmDebt||0)+GLASS_KM;save();try{updateStats();}catch(e){}stErr='You took Screen Time away from Ladder. That is breaking the glass without paying, so it cost '+GLASS_KM+' km. Allow it again below.';try{var lg=jget('ladder_glass_log',[]);lg.push({at:Date.now(),km:GLASS_KM,revoked:true});localStorage.setItem('ladder_glass_log',JSON.stringify(lg.slice(-200)));}catch(e){}}}}catch(e){}}
   var stErr='';
   function stHTML(){
     if(!st)return '';
@@ -6250,14 +6254,18 @@ var COACH_URL='';
       +'<button class="cp-btn" onclick="lockStAuth()">'+(stBusy?'WAITING...':'ALLOW SCREEN TIME')+'</button>';
     var n=(st.apps||0)+(st.cats||0)+(st.sites||0);
     var what=n?[(st.apps?st.apps+' app'+(st.apps>1?'s':''):''),(st.cats?st.cats+' categor'+(st.cats>1?'ies':'y'):''),(st.sites?st.sites+' site'+(st.sites>1?'s':''):'')].filter(Boolean).join(', '):'Nothing chosen yet.';
+    var rl=false;try{rl=state().realLocked;}catch(e){}
     return '<div class="cp-lab">Apps to lock</div><div class="cp-why" style="margin:0 0 8px;color:'+(n?'rgba(244,240,232,.85)':'var(--red)')+'">'+what+'</div>'
-      +'<button class="cp-btn'+(n?' ghost':'')+'" onclick="lockStPick()">'+(stBusy?'OPENING...':(n?'CHANGE APPS':'CHOOSE APPS TO LOCK'))+'</button>';
+      +(rl&&n?'<div class="cp-why" style="margin:0 0 8px">While your work is open you can only add apps. Taking one off waits until your deliverables are done.</div>':'')
+      +(stErr?'<div class="cp-why" style="margin:0 0 8px;color:var(--red)">'+E(stErr)+'</div>':'')
+      +'<button class="cp-btn'+(n?' ghost':'')+'" onclick="lockStPick()">'+(stBusy?'OPENING...':(n?(rl?'ADD APPS':'CHANGE APPS'):'CHOOSE APPS TO LOCK'))+'</button>';
   }
   var _o=window.openPanel;if(typeof _o==='function')window.openPanel=function(id){var r=_o.apply(this,arguments);if(id==='pg-lock'){arm='';paint();stLoad();}return r;};
   document.addEventListener('visibilitychange',function(){if(document.hidden)nsync();else setTimeout(gateCheck,250);});
   setTimeout(function(){nsync();gateCheck();},1200);
   setInterval(nsync,30000);
   /* every tap can finish the last deliverable: tell the phone right away, not in 30 seconds */
+  setTimeout(function(){if(liveNative())stLoad();},3000);document.addEventListener('visibilitychange',function(){if(!document.hidden&&liveNative())setTimeout(stLoad,600);});
   var tapT=null;document.addEventListener('click',function(){clearTimeout(tapT);tapT=setTimeout(function(){nsync();try{paint();}catch(e){}},500);},true);
 })();
 
