@@ -2324,11 +2324,12 @@ function fmtThousands(n){return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,','
 function ruleDay(){var d=new Date(),p=function(n){return (n<10?'0':'')+n;};return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());}
 function systemRules(){var t=ruleDay();return [
   {id:'s1', text:'Mattress stays off the bed frame until today\'s to dos are done', km:10, kind:'manual', since:t},
-  {id:'s2', text:'Set up to dos immediately in the morning', km:10, kind:'plan', by:'10:00', since:t},
-  {id:'s3', text:'No social media, except between 19:00 and 21:00', km:10, kind:'window', from:'19:00', to:'21:00', since:t}
+  {id:'s2', text:'Set up to dos immediately in the morning', km:10, kind:'plan', by:'10:00', since:t}
 ];}
 function loadRules(){
   var r=JSON.parse(localStorage.getItem('ladder_rules')||'null');
+  /* v118: no fixed social window. Apps open as soon as the work is done. */
+  if(r&&!localStorage.getItem('ladder_nowindow_v118')){r=r.filter(function(x){return x.kind!=='window';});localStorage.setItem('ladder_rules',JSON.stringify(r));localStorage.setItem('ladder_nowindow_v118','1');}
   if(!r){
     r=systemRules();
     localStorage.setItem('ladder_rules',JSON.stringify(r));
