@@ -1160,6 +1160,7 @@ body.wp-on #wpMoreBtn{display:none!important}
     <button class="bg" onclick="exportData()">Back up</button><button class="bg" onclick="openTour()">Replay tour</button>
     <button class="bg" onclick="toggleImport()">Restore</button>
   </div>
+  <div id="freshBox" style="margin-top:22px"></div>
   <div id="importBox" style="display:none;margin-top:12px;">
     <textarea id="importText" class="li" rows="4" placeholder="Paste your backup here" style="width:100%;margin-bottom:10px;"></textarea>
     <button class="bp" onclick="importData()">Restore now</button>
@@ -4381,6 +4382,32 @@ function exportData(){
     navigator.clipboard.writeText(txt).then(function(){alert('Backup copied. Paste it somewhere safe.');}).catch(function(){});
   }
 }
+/* v117: start fresh. Everything is kept in a backup on this phone and can come back with one tap. */
+var freshArm='';
+var FRESH_KEEP=['ladder_uid','ladder_tour_v2','ladder_first_done','ladder_goals_archived_v84','ladder_seed_goals_v2','ladder_freedom_v86'];
+function freshPaint(){
+  var b=document.getElementById('freshBox');if(!b)return;var has=!!localStorage.getItem('lfresh_backup');var at='';
+  try{if(has)at=new Date(JSON.parse(localStorage.getItem('lfresh_backup')).at).toLocaleDateString('en-GB',{day:'numeric',month:'short'});}catch(e){}
+  b.innerHTML='<div class="lbl" style="margin-bottom:8px">Start fresh</div><div style="font-family:\'IBM Plex Sans\',sans-serif;font-size:.85rem;color:#999;line-height:1.5;margin-bottom:10px">Empty goals, floor, rules, history and debt, like a new start. Everything is saved first and comes back with one tap. Your vault videos stay.</div>'
+    +'<button class="bg" style="border-color:'+(freshArm==='go'?'var(--red)':'')+';color:'+(freshArm==='go'?'var(--red)':'')+'" onclick="freshStart()">'+(freshArm==='go'?'Tap again to start fresh':'Start fresh')+'</button>'
+    +(has?'<button class="bg" style="margin-left:8px" onclick="freshRestore()">'+(freshArm==='back'?'Tap again to bring it back':'Bring back my data from '+at)+'</button>':'');
+}
+function freshStart(){
+  if(freshArm!=='go'){freshArm='go';freshPaint();setTimeout(function(){if(freshArm==='go'){freshArm='';freshPaint();}},4000);return;}
+  var o={app:'ladder',v:1,at:new Date().toISOString(),data:{}};
+  ladderKeys().forEach(function(k){o.data[k]=localStorage.getItem(k);});
+  try{localStorage.setItem('lfresh_backup',JSON.stringify(o));}catch(e){alert('Could not save the backup. Nothing was changed.');freshArm='';freshPaint();return;}
+  ladderKeys().forEach(function(k){if(FRESH_KEEP.indexOf(k)<0)localStorage.removeItem(k);});
+  localStorage.setItem('ladder_rules','[]');
+  location.reload();
+}
+function freshRestore(){
+  if(freshArm!=='back'){freshArm='back';freshPaint();setTimeout(function(){if(freshArm==='back'){freshArm='';freshPaint();}},4000);return;}
+  try{var o=JSON.parse(localStorage.getItem('lfresh_backup'));if(!o||!o.data)throw 0;
+    ladderKeys().forEach(function(k){if(FRESH_KEEP.indexOf(k)<0)localStorage.removeItem(k);});
+    Object.keys(o.data).forEach(function(k){localStorage.setItem(k,o.data[k]);});location.reload();}catch(e){alert('The backup could not be read.');}
+}
+(function(){var _o=window.openPanel;setTimeout(function(){var o=window.openPanel;if(typeof o==='function')window.openPanel=function(id){var r=o.apply(this,arguments);if(id==='pg-data'){freshArm='';freshPaint();}return r;};},0);})();
 function toggleImport(){var b=document.getElementById('importBox');b.style.display=b.style.display==='none'?'block':'none';}
 function importData(){
   var t=document.getElementById('importText').value.trim();
