@@ -644,6 +644,15 @@ body.on-morning #catchFab{bottom:calc(92px + var(--sab))}
 .fl-warn{font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:#ff8a8a;margin:4px 0 10px;line-height:1.4}
 .fl-pen{font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:#ff8a8a;margin:0 0 10px;line-height:1.4}
 #floorDay .fl-card{margin:6px 0 22px}
+.fl-sec{font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.2em;color:rgba(244,240,232,.45);text-transform:uppercase;margin:16px 0 2px}
+.fl-row.broke i{background:#ff2d2d;border-color:#ff2d2d}
+.fl-row.broke .fl-t{color:#ff8a8a}
+.fl-km{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:#ff6b6b;white-space:nowrap}
+.fl-deal{display:flex;gap:10px;margin:14px 0 8px}
+.fl-deal div{flex:1;border-radius:14px;padding:10px 12px;font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;line-height:1.35}
+.fl-deal .up{background:rgba(212,240,0,.08);color:#e8f5a0}
+.fl-deal .down{background:rgba(255,45,45,.08);color:#ffb0b0}
+.fl-deal b{display:block;font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.18em;margin-bottom:4px;opacity:.8}
 .fl-edit{background:none;border:0;color:#888;font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;text-decoration:underline;padding:10px 0}
 #floorEdit .fl-l{font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;color:#999;margin:10px 0 4px}
 #floorEdit input.li{width:100%}
@@ -917,12 +926,13 @@ body.wp-on #wpMoreBtn{display:none!important}
   <div class="inner">
     <div class="tbar" id="tM"></div>
     <div class="lbl" style="margin-bottom:12px">Today</div>
+    <button id="lockChip" class="fl-edit" style="display:none;margin:0 0 12px;text-align:left" onclick="openPanel('pg-lock')"></button>
+    <div id="floorDay"></div>
     <div class="big-q" id="mGreet">Good morning.<br>Are you <em>ready?</em></div>
     <div class="ybar" id="yBar">Loading...</div>
 
     <div id="buddyNudge" class="bd-nudge" style="display:none"></div>
-    <button id="lockChip" class="fl-edit" style="display:none;margin:0 0 12px;text-align:left" onclick="openPanel('pg-lock')"></button>
-    <div id="floorDay"></div>
+
     <div id="wkHost" style="margin-bottom:26px"></div>
     <div id="planRun" style="display:none;border-left:2px solid var(--lime);padding:4px 0 4px 14px;">
       <button id="wpMoreBtn" class="cp-more" onclick="wpMenu()">More</button>
@@ -5497,6 +5507,26 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   function host(){return document.getElementById('floorCard');}
   function esc2(s){return typeof esc==='function'?esc(s):String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   function hosts(){return [document.getElementById('floorCard'),document.getElementById('floorDay')].filter(Boolean);}
+  function isoD(){var d=new Date(),p=function(q){return (q<10?'0':'')+q;};return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());}
+  /* today's deliverables, inside the floor */
+  function work(){var out=[];
+    try{loadGoals().forEach(function(g){(g.actions||[]).forEach(function(a){if(a.type==='timer')return;out.push({t:a.text,done:!!isActionDone(a),tap:"floorTickGoal('"+a.id+"')"});});});}catch(e){}
+    try{var xl=JSON.parse(localStorage.getItem('ladder_extra_'+isoD())||'[]');xl.forEach(function(o,i){if(o&&o.t)out.push({t:o.t,done:!!o.d,tap:'floorTickX('+i+')'});});}catch(e){}
+    return out;}
+  window.floorTickGoal=function(id){try{toggleGoalAction(id);}catch(e){}setTimeout(function(){render();try{if(window.dayRefresh)dayRefresh();}catch(e){}},50);};
+  window.floorTickX=function(i){try{dayX(i);}catch(e){}setTimeout(function(){render();try{if(window.dayRefresh)dayRefresh();}catch(e){}},50);};
+  window.floorToWork=function(){var w=document.getElementById('wkHost');if(w)w.scrollIntoView({behavior:'smooth',block:'start'});};
+  /* the unbreakable rules, inside the floor */
+  function rulesHTML(){var R=[];try{R=loadRules();}catch(e){}if(!R.length)return '';var st=(S&&S.rules)||{};
+    var o='<div class="fl-sec">All day. Unbreakable</div>';
+    R.forEach(function(r){var v=st[r.id],auto=r.kind==='plan';
+      o+='<div class="fl-row'+(v===true?' on':'')+(v===false?' broke':'')+'" onclick="floorRule(\''+r.id+'\')"><i></i><div class="fl-t" style="'+(v===true?'text-decoration:none;color:#cfe86a':'')+'">'+esc2(r.text)+'</div>'
+        +(v===false?'<div class="fl-km">+'+r.km+' km</div>':'<div class="fl-s">'+(v===true?'held':(auto?'by '+esc2(r.by||'10:00'):'tap when held'))+'</div>')+'</div>';});
+    return o;}
+  window.floorRule=function(id){try{if(typeof cycleRule==='function')cycleRule(id);}catch(e){}setTimeout(render,50);};
+  /* what holding the floor gets you, and what missing it costs */
+  function deal(){var rw='';try{rw=(REWARDS_DAILY[0]&&REWARDS_DAILY[0].title)||'';}catch(e){}
+    return '<div class="fl-deal"><div class="up"><b>HOLD IT ALL</b>'+(rw?esc2(rw)+'. Earned.':'Your reward. Earned.')+'</div><div class="down"><b>MISS IT</b>'+PEN+' km for the floor. Rules cost their km. Open work keeps your phone locked.</div></div>';}
   function cardHTML(){
     var its=items();
     if(!its||!its.length){
@@ -5505,14 +5535,24 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     var d=data(),x=d[TODAY]||{},n=0,h='',list=sorted(its),now=new Date(),nm=now.getHours()*60+now.getMinutes(),nowId='',noTime=0;
     list.forEach(function(it){if(!x[it.id]&&!nowId&&mins(it.time)!==9999&&(mins(it.time)>=nm-30))nowId=it.id;});
     if(!nowId)list.forEach(function(it){if(!x[it.id]&&!nowId)nowId=it.id;});
+    var wk=work(),wkDone=0,workPlaced=false;
+    function workHTML(){workPlaced=true;if(!wk.length)return '<div class="fl-sec">Work</div><div class="fl-row" onclick="floorToWork()"><i style="border-style:dashed"></i><div class="fl-t" style="color:#9a9a9a">Write today\'s deliverables</div><div class="fl-s">plan</div></div>';
+      var o='<div class="fl-sec">Work. Your phone opens when this is done</div>';
+      wk.forEach(function(w){if(w.done)wkDone++;o+='<div class="fl-row'+(w.done?' on':'')+'" onclick="'+w.tap+'"><i></i><div class="fl-t">'+esc2(w.t)+'</div><div class="fl-s">'+(w.done?'proof in':'needs proof')+'</div></div>';});
+      return o+'<div class="fl-sec">Rest of the floor</div>';}
     list.forEach(function(it){var on=!!x[it.id];if(on)n++;var m=mins(it.time);if(m===9999)noTime++;
+      if(!workPlaced&&m>=720)h+=workHTML();
       var late=!on&&m!==9999&&m<nm-30,isNow=!on&&it.id===nowId;
       h+='<div class="fl-row'+(on?' on':'')+(isNow?' now':'')+(late?' late':'')+'" data-id="'+esc2(it.id)+'"><i></i><div class="fl-t">'+(isNow?'<span class="fl-tag">NOW</span>':'')+esc2(it.t)+'</div><div class="fl-s">'+esc2(it.time||'no time')+'</div></div>';});
+    if(!workPlaced)h+=workHTML();
+    h+=rulesHTML();
     var ok=n===its.length,st=streak(),pm=null;
     try{pm=JSON.parse(localStorage.getItem('ladder_floor_pen_msg')||'null');}catch(e){}
     var pen=(pm&&pm.day===TODAY)?'<div class="fl-pen">'+(pm.n>1?pm.n+' days':'Yesterday')+' the floor did not hold. '+pm.km+' km added to your debt.'+(window.vaultDoneToday&&vaultDoneToday()?'':'<br><button class="fl-edit" style="color:var(--lime);margin-top:6px" onclick="vaultOpenFor(\'floor\')">Record why. 60 seconds, only for you</button>')+'</div>':'';
-    return {cls:'fl-card'+(ok?' held':''),h:'<div class="fl-top"><div class="fl-k">THE FLOOR</div><div class="fl-n">'+n+'/'+its.length+(st>0?' · '+st+' day streak':'')+'</div></div>'
-      +pen+(ok?'<div class="fl-big">THE FLOOR HELD.</div>':'<div class="fl-q">Morning to night. Not all done by midnight costs '+PEN+' km.</div>')
+    var tot=its.length+wk.length,dn=n+wkDone;
+    return {cls:'fl-card'+(ok?' held':''),h:'<div class="fl-top"><div class="fl-k">THE FLOOR</div><div class="fl-n">'+dn+'/'+tot+(st>0?' · '+st+' day streak':'')+'</div></div>'
+      +deal()
+      +pen+(ok?'<div class="fl-big">THE FLOOR HELD.</div>':'')
       +(noTime?'<div class="fl-warn">'+noTime+' item'+(noTime>1?'s have':' has')+' no time yet. Give every item a time.</div>':'')
       +h+'<button class="fl-edit" onclick="floorEdit()">Edit my floor</button>'};
   }
@@ -5522,7 +5562,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     hosts().forEach(function(c){c.className=o.cls;c.innerHTML=o.h;});
   }
   document.addEventListener('click',function(e){
-    var r=e.target.closest&&e.target.closest('#floorCard .fl-row,#floorDay .fl-row');if(!r)return;
+    var r=e.target.closest&&e.target.closest('#floorCard .fl-row[data-id],#floorDay .fl-row[data-id]');if(!r)return;
     var id=r.getAttribute('data-id'),d=data();if(!d[TODAY])d[TODAY]={};d[TODAY][id]=!d[TODAY][id];
     var its=items()||[];var all=its.length>0&&its.every(function(i){return d[TODAY][i.id];});
     d[TODAY].held=all;save(FK,d);
