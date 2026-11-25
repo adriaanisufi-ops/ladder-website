@@ -5443,12 +5443,20 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   var PEN=5;
   /* The Routine: the checklist that worked. Blocks instead of clock times. */
   var ROUTINE=[
-    {t:'Make up bed',b:'am'},{t:'Drink half to 1 liter of water',b:'am'},{t:'Brush teeth',b:'am'},{t:'Silence, 3 minutes',b:'am'},
-    {t:'Affirmations',b:'am'},{t:'Visualize, 1 to 5 minutes',b:'am'},{t:'Mobility and abs',b:'am'},{t:'Read 15 minutes',b:'am'},
-    {t:'Write one thing you are thankful for',b:'am'},
-    {t:'Brush teeth',b:'pm'},{t:'Affirmations and visualize',b:'pm'},
-    {t:'Set up the list for next week',b:'sun'}];
-  var BLOCKS={am:{k:'Morning',sub:'No phone, no bed'},day:{k:'Day',sub:'Music allowed. Day One, work the list'},pm:{k:'Night',sub:'Phone and bed allowed'},sun:{k:'Sunday',sub:'Once a week'}};
+    {t:'Up before 7:30',b:'am',k:'wake',by:'07:30'},
+    {t:'Write for 15 minutes',b:'am'},
+    {t:"To do's for today",b:'am',k:'plan'},
+    {t:'Brush teeth',b:'pm'},
+    {t:'Affirmations and visualize',b:'pm'}];
+  var BLOCKS={am:{k:'Morning',sub:'Easy start'},day:{k:'Day',sub:'Work. Your to dos get done in these hours'},pm:{k:'Evening',sub:'Close it'},sun:{k:'Sunday',sub:'Once a week'}};
+  function hoursGoal(){var h=parseFloat(localStorage.getItem('ladder_work_hours')||'4');return isNaN(h)||h<=0?4:h;}
+  function wkey(){return 'ladder_work_'+isoD();}
+  function wstate(){return load(wkey(),{ms:0,run:0});}
+  function workMs(){var w=wstate();return (w.ms||0)+(w.run?Date.now()-w.run:0);}
+  function hm(ms){var m=Math.floor(ms/60000);return Math.floor(m/60)+':'+((m%60)<10?'0':'')+(m%60);}
+  window.floorWork=function(){var w=wstate();if(w.run){w.ms=(w.ms||0)+(Date.now()-w.run);w.run=0;}else{w.run=Date.now();}save(wkey(),w);render();try{if(window.hap)hap('medium');}catch(e){}};
+  /* the old v120 list is replaced once by the easier routine */
+  (function(){try{var it=load(IK,null);if(it&&it.some(function(i){return i.t==='Silence, 3 minutes';})){save(IK,ROUTINE.map(function(x,i){return Object.assign({id:'r'+Date.now()+i,time:'',remind:false},x);}));}}catch(e){}})();
   var BORD={am:0,day:1,pm:2,sun:3};
   function blk(it){if(it.b&&BORD[it.b]!==undefined)return it.b;var m=mins(it.time);return m===9999?'am':(m<720?'am':(m<1080?'day':'pm'));}
   /* points: morning done +1, list done +1. Skip the morning -1 (5 km), skip the list -3 (10 km). */
@@ -5533,7 +5541,8 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     return out;}
   window.floorTickGoal=function(id){try{toggleGoalAction(id);}catch(e){}setTimeout(function(){render();try{if(window.dayRefresh)dayRefresh();}catch(e){}},50);};
   window.floorTickX=function(i){try{dayX(i);}catch(e){}setTimeout(function(){render();try{if(window.dayRefresh)dayRefresh();}catch(e){}},50);};
-  window.floorRoutine=function(){var its=ROUTINE.map(function(x,i){return {id:'r'+Date.now()+i,t:x.t,b:x.b,time:'',remind:false};});save(IK,its);try{if(!localStorage.getItem('ladder_floor_since'))localStorage.setItem('ladder_floor_since',String(Date.now()));}catch(e){}render();try{if(window.hap)hap('success');}catch(e){}};
+  window.floorWake=function(id){var d=data();if(!d[TODAY])d[TODAY]={};if(typeof d[TODAY][id]==='string'){delete d[TODAY][id];}else{var n=new Date(),p=function(q){return (q<10?'0':'')+q;},t=p(n.getHours())+':'+p(n.getMinutes());var it=(items()||[]).filter(function(i){return i.id===id;})[0]||{};var by=mins(it.by||'07:30');d[TODAY][id]=(n.getHours()*60+n.getMinutes()<=by?'ok:':'late:')+t;}save(FK,d);render();try{if(window.hap)hap('success');}catch(e){}};
+  window.floorRoutine=function(){var its=ROUTINE.map(function(x,i){return Object.assign({id:'r'+Date.now()+i,time:'',remind:false},x);});save(IK,its);try{if(!localStorage.getItem('ladder_floor_since'))localStorage.setItem('ladder_floor_since',String(Date.now()));}catch(e){}render();try{if(window.hap)hap('success');}catch(e){}};
   window.floorToWork=function(){var w=document.getElementById('wkHost');if(w)w.scrollIntoView({behavior:'smooth',block:'start'});};
   /* the unbreakable rules, inside the floor */
   function rulesHTML(){var R=[];try{R=loadRules();}catch(e){}if(!R.length)return '';var st=(S&&S.rules)||{};
@@ -5545,7 +5554,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   window.floorRule=function(id){try{if(typeof cycleRule==='function')cycleRule(id);}catch(e){}setTimeout(render,50);};
   /* what holding the floor gets you, and what missing it costs */
   function deal(){var rw='';try{rw=(REWARDS_DAILY[0]&&REWARDS_DAILY[0].title)||'';}catch(e){}
-    return '<div class="fl-deal"><div class="up"><b>+2 POINTS</b>Morning done +1. The list done +1.'+(rw?' '+esc2(rw)+', earned.':'')+'</div><div class="down"><b>MINUS</b>No morning: -1, that is 5 km. No list: -3, that is 10 km. Walk or run, no music.</div></div>';}
+    return '<div class="fl-deal"><div class="up"><b>+2 POINTS</b>Morning done +1. Work hours and to dos done +1.'+(rw?' '+esc2(rw)+', earned.':'')+'</div><div class="down"><b>MINUS</b>No morning: -1, 5 km. No work: -3, 10 km. Walk or run, no music.</div></div>';}
   function cardHTML(){
     var its=items();
     if(!its||!its.length){
@@ -5553,19 +5562,28 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     }
     var d=data(),x=d[TODAY]||{},h='',list=sorted(todayItems(its)),nowId='';
     var wk=work(),wkDone=0;wk.forEach(function(w){if(w.done)wkDone++;});
-    var am=list.filter(function(i){return blk(i)==='am';}),amDone=am.filter(function(i){return x[i.id];}).length;
-    var amOk=am.length>0&&amDone===am.length,listOk=wk.length>0&&wkDone===wk.length;
+    var planned=false;try{planned=wk.length>0;}catch(e){}
+    /* special items: wake checks the clock, plan checks itself */
+    function done(it){if(it.k==='plan')return planned;if(it.k==='wake'){var v=x[it.id];return typeof v==='string'?v.indexOf('ok')===0:!!v;}return !!x[it.id];}
+    var am=list.filter(function(i){return blk(i)==='am';}),amDone=am.filter(done).length;
+    var wms=workMs(),wgoal=hoursGoal()*3600000,wOk=wms>=wgoal,wRun=!!wstate().run;
+    var amOk=am.length>0&&amDone===am.length,listOk=wk.length>0&&wkDone===wk.length&&wOk;
     /* one thing at a time: the first open item, in order */
     var seq=[];['am','day','pm','sun'].forEach(function(bk){if(bk==='day'){wk.forEach(function(w){seq.push({w:w});});}list.forEach(function(i){if(blk(i)===bk&&bk!=='day')seq.push({i:i});});if(bk==='day')list.forEach(function(i){if(blk(i)==='day')seq.push({i:i});});});
-    var nxt=null;for(var q=0;q<seq.length;q++){var e=seq[q];if(e.w&&!e.w.done){nxt=e;break;}if(e.i&&!x[e.i.id]){nxt=e;break;}}
+    var nxt=null;for(var q=0;q<seq.length;q++){var e=seq[q];if(e.w&&!e.w.done){nxt=e;break;}if(e.i&&!done(e.i)&&!(e.i.k==='wake'&&x[e.i.id])){nxt=e;break;}}
     if(nxt&&nxt.i)nowId=nxt.i.id;
-    function row(it){var on=!!x[it.id],isNow=it.id===nowId;
-      return '<div class="fl-row'+(on?' on':'')+(isNow?' now':'')+'" data-id="'+esc2(it.id)+'"><i></i><div class="fl-t">'+(isNow?'<span class="fl-tag">NOW</span>':'')+esc2(it.t)+'</div><div class="fl-s">'+esc2(it.time||'')+'</div></div>';}
+    function row(it){var on=done(it),isNow=it.id===nowId,v=x[it.id],late=it.k==='wake'&&typeof v==='string'&&v.indexOf('late')===0;
+      var side=esc2(it.time||'');if(it.k==='wake')side=typeof v==='string'?(late?'up at '+v.slice(5):'up at '+v.slice(3)):'tap when up';if(it.k==='plan')side=planned?wk.length+' written':'write them';
+      var attr=it.k==='plan'?' onclick="floorToWork()"':(it.k==='wake'?' onclick="floorWake(\''+esc2(it.id)+'\')"':' data-id="'+esc2(it.id)+'"');
+      return '<div class="fl-row'+(on?' on':'')+(late?' broke':'')+(isNow?' now':'')+'"'+attr+'><i></i><div class="fl-t">'+(isNow?'<span class="fl-tag">NOW</span>':'')+esc2(it.t)+'</div><div class="fl-s"'+(late?' style="color:#ff6b6b"':'')+'>'+side+'</div></div>';}
     ['am','day','pm','sun'].forEach(function(bk){
       var rows=list.filter(function(i){return blk(i)===bk;});
       if(bk!=='day'&&!rows.length)return;
-      h+='<div class="fl-sec">'+BLOCKS[bk].k+'. '+BLOCKS[bk].sub+(bk==='am'?' · '+amDone+'/'+am.length:'')+(bk==='day'?' · '+wkDone+'/'+wk.length:'')+'</div>';
+      h+='<div class="fl-sec">'+BLOCKS[bk].k+'. '+BLOCKS[bk].sub+(bk==='am'?' · '+amDone+'/'+am.length:'')+(bk==='day'?' · '+wkDone+'/'+wk.length+' to dos':'')+'</div>';
       if(bk==='day'){
+        var pc=Math.min(100,Math.round(wms/wgoal*100));
+        h+='<div style="padding:12px 0 6px"><div style="display:flex;justify-content:space-between;align-items:baseline"><div class="fl-t" style="flex:0 0 auto">Work '+hm(wms)+' of '+hm(wgoal)+'</div><button class="fl-build" style="width:auto;margin:0;padding:8px 16px" onclick="floorWork()">'+(wRun?'PAUSE':(wms?'GO ON':'START WORK'))+'</button></div>'
+          +'<div style="height:6px;border-radius:3px;background:rgba(255,255,255,.08);margin-top:10px;overflow:hidden"><div style="height:100%;width:'+pc+'%;background:'+(wOk?'var(--lime)':'#d4f000aa')+'"></div></div></div>';
         if(!wk.length)h+='<div class="fl-row" onclick="floorToWork()"><i style="border-style:dashed"></i><div class="fl-t" style="color:#9a9a9a">Write today\'s list</div><div class="fl-s">plan</div></div>';
         wk.forEach(function(w){var isNow=nxt&&nxt.w===w;h+='<div class="fl-row'+(w.done?' on':'')+(isNow?' now':'')+'" onclick="'+w.tap+'"><i></i><div class="fl-t">'+(isNow?'<span class="fl-tag">NOW</span>':'')+esc2(w.t)+'</div><div class="fl-s">'+(w.done?'proof in':'needs proof')+'</div></div>';});
       }
@@ -5601,11 +5619,13 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   var ed=document.createElement('div');ed.id='floorEdit';ed.className='ovl';ed.style.justifyContent='flex-start';document.body.appendChild(ed);
   var draft=[],sysArm=false,bWarn='';
   function collect(){
-    draft=[].slice.call(ed.querySelectorAll('.fb-row')).map(function(r){var b=r.querySelector('.fb-b');return {id:r.getAttribute('data-id'),t:r.querySelector('.fb-t').value.trim(),b:b?b.value:'am',time:r.querySelector('.fb-time').value||'',remind:r.querySelector('.fb-rem').checked};});
+    var prev={};(draft||[]).forEach(function(x){prev[x.id]=x;});
+    draft=[].slice.call(ed.querySelectorAll('.fb-row')).map(function(r){var b=r.querySelector('.fb-b'),id=r.getAttribute('data-id'),o=prev[id]||{};return {id:id,t:r.querySelector('.fb-t').value.trim(),b:b?b.value:'am',k:o.k,by:o.by,time:r.querySelector('.fb-time').value||'',remind:r.querySelector('.fb-rem').checked};});
+    var hw=document.getElementById('fbHours');if(hw&&parseFloat(hw.value)>0)localStorage.setItem('ladder_work_hours',String(parseFloat(hw.value)));
   }
   function has(t){return draft.some(function(x){return x.t.toLowerCase()===t.toLowerCase();});}
   function bRender(){
-    var h='<h2>YOUR<br><span>ROUTINE.</span></h2><p>One checklist for the day. Put each item in Morning, Day, Night or Sunday. A time is optional.</p>'
+    var h='<h2>YOUR<br><span>ROUTINE.</span></h2><p>Keep it easy. A short morning, your work hours, a short evening.</p>'
       +'<button class="fl-build" id="fbSystem" style="margin-top:14px">'+(sysArm?'TAP AGAIN. THIS REPLACES YOUR LIST':'START FROM THE ROUTINE')+'</button><div class="fb-k">Or tap to add</div><div class="fb-chips">';
     SUGG.forEach(function(s,i){h+='<button class="'+(has(s)?'on':'')+'" data-s="'+i+'">'+esc2(s)+'</button>';});
     h+='</div><div class="fb-k">Your floor ('+draft.length+' of '+MAXI+')</div>';
@@ -5614,6 +5634,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
       h+='<div class="fb-row" data-id="'+esc2(it.id)+'"><input class="li fb-t" value="'+esc2(it.t)+'" placeholder="What is it?"><div class="fb-line"><select class="fb-b li" style="flex:0 0 auto;width:auto;padding:8px">'+['am','day','pm','sun'].map(function(k){return '<option value="'+k+'"'+(k===bk?' selected':'')+'>'+BLOCKS[k].k+'</option>';}).join('')+'</select><div class="fb-tw'+(it.time?'':' empty')+'"><input class="fb-time" type="time" value="'+esc2(it.time||'')+'"></div><label class="fb-rm'+(it.remind?' on':'')+'"><input type="checkbox" class="fb-rem"'+(it.remind?' checked':'')+'>Remind me</label><button class="fb-x">Remove</button></div></div>';
     });
     h+='<div class="fb-add"><input class="li" id="fbNew" placeholder="Write your own"><button id="fbAdd">Add</button></div>'
+      +'<div class="fb-k">Work hours a day</div><input class="li" id="fbHours" type="number" min="1" max="12" step="0.5" value="'+hoursGoal()+'" style="width:120px">'
       +(draft.length>14?'<div class="fb-warn">Keep it a list you can do on a bad day.</div>':'')
       +(bWarn?'<div class="fb-warn">'+bWarn+'</div>':'')
       +'<button class="ov-go" style="margin-top:20px" id="fbSave">SAVE MY FLOOR</button><button class="ov-skip" id="fbCancel">Cancel</button>';
@@ -5622,7 +5643,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   ed.addEventListener('click',function(e){
     var t=e.target;
     if(t.id==='fbSystem'){collect();if(draft.length&&!sysArm){sysArm=true;bRender();setTimeout(function(){if(sysArm){sysArm=false;if(ed.classList.contains('on')){collect();bRender();}}},4000);return;}
-      sysArm=false;bWarn='';draft=ROUTINE.map(function(x,i){return {id:'r'+Date.now()+i,t:x.t,b:x.b,time:'',remind:false};});bRender();return;}
+      sysArm=false;bWarn='';draft=ROUTINE.map(function(x,i){return Object.assign({id:'r'+Date.now()+i,time:'',remind:false},x);});bRender();return;}
     if(t.closest('.fb-chips button')){collect();bWarn='';var s=SUGG[+t.closest('button').getAttribute('data-s')];var i=draft.findIndex(function(x){return x.t.toLowerCase()===s.toLowerCase();});if(i>-1)draft.splice(i,1);else if(draft.length<MAXI)draft.push({id:'u'+Date.now()+Math.floor(Math.random()*99),t:s,time:STIME[s]||'',remind:!!STIME[s]});bRender();return;}
     if(t.classList.contains('fb-x')){collect();var id=t.closest('.fb-row').getAttribute('data-id');draft=draft.filter(function(x){return x.id!==id;});bRender();return;}
     if(t.id==='fbAdd'){collect();var v=document.getElementById('fbNew').value.trim();if(v&&draft.length<MAXI&&!has(v))draft.push({id:'u'+Date.now(),t:v,time:'',remind:false});bRender();return;}
