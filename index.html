@@ -5459,7 +5459,14 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   function wstate(){return load(wkey(),{ms:0,run:0});}
   function workMs(){var w=wstate();return (w.ms||0)+(w.run?Date.now()-w.run:0);}
   function hm(ms){var m=Math.floor(ms/60000);return Math.floor(m/60)+':'+((m%60)<10?'0':'')+(m%60);}
-  window.floorWork=function(){var w=wstate();if(w.run){w.ms=(w.ms||0)+(Date.now()-w.run);w.run=0;}else{w.run=Date.now();}save(wkey(),w);render();try{if(window.hap)hap('medium');}catch(e){}};
+  window.workRunning=function(){return !!wstate().run;};
+  function workLive(){var w=wstate();try{
+    if(w.run){var el=(w.ms||0)+(Date.now()-w.run),left=Math.max(60000,hoursGoal()*3600000-el);var first='';try{var o=work().filter(function(x){return !x.done;})[0];if(o)first=o.t;}catch(e){}
+      liveCall('start',{id:'work',title:first?'Work. '+first:'Work',start:Date.now()-el,deadline:Date.now()+left}).catch(function(){});}
+    else liveCall('end',{id:'work'}).catch(function(){});}catch(e){}}
+  window.floorWork=function(){var w=wstate();if(w.run){w.ms=(w.ms||0)+(Date.now()-w.run);w.run=0;}else{w.run=Date.now();}save(wkey(),w);render();workLive();try{if(window.lockRefresh)lockRefresh();}catch(e){}try{if(window.hap)hap('medium');}catch(e){}};
+  /* the work clock ticks in the app too */
+  setInterval(function(){var t=document.getElementById('flWorkTxt');if(t&&wstate().run){t.textContent='Work '+hm(workMs())+' of '+hm(hoursGoal()*3600000);}},15000);
   /* the old v120 list is replaced once by the easier routine */
   (function(){try{var it=load(IK,null);if(it&&it.some(function(i){return i.t==='Silence, 3 minutes';})){save(IK,ROUTINE.map(function(x,i){return Object.assign({id:'r'+Date.now()+i,time:'',remind:false},x);}));}}catch(e){}})();
   var BORD={am:0,day:1,pm:2,sun:3};
@@ -5589,10 +5596,12 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
       h+='<div class="fl-sec">'+BLOCKS[bk].k+'. '+BLOCKS[bk].sub+(bk==='am'?' · '+amDone+'/'+am.length:'')+(bk==='day'?' · '+wkDone+'/'+wk.length+' to dos':'')+'</div>';
       if(bk==='day'){
         var pc=Math.min(100,Math.round(wms/wgoal*100));
-        h+='<div style="padding:12px 0 6px"><div style="display:flex;justify-content:space-between;align-items:baseline"><div class="fl-t" style="flex:0 0 auto">Work '+hm(wms)+' of '+hm(wgoal)+'</div><button class="fl-build" style="width:auto;margin:0;padding:8px 14px;font-size:1rem;line-height:1.1;flex:0 0 auto" onclick="floorWork()">'+(wRun?'PAUSE':(wms?'GO ON':'START WORK'))+'</button></div>'
-          +'<div style="height:6px;border-radius:3px;background:rgba(255,255,255,.08);margin-top:10px;overflow:hidden"><div style="height:100%;width:'+pc+'%;background:'+(wOk?'var(--lime)':'#d4f000aa')+'"></div></div></div>';
+        h+='<div style="padding:12px 0 6px"><div style="display:flex;justify-content:space-between;align-items:baseline"><div class="fl-t" id="flWorkTxt" style="flex:0 0 auto">Work '+hm(wms)+' of '+hm(wgoal)+'</div><button class="fl-build" style="width:auto;margin:0;padding:8px 14px;font-size:1rem;line-height:1.1;flex:0 0 auto" onclick="floorWork()">'+(wRun?'PAUSE':(wms?'GO ON':'START WORK'))+'</button></div>'
+          +'<div style="height:6px;border-radius:3px;background:rgba(255,255,255,.08);margin-top:10px;overflow:hidden"><div style="height:100%;width:'+pc+'%;background:'+(wOk?'var(--lime)':'#d4f000aa')+'"></div></div>'
+          +(wRun?'<div class="fl-s" style="margin-top:8px;color:var(--lime)">Work mode is on. Your phone is closed except the apps you allowed.</div>':'')+'</div>';
         wk.forEach(function(w){var isNow=nxt&&nxt.w===w;h+='<div class="fl-row'+(w.done?' on':'')+(isNow?' now':'')+'" onclick="'+w.tap+'"><i></i><div class="fl-t">'+(isNow?'<span class="fl-tag">NOW</span>':'')+esc2(w.t)+'</div><div class="fl-s">'+(w.done?'proof in':'needs proof')+'</div>'+(!w.done&&w.x!==undefined?'<button class="fl-x" aria-label="Remove" onclick="event.stopPropagation();floorDelX('+w.x+')">×</button>':'')+'</div>';});
-        h+='<div class="fl-add"><input id="flAddIn" placeholder="Add a to do, like 10 outreach sent" onkeydown="if(event.key===\'Enter\')floorAddX()"><button onclick="floorAddX()">ADD</button></div>';
+        h+='<div class="fl-add"><input id="flAddIn" placeholder="Add a to do, like 10 outreach sent" onkeydown="if(event.key===\'Enter\')floorAddX()"><button onclick="floorAddX()">ADD</button></div>'
+          +'<button class="fl-edit" style="color:var(--lime);margin:4px 0 8px" onclick="aiTodoOpen()">Help me write today\'s to dos</button>';
       }
       rows.forEach(function(it){h+=row(it);});
     });
@@ -6278,7 +6287,7 @@ var COACH_URL='';
   };
   function nsync(){
     var s=state();
-    var o={mode:s.c.tasks,doneDay:(s.c.tasks&&!s.realLocked)?dk():'',ai:s.c.ai,passUntil:s.c.pass,winFrom:s.w?s.w.from:-1,winTo:s.w?s.w.to:-1,glassUntil:s.c.glass,openCount:s.o.open.length,openFirst:String(s.o.open[0]||'').slice(0,80),vaultHas:!!(window.vaultCount&&vaultCount()>0)};
+    var o={mode:s.c.tasks,doneDay:(s.c.tasks&&!s.realLocked)?dk():'',ai:s.c.ai,passUntil:s.c.pass,winFrom:s.w?s.w.from:-1,winTo:s.w?s.w.to:-1,glassUntil:s.c.glass,focus:!!(window.workRunning&&workRunning()&&s.c.tasks),openCount:s.o.open.length,openFirst:String(s.o.open[0]||'').slice(0,80),vaultHas:!!(window.vaultCount&&vaultCount()>0)};
     try{liveCall('lock',o).then(function(r){var n=!!(r&&r.ok);if(n!==native){native=n;paint();}}).catch(function(){if(native!==false){native=false;paint();}});}catch(e){native=false;}
   }
   function gateCheck(){
@@ -6392,6 +6401,8 @@ var COACH_URL='';
     if(r&&r.ok&&r.approved){localStorage.setItem('ladder_st_was','1');return;}
     if(r&&r.ok&&!r.approved&&was&&cfg().tasks){var k='ladder_st_pen_'+dk();if(!localStorage.getItem(k)){localStorage.setItem(k,'1');S.kmDebt=(+S.kmDebt||0)+GLASS_KM;save();try{updateStats();}catch(e){}stErr='You took Screen Time away from Ladder. That is breaking the glass without paying, so it cost '+GLASS_KM+' km. Allow it again below.';try{var lg=jget('ladder_glass_log',[]);lg.push({at:Date.now(),km:GLASS_KM,revoked:true});localStorage.setItem('ladder_glass_log',JSON.stringify(lg.slice(-200)));}catch(e){}}}}catch(e){}}
   var stErr='';
+  function allowN(){return +(localStorage.getItem('ladder_allow_n')||0);}
+  window.lockStPickAllow=function(){if(stBusy)return;stBusy=true;paint();try{liveCall('stPickAllow',{}).then(function(r){stBusy=false;if(r&&r.ok)localStorage.setItem('ladder_allow_n',String((r.apps||0)+(r.cats||0)+(r.sites||0)));paint();nsync();}).catch(function(){stBusy=false;paint();});}catch(e){stBusy=false;}};
   function stHTML(){
     if(!st)return '';
     if(!st.approved)return '<div class="cp-lab">Screen Time</div><div class="cp-why" style="margin:0 0 8px">Ladder needs Screen Time permission to really close your apps. Your choices stay on this iPhone.</div>'
@@ -6403,6 +6414,8 @@ var COACH_URL='';
     return '<div class="cp-lab">Apps to lock</div><div class="cp-why" style="margin:0 0 8px;color:'+(n?'rgba(244,240,232,.85)':'var(--red)')+'">'+what+'</div>'
       +(rl&&n?'<div class="cp-why" style="margin:0 0 8px">While your work is open you can only add apps. Taking one off waits until your deliverables are done.</div>':'')
       +(stErr?'<div class="cp-why" style="margin:0 0 8px;color:var(--red)">'+E(stErr)+'</div>':'')
+      +'<div class="cp-lab" style="margin-top:14px">Allowed during work</div><div class="cp-why" style="margin:0 0 8px">When your work timer runs, everything closes except these. Add Ladder itself, Phone and what you need for the work.'+(allowN()?' Now: '+allowN()+' allowed.':' Nothing allowed yet, so add at least Ladder.')+'</div>'
+      +'<button class="cp-btn ghost" onclick="lockStPickAllow()">CHOOSE ALLOWED APPS</button>'
       +'<button class="cp-btn'+(n?' ghost':'')+'" onclick="lockStPick()">'+(stBusy?'OPENING...':(n?(rl?'ADD APPS':'CHANGE APPS'):'CHOOSE APPS TO LOCK'))+'</button>';
   }
   var _o=window.openPanel;if(typeof _o==='function')window.openPanel=function(id){var r=_o.apply(this,arguments);if(id==='pg-lock'){arm='';paint();stLoad();}return r;};
@@ -6680,6 +6693,43 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   if(typeof _dx==='function')window.dayX=function(i){
     var l=jg('ladder_extra_'+iso(),[]);if(!l[i])return;if(l[i].d)return _dx(i);
     open('x'+i,promiseFor('x'+i,l[i].t),function(){_dx(i);});
+  };
+})();
+
+/* v123: AI help for today's to dos. Scariest first, fits in your work hours. */
+(function(){
+  var ov=null,busy=false,res=null,err='',want='';
+  function E(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function el(){if(!ov){ov=document.createElement('div');ov.className='pf-ov';ov.id='aiTodoOv';document.body.appendChild(ov);}return ov;}
+  function iso(){var d=new Date(),p=function(n){return (n<10?'0':'')+n;};return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());}
+  function hours(){var h=parseFloat(localStorage.getItem('ladder_work_hours')||'4');return isNaN(h)?4:h;}
+  function paint(){var o=el();var t=document.getElementById('aiWant');if(t)want=t.value;
+    var h='<div class="pf-k">TODAY.</div><div class="cp-why" style="margin:0 0 12px">What do you want to move forward today? Say it rough, in your own words. You get at most three to dos that fit in '+hours()+' hours, the scariest first.</div>'
+      +'<textarea id="aiWant" class="pf-ta" placeholder="Like: more clients for my websites, and my book video">'+E(want)+'</textarea>'
+      +'<button class="cp-btn" onclick="aiTodoGo()">'+(busy?'THINKING...':'MAKE MY TO DOS')+'</button>'
+      +(err?'<div class="cp-why" style="margin:10px 0 0;color:var(--red)">'+E(err)+'</div>':'');
+    if(res&&res.todos&&res.todos.length){
+      h+=(res.note?'<div class="pf-promise" style="margin-top:18px">'+E(res.note)+'</div>':'<div style="height:18px"></div>');
+      res.todos.forEach(function(x,i){h+='<div class="fl-row" style="cursor:default"><div class="fl-t">'+(x.scary?'<span class="fl-tag" style="color:#ff6b6b">DO THIS FIRST</span>':'')+E(x.t)+'<span class="fl-s" style="display:block">'+x.mins+' min</span></div><button class="fl-build" style="width:auto;margin:0;padding:8px 14px;font-size:1rem" onclick="aiTodoAdd('+i+')">'+(x.added?'ADDED':'ADD')+'</button></div>';});
+      h+='<button class="cp-btn" style="margin-top:12px" onclick="aiTodoAddAll()">ADD ALL</button>';
+    }
+    h+='<button class="fl-edit" style="margin-top:18px" onclick="aiTodoClose()">Close</button>';
+    o.innerHTML=h;}
+  window.aiTodoOpen=function(){err='';res=null;paint();el().classList.add('on');setTimeout(function(){var t=document.getElementById('aiWant');if(t)t.focus();},200);};
+  window.aiTodoClose=function(){if(ov)ov.classList.remove('on');try{if(window.floorRender)floorRender();}catch(e){}};
+  function add(x){if(x.added)return;var k='ladder_extra_'+iso(),l=[];try{l=JSON.parse(localStorage.getItem(k)||'[]');}catch(e){}
+    var it={t:x.t};if(x.scary){l.unshift(it);}else l.push(it);localStorage.setItem(k,JSON.stringify(l));x.added=true;try{if(window.lockRefresh)lockRefresh();}catch(e){}}
+  window.aiTodoAdd=function(i){if(res&&res.todos[i]){add(res.todos[i]);paint();}};
+  window.aiTodoAddAll=function(){if(!res)return;res.todos.forEach(function(x){if(!x.scary)add(x);});res.todos.forEach(function(x){if(x.scary)add(x);});aiTodoClose();};
+  window.aiTodoGo=function(){if(busy)return;var t=document.getElementById('aiWant');want=t?t.value:want;
+    if(want.trim().split(/\s+/).length<2){err='Write a bit more first. What do you want to move forward?';paint();return;}
+    var goals=[];try{goals=loadGoals().map(function(g){return g.name;});}catch(e){}
+    busy=true;err='';paint();
+    var ctl=new AbortController();var to=setTimeout(function(){ctl.abort();},25000);
+    fetch(API_BASE+'/api/deliver',{method:'POST',headers:ladderHeaders(),signal:ctl.signal,body:JSON.stringify({want:want,goals:goals,hours:hours()})})
+      .then(function(r){return r.ok?r.json():Promise.reject(r.status);})
+      .then(function(p){clearTimeout(to);busy=false;res=p;if(!p||!p.todos||!p.todos.length)err='No to dos came back. Try saying it differently.';paint();})
+      .catch(function(){clearTimeout(to);busy=false;err='No connection to the helper right now. Write your to dos yourself, one result each.';paint();});
   };
 })();
 </script>
