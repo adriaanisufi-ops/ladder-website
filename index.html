@@ -5436,11 +5436,23 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
 })();
 // ===== v46: The Floor, built by each person =====
 (function(){
-  var FK='ladder_floor',IK='ladder_floor_items',MAXI=7;
+  var FK='ladder_floor',IK='ladder_floor_items',MAXI=16;
   var SUGG=['Phone out of the bedroom','Lights out on time','Up on time','Move for ten minutes','Plan tomorrow in one line','Read ten pages','Write for ten minutes','Meditate five minutes','Drink water before coffee','Eat a proper meal'];
   var STIME={'Up on time':'07:30','Drink water before coffee':'07:35','Move for ten minutes':'07:45','Meditate five minutes':'08:00','Read ten pages':'08:10','Write for ten minutes':'08:30','Eat a proper meal':'18:00','Plan tomorrow in one line':'21:30','Phone out of the bedroom':'22:30','Lights out on time':'23:00'};
   var SYSTEM=[{t:'Up with the light alarm. Phone stays in the closet',time:'07:30'},{t:'Worry time on paper, 15 minutes',time:'07:45'},{t:'Three to dos written, hard task first',time:'08:00'},{t:'Sort everything in Drafts, 30 minutes',time:'20:30'},{t:'Phone away, no screens',time:'22:30'},{t:'Lights out',time:'23:00'}];
   var PEN=5;
+  /* The Routine: the checklist that worked. Blocks instead of clock times. */
+  var ROUTINE=[
+    {t:'Make up bed',b:'am'},{t:'Drink half to 1 liter of water',b:'am'},{t:'Brush teeth',b:'am'},{t:'Silence, 3 minutes',b:'am'},
+    {t:'Affirmations',b:'am'},{t:'Visualize, 1 to 5 minutes',b:'am'},{t:'Mobility and abs',b:'am'},{t:'Read 15 minutes',b:'am'},
+    {t:'Write one thing you are thankful for',b:'am'},
+    {t:'Brush teeth',b:'pm'},{t:'Affirmations and visualize',b:'pm'},
+    {t:'Set up the list for next week',b:'sun'}];
+  var BLOCKS={am:{k:'Morning',sub:'No phone, no bed'},day:{k:'Day',sub:'Music allowed. Day One, work the list'},pm:{k:'Night',sub:'Phone and bed allowed'},sun:{k:'Sunday',sub:'Once a week'}};
+  var BORD={am:0,day:1,pm:2,sun:3};
+  function blk(it){if(it.b&&BORD[it.b]!==undefined)return it.b;var m=mins(it.time);return m===9999?'am':(m<720?'am':(m<1080?'day':'pm'));}
+  /* points: morning done +1, list done +1. Skip the morning -1 (5 km), skip the list -3 (10 km). */
+  var PTS={am:1,list:1,amMiss:-1,listMiss:-3,amKm:5,listKm:10};
   var LEGACY=[{id:'0',t:'Phone in the closet, laptop closed',time:'22:30',remind:true},{id:'1',t:'Head dump on paper',time:'',remind:false},{id:'2',t:'Lights out',time:'23:00',remind:true},{id:'3',t:'Up, feet on the floor',time:'07:30',remind:false},{id:'4',t:'Move for ten minutes',time:'',remind:false}];
   function load(k,d){try{var v=JSON.parse(localStorage.getItem(k)||'null');return v==null?d:v;}catch(e){return d;}}
   function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
@@ -5458,13 +5470,14 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   }
   function data(){return load(FK,{});}
   function dstr(n){var d=new Date();d.setDate(d.getDate()-n);return d.toDateString();}
-  function heldDay(k,d){var x=(d||data())[k]||{};if(x.held)return true;var its=load(IK,null);if(its&&its.length)return its.every(function(i){return x[i.id];});return ['0','1','2','3','4'].every(function(i){return x[i];});}
+  function heldDay(k,d){var sc=load('ladder_dayscore',{})[k];if(sc)return !!(sc.am&&sc.list);var x=(d||data())[k]||{};if(x.held)return true;var its=load(IK,null);if(its&&its.length)return its.every(function(i){return x[i.id];});return ['0','1','2','3','4'].every(function(i){return x[i];});}
   function streak(){var d=data(),n=0,s=heldDay(dstr(0),d)?0:1;while(heldDay(dstr(s+n),d))n++;return n;}
   window.floorStreak=streak;
   window.floorHeldDay=function(k){var its=items();if(!its||!its.length)return null;return heldDay(k);};
   function mins(t){var p=String(t||'').split(':');return p.length<2?9999:(+p[0])*60+(+p[1]);}
-  function sorted(its){return its.slice().sort(function(a,b){return mins(a.time)-mins(b.time);});}
-  /* the floor is the day: every day it was not held costs PEN km, counted once */
+  function sorted(its){return its.map(function(x,i){return {x:x,i:i};}).sort(function(a,b){var d=BORD[blk(a.x)]-BORD[blk(b.x)];if(d)return d;var t=mins(a.x.time)-mins(b.x.time);return t||a.i-b.i;}).map(function(o){return o.x;});}
+  function todayItems(its){var sun=new Date().getDay()===0;return its.filter(function(i){return blk(i)!=='sun'||sun;});}
+  /* score every past day once: morning and list, like the old routine */
   function penalize(){
     try{
       var its=items();if(!its||!its.length)return;
@@ -5472,17 +5485,22 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
       var since=+(localStorage.getItem('ladder_floor_since')||0);
       if(!since){localStorage.setItem('ladder_floor_since',String(Date.now()));return;}
       var last=localStorage.getItem('ladder_floor_pen')||'';
-      var d=data(),add=0,miss=[];
+      var sc=load('ladder_dayscore',{}),km=0,pts=0,lines=[];
       for(var n=7;n>=1;n--){
         var day=new Date();day.setHours(12,0,0,0);day.setDate(day.getDate()-n);
         var ks=day.toDateString(),iso=day.toISOString().slice(0,10);
         if(day.getTime()<since)continue;
         if(last&&iso<=last)continue;
-        if(!heldDay(ks,d)){add+=PEN;miss.push(ks);}
+        var r=sc[ks]||{am:false,list:false};
+        if(r.am)pts+=PTS.am;else{pts+=PTS.amMiss;km+=PTS.amKm;}
+        if(r.list)pts+=PTS.list;else{pts+=PTS.listMiss;km+=PTS.listKm;}
+        if(!r.am||!r.list)lines.push(ks);
       }
       var y=new Date();y.setDate(y.getDate()-1);y.setHours(12,0,0,0);
       localStorage.setItem('ladder_floor_pen',y.toISOString().slice(0,10));
-      if(add){S.kmDebt=(S.kmDebt||0)+add;window.save&&window.save();try{localStorage.setItem('ladder_floor_pen_msg',JSON.stringify({day:new Date().toDateString(),n:miss.length,km:add}));}catch(e){}try{updateStats();}catch(e){}}
+      localStorage.setItem('ladder_points',String((+localStorage.getItem('ladder_points')||0)+pts));
+      if(km){S.kmDebt=(S.kmDebt||0)+km;window.save&&window.save();try{updateStats();}catch(e){}}
+      if(lines.length||pts){try{localStorage.setItem('ladder_floor_pen_msg',JSON.stringify({day:new Date().toDateString(),n:lines.length,km:km,pts:pts}));}catch(e){}}
     }catch(e){}
   }
   window.floorPenalize=penalize;
@@ -5515,6 +5533,7 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
     return out;}
   window.floorTickGoal=function(id){try{toggleGoalAction(id);}catch(e){}setTimeout(function(){render();try{if(window.dayRefresh)dayRefresh();}catch(e){}},50);};
   window.floorTickX=function(i){try{dayX(i);}catch(e){}setTimeout(function(){render();try{if(window.dayRefresh)dayRefresh();}catch(e){}},50);};
+  window.floorRoutine=function(){var its=ROUTINE.map(function(x,i){return {id:'r'+Date.now()+i,t:x.t,b:x.b,time:'',remind:false};});save(IK,its);try{if(!localStorage.getItem('ladder_floor_since'))localStorage.setItem('ladder_floor_since',String(Date.now()));}catch(e){}render();try{if(window.hap)hap('success');}catch(e){}};
   window.floorToWork=function(){var w=document.getElementById('wkHost');if(w)w.scrollIntoView({behavior:'smooth',block:'start'});};
   /* the unbreakable rules, inside the floor */
   function rulesHTML(){var R=[];try{R=loadRules();}catch(e){}if(!R.length)return '';var st=(S&&S.rules)||{};
@@ -5526,35 +5545,43 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   window.floorRule=function(id){try{if(typeof cycleRule==='function')cycleRule(id);}catch(e){}setTimeout(render,50);};
   /* what holding the floor gets you, and what missing it costs */
   function deal(){var rw='';try{rw=(REWARDS_DAILY[0]&&REWARDS_DAILY[0].title)||'';}catch(e){}
-    return '<div class="fl-deal"><div class="up"><b>HOLD IT ALL</b>'+(rw?esc2(rw)+'. Earned.':'Your reward. Earned.')+'</div><div class="down"><b>MISS IT</b>'+PEN+' km for the floor. Rules cost their km. Open work keeps your phone locked.</div></div>';}
+    return '<div class="fl-deal"><div class="up"><b>+2 POINTS</b>Morning done +1. The list done +1.'+(rw?' '+esc2(rw)+', earned.':'')+'</div><div class="down"><b>MINUS</b>No morning: -1, that is 5 km. No list: -3, that is 10 km. Walk or run, no music.</div></div>';}
   function cardHTML(){
     var its=items();
     if(!its||!its.length){
-      return {cls:'fl-card',h:'<div class="fl-top"><div class="fl-k">YOUR FLOOR</div></div><div class="fl-q">Your routine from morning to night. The minimum you do every day, even on your worst day. Every item gets a time. Miss it and '+PEN+' km go on your debt.</div><button class="fl-build" onclick="floorEdit()">BUILD MY FLOOR</button>'};
+      return {cls:'fl-card',h:'<div class="fl-top"><div class="fl-k">YOUR ROUTINE</div></div><div class="fl-q">One checklist for the whole day. Morning, work, night. You do not think about it, you do the next thing.</div><button class="fl-build" onclick="floorRoutine()">START WITH THE ROUTINE</button><button class="fl-edit" onclick="floorEdit()">Build my own</button>'};
     }
-    var d=data(),x=d[TODAY]||{},n=0,h='',list=sorted(its),now=new Date(),nm=now.getHours()*60+now.getMinutes(),nowId='',noTime=0;
-    list.forEach(function(it){if(!x[it.id]&&!nowId&&mins(it.time)!==9999&&(mins(it.time)>=nm-30))nowId=it.id;});
-    if(!nowId)list.forEach(function(it){if(!x[it.id]&&!nowId)nowId=it.id;});
-    var wk=work(),wkDone=0,workPlaced=false;
-    function workHTML(){workPlaced=true;if(!wk.length)return '<div class="fl-sec">Work</div><div class="fl-row" onclick="floorToWork()"><i style="border-style:dashed"></i><div class="fl-t" style="color:#9a9a9a">Write today\'s deliverables</div><div class="fl-s">plan</div></div>';
-      var o='<div class="fl-sec">Work. Your phone opens when this is done</div>';
-      wk.forEach(function(w){if(w.done)wkDone++;o+='<div class="fl-row'+(w.done?' on':'')+'" onclick="'+w.tap+'"><i></i><div class="fl-t">'+esc2(w.t)+'</div><div class="fl-s">'+(w.done?'proof in':'needs proof')+'</div></div>';});
-      return o+'<div class="fl-sec">Rest of the floor</div>';}
-    list.forEach(function(it){var on=!!x[it.id];if(on)n++;var m=mins(it.time);if(m===9999)noTime++;
-      if(!workPlaced&&m>=720)h+=workHTML();
-      var late=!on&&m!==9999&&m<nm-30,isNow=!on&&it.id===nowId;
-      h+='<div class="fl-row'+(on?' on':'')+(isNow?' now':'')+(late?' late':'')+'" data-id="'+esc2(it.id)+'"><i></i><div class="fl-t">'+(isNow?'<span class="fl-tag">NOW</span>':'')+esc2(it.t)+'</div><div class="fl-s">'+esc2(it.time||'no time')+'</div></div>';});
-    if(!workPlaced)h+=workHTML();
+    var d=data(),x=d[TODAY]||{},h='',list=sorted(todayItems(its)),nowId='';
+    var wk=work(),wkDone=0;wk.forEach(function(w){if(w.done)wkDone++;});
+    var am=list.filter(function(i){return blk(i)==='am';}),amDone=am.filter(function(i){return x[i.id];}).length;
+    var amOk=am.length>0&&amDone===am.length,listOk=wk.length>0&&wkDone===wk.length;
+    /* one thing at a time: the first open item, in order */
+    var seq=[];['am','day','pm','sun'].forEach(function(bk){if(bk==='day'){wk.forEach(function(w){seq.push({w:w});});}list.forEach(function(i){if(blk(i)===bk&&bk!=='day')seq.push({i:i});});if(bk==='day')list.forEach(function(i){if(blk(i)==='day')seq.push({i:i});});});
+    var nxt=null;for(var q=0;q<seq.length;q++){var e=seq[q];if(e.w&&!e.w.done){nxt=e;break;}if(e.i&&!x[e.i.id]){nxt=e;break;}}
+    if(nxt&&nxt.i)nowId=nxt.i.id;
+    function row(it){var on=!!x[it.id],isNow=it.id===nowId;
+      return '<div class="fl-row'+(on?' on':'')+(isNow?' now':'')+'" data-id="'+esc2(it.id)+'"><i></i><div class="fl-t">'+(isNow?'<span class="fl-tag">NOW</span>':'')+esc2(it.t)+'</div><div class="fl-s">'+esc2(it.time||'')+'</div></div>';}
+    ['am','day','pm','sun'].forEach(function(bk){
+      var rows=list.filter(function(i){return blk(i)===bk;});
+      if(bk!=='day'&&!rows.length)return;
+      h+='<div class="fl-sec">'+BLOCKS[bk].k+'. '+BLOCKS[bk].sub+(bk==='am'?' · '+amDone+'/'+am.length:'')+(bk==='day'?' · '+wkDone+'/'+wk.length:'')+'</div>';
+      if(bk==='day'){
+        if(!wk.length)h+='<div class="fl-row" onclick="floorToWork()"><i style="border-style:dashed"></i><div class="fl-t" style="color:#9a9a9a">Write today\'s list</div><div class="fl-s">plan</div></div>';
+        wk.forEach(function(w){var isNow=nxt&&nxt.w===w;h+='<div class="fl-row'+(w.done?' on':'')+(isNow?' now':'')+'" onclick="'+w.tap+'"><i></i><div class="fl-t">'+(isNow?'<span class="fl-tag">NOW</span>':'')+esc2(w.t)+'</div><div class="fl-s">'+(w.done?'proof in':'needs proof')+'</div></div>';});
+      }
+      rows.forEach(function(it){h+=row(it);});
+    });
     h+=rulesHTML();
-    var ok=n===its.length,st=streak(),pm=null;
-    try{pm=JSON.parse(localStorage.getItem('ladder_floor_pen_msg')||'null');}catch(e){}
-    var pen=(pm&&pm.day===TODAY)?'<div class="fl-pen">'+(pm.n>1?pm.n+' days':'Yesterday')+' the floor did not hold. '+pm.km+' km added to your debt.'+(window.vaultDoneToday&&vaultDoneToday()?'':'<br><button class="fl-edit" style="color:var(--lime);margin-top:6px" onclick="vaultOpenFor(\'floor\')">Record why. 60 seconds, only for you</button>')+'</div>':'';
-    var tot=its.length+wk.length,dn=n+wkDone;
-    return {cls:'fl-card'+(ok?' held':''),h:'<div class="fl-top"><div class="fl-k">THE FLOOR</div><div class="fl-n">'+dn+'/'+tot+(st>0?' · '+st+' day streak':'')+'</div></div>'
-      +deal()
-      +pen+(ok?'<div class="fl-big">THE FLOOR HELD.</div>':'')
-      +(noTime?'<div class="fl-warn">'+noTime+' item'+(noTime>1?'s have':' has')+' no time yet. Give every item a time.</div>':'')
-      +h+'<button class="fl-edit" onclick="floorEdit()">Edit my floor</button>'};
+    var pts=(amOk?PTS.am:0)+(listOk?PTS.list:0),tot=(+localStorage.getItem('ladder_points')||0);
+    /* remember how today stands, so tomorrow can score it */
+    try{var sc=load('ladder_dayscore',{});sc[TODAY]={am:amOk,list:listOk};var ks=Object.keys(sc);if(ks.length>60)ks.slice(0,ks.length-60).forEach(function(k){delete sc[k];});save('ladder_dayscore',sc);}catch(e){}
+    var pm=null;try{pm=JSON.parse(localStorage.getItem('ladder_floor_pen_msg')||'null');}catch(e){}
+    var pen=(pm&&pm.day===TODAY&&pm.km)?'<div class="fl-pen">Yesterday cost you '+pm.km+' km ('+(pm.pts>0?'+':'')+pm.pts+' points). Walk or run it, no music.'+(window.vaultDoneToday&&vaultDoneToday()?'':'<br><button class="fl-edit" style="color:var(--lime);margin-top:6px" onclick="vaultOpenFor(\'floor\')">Record why. 60 seconds, only for you</button>')+'</div>':'';
+    var st=streak(),ok=amOk&&listOk;
+    return {cls:'fl-card'+(ok?' held':''),h:'<div class="fl-top"><div class="fl-k">THE ROUTINE</div><div class="fl-n">'+pts+'/2 today · '+tot+' total'+(st>0?' · '+st+' day streak':'')+'</div></div>'
+      +deal()+pen+(ok?'<div class="fl-big">THE DAY HELD.</div>':'')
+      +(nxt?'':'<div class="fl-q" style="color:var(--lime)">Everything is done. The rest of the day is yours.</div>')
+      +h+'<button class="fl-edit" onclick="floorEdit()">Edit my routine</button>'};
   }
   function render(){
     chipRender();
@@ -5574,19 +5601,20 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   var ed=document.createElement('div');ed.id='floorEdit';ed.className='ovl';ed.style.justifyContent='flex-start';document.body.appendChild(ed);
   var draft=[],sysArm=false,bWarn='';
   function collect(){
-    draft=[].slice.call(ed.querySelectorAll('.fb-row')).map(function(r){return {id:r.getAttribute('data-id'),t:r.querySelector('.fb-t').value.trim(),time:r.querySelector('.fb-time').value||'',remind:r.querySelector('.fb-rem').checked};});
+    draft=[].slice.call(ed.querySelectorAll('.fb-row')).map(function(r){var b=r.querySelector('.fb-b');return {id:r.getAttribute('data-id'),t:r.querySelector('.fb-t').value.trim(),b:b?b.value:'am',time:r.querySelector('.fb-time').value||'',remind:r.querySelector('.fb-rem').checked};});
   }
   function has(t){return draft.some(function(x){return x.t.toLowerCase()===t.toLowerCase();});}
   function bRender(){
-    var h='<h2>BUILD YOUR<br><span>FLOOR.</span></h2><p>Your routine from morning to night. The minimum you do every day, even on your worst day. Every item gets a time. Not all done by midnight means '+PEN+' km on your debt.</p>'
-      +'<button class="fl-build" id="fbSystem" style="margin-top:14px">'+(sysArm?'TAP AGAIN. THIS REPLACES YOUR LIST':'START FROM THE SYSTEM')+'</button><div class="fb-k">Or tap to add</div><div class="fb-chips">';
+    var h='<h2>YOUR<br><span>ROUTINE.</span></h2><p>One checklist for the day. Put each item in Morning, Day, Night or Sunday. A time is optional.</p>'
+      +'<button class="fl-build" id="fbSystem" style="margin-top:14px">'+(sysArm?'TAP AGAIN. THIS REPLACES YOUR LIST':'START FROM THE ROUTINE')+'</button><div class="fb-k">Or tap to add</div><div class="fb-chips">';
     SUGG.forEach(function(s,i){h+='<button class="'+(has(s)?'on':'')+'" data-s="'+i+'">'+esc2(s)+'</button>';});
     h+='</div><div class="fb-k">Your floor ('+draft.length+' of '+MAXI+')</div>';
     draft.forEach(function(it){
-      h+='<div class="fb-row" data-id="'+esc2(it.id)+'"><input class="li fb-t" value="'+esc2(it.t)+'" placeholder="What is it?"><div class="fb-line"><div class="fb-tw'+(it.time?'':' empty')+'"><input class="fb-time" type="time" value="'+esc2(it.time||'')+'"></div><label class="fb-rm'+(it.remind?' on':'')+'"><input type="checkbox" class="fb-rem"'+(it.remind?' checked':'')+'>Remind me</label><button class="fb-x">Remove</button></div></div>';
+      var bk=blk(it);
+      h+='<div class="fb-row" data-id="'+esc2(it.id)+'"><input class="li fb-t" value="'+esc2(it.t)+'" placeholder="What is it?"><div class="fb-line"><select class="fb-b li" style="flex:0 0 auto;width:auto;padding:8px">'+['am','day','pm','sun'].map(function(k){return '<option value="'+k+'"'+(k===bk?' selected':'')+'>'+BLOCKS[k].k+'</option>';}).join('')+'</select><div class="fb-tw'+(it.time?'':' empty')+'"><input class="fb-time" type="time" value="'+esc2(it.time||'')+'"></div><label class="fb-rm'+(it.remind?' on':'')+'"><input type="checkbox" class="fb-rem"'+(it.remind?' checked':'')+'>Remind me</label><button class="fb-x">Remove</button></div></div>';
     });
     h+='<div class="fb-add"><input class="li" id="fbNew" placeholder="Write your own"><button id="fbAdd">Add</button></div>'
-      +(draft.length>6?'<div class="fb-warn">More than six is how a floor breaks. Keep it small.</div>':'')
+      +(draft.length>14?'<div class="fb-warn">Keep it a list you can do on a bad day.</div>':'')
       +(bWarn?'<div class="fb-warn">'+bWarn+'</div>':'')
       +'<button class="ov-go" style="margin-top:20px" id="fbSave">SAVE MY FLOOR</button><button class="ov-skip" id="fbCancel">Cancel</button>';
     var sc=ed.scrollTop;ed.innerHTML=h;ed.scrollTop=sc;
@@ -5594,13 +5622,12 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   ed.addEventListener('click',function(e){
     var t=e.target;
     if(t.id==='fbSystem'){collect();if(draft.length&&!sysArm){sysArm=true;bRender();setTimeout(function(){if(sysArm){sysArm=false;if(ed.classList.contains('on')){collect();bRender();}}},4000);return;}
-      sysArm=false;bWarn='';draft=SYSTEM.map(function(x,i){return {id:'s'+Date.now()+i,t:x.t,time:x.time,remind:true};});bRender();return;}
+      sysArm=false;bWarn='';draft=ROUTINE.map(function(x,i){return {id:'r'+Date.now()+i,t:x.t,b:x.b,time:'',remind:false};});bRender();return;}
     if(t.closest('.fb-chips button')){collect();bWarn='';var s=SUGG[+t.closest('button').getAttribute('data-s')];var i=draft.findIndex(function(x){return x.t.toLowerCase()===s.toLowerCase();});if(i>-1)draft.splice(i,1);else if(draft.length<MAXI)draft.push({id:'u'+Date.now()+Math.floor(Math.random()*99),t:s,time:STIME[s]||'',remind:!!STIME[s]});bRender();return;}
     if(t.classList.contains('fb-x')){collect();var id=t.closest('.fb-row').getAttribute('data-id');draft=draft.filter(function(x){return x.id!==id;});bRender();return;}
     if(t.id==='fbAdd'){collect();var v=document.getElementById('fbNew').value.trim();if(v&&draft.length<MAXI&&!has(v))draft.push({id:'u'+Date.now(),t:v,time:'',remind:false});bRender();return;}
     if(t.id==='fbCancel'){ed.classList.remove('on');return;}
     if(t.id==='fbSave'){collect();draft=draft.filter(function(x){return x.t;});if(!draft.length)return;
-      var nt=draft.filter(function(x){return !x.time;}).length;if(nt){bWarn='Give every item a time. '+nt+' still '+(nt>1?'have':'has')+' none.';bRender();return;}
       bWarn='';draft=sorted(draft);save(IK,draft);try{if(!localStorage.getItem('ladder_floor_since'))localStorage.setItem('ladder_floor_since',String(Date.now()));}catch(e){}
       ed.classList.remove('on');render();schedule();hap('success');}
   });
