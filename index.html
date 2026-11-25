@@ -636,6 +636,11 @@ body.on-morning #catchFab{bottom:calc(92px + var(--sab))}
 .pf-promise{font-family:'IBM Plex Sans',sans-serif;font-size:1.05rem;color:#f4f0e8;margin:0 0 18px;padding:12px 14px;border-left:3px solid var(--lime);background:rgba(212,240,0,.05)}
 .pf-ta{width:100%;min-height:90px;background:#111;border:1px solid rgba(244,240,232,.18);border-radius:14px;color:#f4f0e8;font-family:'IBM Plex Sans',sans-serif;font-size:1rem;padding:12px;margin:0 0 12px}
 .pf-img{width:100%;border-radius:14px;margin:0 0 12px;border:1px solid rgba(244,240,232,.12)}
+.day-simple #mGreet,.day-simple #yBar,.day-simple #wkHost,.day-simple #dayTiles{display:none!important}
+.fl-add{display:flex;gap:8px;margin:10px 0 4px}
+.fl-add input{flex:1;background:#111;border:1px solid rgba(244,240,232,.15);border-radius:12px;color:#f4f0e8;font-family:'IBM Plex Sans',sans-serif;font-size:.95rem;padding:10px 12px}
+.fl-add button{background:var(--lime);color:#000;border:0;border-radius:12px;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;padding:0 16px}
+.fl-x{background:none;border:0;color:rgba(244,240,232,.35);font-size:1.1rem;padding:0 0 0 8px}
 .fl-row.now{background:rgba(212,240,0,.07);margin:0 -18px;padding:13px 18px;border-top-color:rgba(212,240,0,.35)}
 .fl-row.now .fl-s{color:var(--lime);font-weight:600}
 .fl-row.late .fl-s{color:#ff6b6b}
@@ -922,7 +927,7 @@ body.wp-on #wpMoreBtn{display:none!important}
   <button class="boot-enter" onclick="enterApp()" type="button">Start Today &rarr;</button>
 </div>
 
-<div class="screen" id="s-morning">
+<div class="screen day-simple" id="s-morning">
   <div class="inner">
     <div class="tbar" id="tM"></div>
     <div class="lbl" style="margin-bottom:12px">Today</div>
@@ -5537,13 +5542,15 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
   /* today's deliverables, inside the floor */
   function work(){var out=[];
     try{loadGoals().forEach(function(g){(g.actions||[]).forEach(function(a){if(a.type==='timer')return;out.push({t:a.text,done:!!isActionDone(a),tap:"floorTickGoal('"+a.id+"')"});});});}catch(e){}
-    try{var xl=JSON.parse(localStorage.getItem('ladder_extra_'+isoD())||'[]');xl.forEach(function(o,i){if(o&&o.t)out.push({t:o.t,done:!!o.d,tap:'floorTickX('+i+')'});});}catch(e){}
+    try{var xl=JSON.parse(localStorage.getItem('ladder_extra_'+isoD())||'[]');xl.forEach(function(o,i){if(o&&o.t)out.push({t:o.t,done:!!o.d,tap:'floorTickX('+i+')',x:i});});}catch(e){}
     return out;}
   window.floorTickGoal=function(id){try{toggleGoalAction(id);}catch(e){}setTimeout(function(){render();try{if(window.dayRefresh)dayRefresh();}catch(e){}},50);};
   window.floorTickX=function(i){try{dayX(i);}catch(e){}setTimeout(function(){render();try{if(window.dayRefresh)dayRefresh();}catch(e){}},50);};
   window.floorWake=function(id){var d=data();if(!d[TODAY])d[TODAY]={};if(typeof d[TODAY][id]==='string'){delete d[TODAY][id];}else{var n=new Date(),p=function(q){return (q<10?'0':'')+q;},t=p(n.getHours())+':'+p(n.getMinutes());var it=(items()||[]).filter(function(i){return i.id===id;})[0]||{};var by=mins(it.by||'07:30');d[TODAY][id]=(n.getHours()*60+n.getMinutes()<=by?'ok:':'late:')+t;}save(FK,d);render();try{if(window.hap)hap('success');}catch(e){}};
   window.floorRoutine=function(){var its=ROUTINE.map(function(x,i){return Object.assign({id:'r'+Date.now()+i,time:'',remind:false},x);});save(IK,its);try{if(!localStorage.getItem('ladder_floor_since'))localStorage.setItem('ladder_floor_since',String(Date.now()));}catch(e){}render();try{if(window.hap)hap('success');}catch(e){}};
-  window.floorToWork=function(){var w=document.getElementById('wkHost');if(w)w.scrollIntoView({behavior:'smooth',block:'start'});};
+  window.floorToWork=function(){var i=document.getElementById('flAddIn');if(i){i.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(function(){try{i.focus();}catch(e){}},300);}};
+  window.floorAddX=function(){var i=document.getElementById('flAddIn');var v=i?i.value.trim():'';if(!v)return;var k='ladder_extra_'+isoD();var l=[];try{l=JSON.parse(localStorage.getItem(k)||'[]');}catch(e){}l.push({t:v});localStorage.setItem(k,JSON.stringify(l));render();try{if(window.dayRefresh)dayRefresh();}catch(e){}try{if(window.lockRefresh)lockRefresh();}catch(e){}setTimeout(function(){var n=document.getElementById('flAddIn');if(n)n.focus();},50);};
+  window.floorDelX=function(ix){var k='ladder_extra_'+isoD();var l=[];try{l=JSON.parse(localStorage.getItem(k)||'[]');}catch(e){}if(!l[ix]||l[ix].d)return;l.splice(ix,1);localStorage.setItem(k,JSON.stringify(l));render();try{if(window.dayRefresh)dayRefresh();}catch(e){}try{if(window.lockRefresh)lockRefresh();}catch(e){}};
   /* the unbreakable rules, inside the floor */
   function rulesHTML(){var R=[];try{R=loadRules();}catch(e){}if(!R.length)return '';var st=(S&&S.rules)||{};
     var o='<div class="fl-sec">All day. Unbreakable</div>';
@@ -5582,10 +5589,10 @@ function ladderHeaders(){return {'Content-Type':'application/json','x-ladder-use
       h+='<div class="fl-sec">'+BLOCKS[bk].k+'. '+BLOCKS[bk].sub+(bk==='am'?' · '+amDone+'/'+am.length:'')+(bk==='day'?' · '+wkDone+'/'+wk.length+' to dos':'')+'</div>';
       if(bk==='day'){
         var pc=Math.min(100,Math.round(wms/wgoal*100));
-        h+='<div style="padding:12px 0 6px"><div style="display:flex;justify-content:space-between;align-items:baseline"><div class="fl-t" style="flex:0 0 auto">Work '+hm(wms)+' of '+hm(wgoal)+'</div><button class="fl-build" style="width:auto;margin:0;padding:8px 16px" onclick="floorWork()">'+(wRun?'PAUSE':(wms?'GO ON':'START WORK'))+'</button></div>'
+        h+='<div style="padding:12px 0 6px"><div style="display:flex;justify-content:space-between;align-items:baseline"><div class="fl-t" style="flex:0 0 auto">Work '+hm(wms)+' of '+hm(wgoal)+'</div><button class="fl-build" style="width:auto;margin:0;padding:8px 14px;font-size:1rem;line-height:1.1;flex:0 0 auto" onclick="floorWork()">'+(wRun?'PAUSE':(wms?'GO ON':'START WORK'))+'</button></div>'
           +'<div style="height:6px;border-radius:3px;background:rgba(255,255,255,.08);margin-top:10px;overflow:hidden"><div style="height:100%;width:'+pc+'%;background:'+(wOk?'var(--lime)':'#d4f000aa')+'"></div></div></div>';
-        if(!wk.length)h+='<div class="fl-row" onclick="floorToWork()"><i style="border-style:dashed"></i><div class="fl-t" style="color:#9a9a9a">Write today\'s list</div><div class="fl-s">plan</div></div>';
-        wk.forEach(function(w){var isNow=nxt&&nxt.w===w;h+='<div class="fl-row'+(w.done?' on':'')+(isNow?' now':'')+'" onclick="'+w.tap+'"><i></i><div class="fl-t">'+(isNow?'<span class="fl-tag">NOW</span>':'')+esc2(w.t)+'</div><div class="fl-s">'+(w.done?'proof in':'needs proof')+'</div></div>';});
+        wk.forEach(function(w){var isNow=nxt&&nxt.w===w;h+='<div class="fl-row'+(w.done?' on':'')+(isNow?' now':'')+'" onclick="'+w.tap+'"><i></i><div class="fl-t">'+(isNow?'<span class="fl-tag">NOW</span>':'')+esc2(w.t)+'</div><div class="fl-s">'+(w.done?'proof in':'needs proof')+'</div>'+(!w.done&&w.x!==undefined?'<button class="fl-x" aria-label="Remove" onclick="event.stopPropagation();floorDelX('+w.x+')">×</button>':'')+'</div>';});
+        h+='<div class="fl-add"><input id="flAddIn" placeholder="Add a to do, like 10 outreach sent" onkeydown="if(event.key===\'Enter\')floorAddX()"><button onclick="floorAddX()">ADD</button></div>';
       }
       rows.forEach(function(it){h+=row(it);});
     });
